@@ -23,5 +23,26 @@ public class Account {
         this.balance = balance;
     }
 
+    public BigDecimal deposit(BigDecimal amount){
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        this.balance = this.balance.add(amount);
+        return this.balance;
+    }
+    public  BigDecimal withdraw(BigDecimal amount){
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        this.balance = this.balance.subtract(amount);
+        return this.balance;
+
+    }
 
 }
