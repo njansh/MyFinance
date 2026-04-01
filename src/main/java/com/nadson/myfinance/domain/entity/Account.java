@@ -12,18 +12,16 @@ public class Account {
     private String name;
     private BigDecimal balance;
 
-    public Account() {
-    }
 
     public Account(UUID accountID, UUID userId, AccountType type, String name, BigDecimal balance) {
         this.accountID = accountID;
         this.userId = userId;
         this.type = type;
         this.name = name;
-        this.balance = balance;
+        this.balance = (balance == null) ? BigDecimal.ZERO : balance;
     }
 
-    public BigDecimal deposit(BigDecimal amount){
+    public BigDecimal deposit(BigDecimal amount) {
         if (amount == null) {
             throw new IllegalArgumentException("Amount cannot be null");
         }
@@ -33,16 +31,36 @@ public class Account {
         this.balance = this.balance.add(amount);
         return this.balance;
     }
-    public  BigDecimal withdraw(BigDecimal amount){
+
+    public BigDecimal withdraw(BigDecimal amount) {
         if (amount == null) {
             throw new IllegalArgumentException("Amount cannot be null");
         }
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-throw new IllegalArgumentException("Amount must be greater than zero");
+            throw new IllegalArgumentException("Amount must be greater than zero");
         }
         this.balance = this.balance.subtract(amount);
         return this.balance;
+    }
 
+    public UUID getAccountID() {
+        return accountID;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public AccountType getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
     }
 
 }
