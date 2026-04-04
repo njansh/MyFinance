@@ -27,6 +27,16 @@ public class Transaction {
         this.categoryId = categoryId;
         this.isTransfer = isTransfer;
     }
+    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description) {
+        this.transactionId = UUID.randomUUID();
+        this.date = LocalDateTime.now();
+        this.accountId = accountId;
+        this.amount = amount;
+        this.type = type;
+        this.description = description;
+        this.isTransfer = true;
+        this.categoryId = null;
+    }
 
     public UUID getTransactionId() {
         return transactionId;
