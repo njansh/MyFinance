@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface TransactionRepositoryPort {
     Transaction save(Transaction transaction);
+    Transaction findById(UUID transactionId);
     List<Transaction> findByAccountId(UUID accountId);
 }
 
