@@ -1,5 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 
+import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.enums.AccountType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,27 @@ public class AccountJpaEntity {
         this.balance = balance;
     }
 
+    public static AccountJpaEntity fromDomain(Account account) {
+        return new AccountJpaEntity(
+            account.getAccountID(),
+            account.getUserId(),
+            account.getType(),
+            account.getName(),
+            account.getBalance()
+        );
+    }
+
+    public Account toDomain() {
+        return new Account(
+            this.id,
+            this.userId,
+            this.type,
+            this.name,
+            this.balance
+        );
+    }
+    
+    
     public UUID getId() {
         return id;
     }
