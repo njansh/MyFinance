@@ -39,7 +39,12 @@ public class Transaction {
         this.isTransfer = true;
         this.categoryId = null;
     }
-
+    public void updateCategory(UUID categoryId) {
+        if (categoryId == null) {
+            throw new IllegalArgumentException("Category ID cannot be null");
+        }
+        this.categoryId = categoryId;
+    }
     public UUID getTransactionId() {
         return transactionId;
     }
