@@ -20,6 +20,9 @@ public class Account {
         this.name = name;
         this.balance = (balance == null) ? BigDecimal.ZERO : balance;
     }
+    public Account(UUID userId, String name, AccountType type) {
+        this(UUID.randomUUID(), userId, type, name, BigDecimal.ZERO);
+    }
 
     public BigDecimal deposit(BigDecimal amount) {
         if (amount == null) {
@@ -43,7 +46,7 @@ public class Account {
         return this.balance;
     }
 
-    public UUID getAccountID() {
+    public UUID getAccountId() {
         return accountID;
     }
 

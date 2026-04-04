@@ -44,7 +44,7 @@ public class AccountJpaEntity {
 
     public static AccountJpaEntity fromDomain(Account account) {
         return new AccountJpaEntity(
-            account.getAccountID(),
+            account.getAccountId(),
             account.getUserId(),
             account.getType(),
             account.getName(),
