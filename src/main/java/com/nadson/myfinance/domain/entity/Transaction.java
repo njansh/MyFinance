@@ -28,8 +28,10 @@ public class Transaction {
         this.isTransfer = isTransfer;
     }
     public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description) {
+        LocalDateTime now = LocalDateTime.now();
+        validate(description, amount,now, type, accountId);
         this.transactionId = UUID.randomUUID();
-        this.date = LocalDateTime.now();
+        this.date = now;
         this.accountId = accountId;
         this.amount = amount;
         this.type = type;
