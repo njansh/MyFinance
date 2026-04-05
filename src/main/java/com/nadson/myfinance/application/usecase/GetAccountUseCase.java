@@ -3,6 +3,7 @@ package com.nadson.myfinance.application.usecase;
 import com.nadson.myfinance.application.port.in.GetAccountport;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ public class GetAccountUseCase implements GetAccountport {
     public Account execute(UUID accountId) {
         Account account = accountRepositoryPort.findById(accountId);
         if (account == null) {
-            throw new IllegalArgumentException("Account not found");
+throw new AccountNotFoundException(accountId);
         }
         return account;
     }
