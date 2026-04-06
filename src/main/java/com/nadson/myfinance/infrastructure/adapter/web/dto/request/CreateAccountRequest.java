@@ -1,4 +1,4 @@
-package com.nadson.myfinance.infrastructure.adapter.web.dto.response;
+package com.nadson.myfinance.infrastructure.adapter.web.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

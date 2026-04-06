@@ -3,8 +3,9 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 import com.nadson.myfinance.application.port.in.CreateAccountPort;
 import com.nadson.myfinance.application.port.in.GetAccountport;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.enums.AccountType;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CreateAccountRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreateAccountRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +33,7 @@ public class AccountController {
         Account account = createAccountPort.execute(
                 request.getUserId(),
                 request.getName(),
-                com.nadson.myfinance.domain.enums.AccountType.valueOf(request.getType().toUpperCase())
+                AccountType.valueOf(request.getType().toUpperCase())
         );
 
         return ResponseEntity.status(201).body(AccountResponse.fromDomain(account));
