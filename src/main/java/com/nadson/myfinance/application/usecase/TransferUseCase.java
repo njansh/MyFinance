@@ -6,6 +6,7 @@ import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class TransferUseCase implements TransferPort {
         this.transactionRepositoryPort = transactionRepositoryPort;
     }
     @Override
+    @Transactional
     public void execute(UUID senderAccountId, UUID receiverAccountId, BigDecimal amount) {
         Account senderAccount=accountRepositoryPort.findById(senderAccountId);
         Account receiverAccount=accountRepositoryPort.findById(receiverAccountId);

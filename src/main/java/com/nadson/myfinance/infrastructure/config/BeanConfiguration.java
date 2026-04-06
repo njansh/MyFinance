@@ -48,4 +48,19 @@ public class BeanConfiguration {
     public GetUserPort getUserUseCase(UserRepositoryPort userRepositoryPort) {
         return new GetUserUseCase(userRepositoryPort);
     }
+    @Bean
+    public TransferPort transferPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
+        return new TransferUseCase(accountRepo, transRepo);
+    }
+
+    @Bean
+    public ListTransactionsPort listTransactionsPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
+        return new ListTransactionsUseCase(accountRepo, transRepo);
+    }
+    // deixe tudo bem organizado
+
+    @Bean
+    public GetAccountBalancePort getAccountBalancePort(AccountRepositoryPort repository) {
+        return new GetAccountBalanceUseCase(repository);
+    }
 }
