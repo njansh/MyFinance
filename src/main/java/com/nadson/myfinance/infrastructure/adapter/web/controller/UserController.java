@@ -1,6 +1,7 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateUserPort;
+import com.nadson.myfinance.application.port.in.GetTotalBalancePort;
 import com.nadson.myfinance.application.port.in.GetUserPort;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -16,10 +18,12 @@ import java.util.UUID;
 public class UserController {
     private final CreateUserPort createUserPort;
     private final GetUserPort getUserPort;
+    private final GetTotalBalancePort getTotalBalancePort;
 
-    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort) {
+    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
+        this.getTotalBalancePort = getTotalBalancePort;
     }
     
     @PostMapping
@@ -32,5 +36,10 @@ public class UserController {
     public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
         User user = getUserPort.execute(id);
         return ResponseEntity.ok(UserResponse.fromDomain(user));
+    }
+
+    @GetMapping("/{id}/total-balance")
+    public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable UUID id) {
+        return ResponseEntity.ok(getTotalBalancePort.execute(id));
     }
 }

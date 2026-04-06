@@ -57,10 +57,24 @@ public class BeanConfiguration {
     public ListTransactionsPort listTransactionsPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
         return new ListTransactionsUseCase(accountRepo, transRepo);
     }
-    // deixe tudo bem organizado
 
     @Bean
     public GetAccountBalancePort getAccountBalancePort(AccountRepositoryPort repository) {
         return new GetAccountBalanceUseCase(repository);
+    }
+    @Bean
+    public CategorizeTransactionPort categorizeTransactionPort(TransactionRepositoryPort transactionRepositoryPort, CategoryRepositoryPort categoryRepository){
+        return new CategorizeTransactionUseCase(transactionRepositoryPort, categoryRepository);
+
+    }
+    @Bean
+    public GetExpensesByCategoryPort getExpensesByCategoryPort(
+            TransactionRepositoryPort transactionRepo,
+            CategoryRepositoryPort categoryRepo) {
+        return new GetExpensesByCategoryUseCase(transactionRepo, categoryRepo);
+    }
+    @Bean
+    public GetTotalBalancePort getTotalBalancePort(AccountRepositoryPort accountRepositoryPort) {
+        return new GetTotalBalanceUserCase(accountRepositoryPort);
     }
 }

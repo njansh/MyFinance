@@ -1,6 +1,7 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
+import com.nadson.myfinance.application.port.in.GetExpensesByCategoryPort;
 import com.nadson.myfinance.application.port.in.GetTransactionPort;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
@@ -9,6 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -16,10 +19,12 @@ import java.util.UUID;
 public class TransactionController {
     private final CreateTransactionPort createTransactionPort;
     private final GetTransactionPort getTransactionPort;
+    private final GetExpensesByCategoryPort getExpensesByCategoryPort;
 
-    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort) {
+    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
+        this.getExpensesByCategoryPort = getExpensesByCategoryPort;
     }
 
     @PostMapping
@@ -42,4 +47,10 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> getById(@PathVariable UUID id) {
         Transaction transaction = getTransactionPort.execute(id);
         return ResponseEntity.ok(TransactionResponse.fromDomain(transaction));
-    }}
+    }
+
+    @GetMapping("/reports/expenses-by-category/{accountId}")
+    public ResponseEntity<Map<String, BigDecimal>> getReport(@PathVariable UUID accountId) {
+        return ResponseEntity.ok(getExpensesByCategoryPort.execute(accountId));
+    }
+}

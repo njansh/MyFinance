@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.AccountJpa
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringAccountRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -26,5 +27,11 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
         return springAccountRepository.findById(accountId)
                 .map(AccountJpaEntity::toDomain)
                 .orElse(null);
+    }
+    @Override
+    public List<Account> findByUserId(UUID userId) {
+        return springAccountRepository.findByUserId(userId).stream()
+                .map(AccountJpaEntity::toDomain)
+                .toList();
     }
 }
