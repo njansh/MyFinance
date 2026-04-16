@@ -78,4 +78,8 @@ public class BeanConfiguration {
     public GetTotalBalancePort getTotalBalancePort(AccountRepositoryPort accountRepositoryPort) {
         return new GetTotalBalanceUserCase(accountRepositoryPort);
     }
+    @Bean
+    public UpdateTransactionPort updateTransactionPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort, CategoryRepositoryPort categoryRepositoryPort) {
+        return new UpdateTransactionUseCase(transactionRepositoryPort, categoryRepositoryPort, accountRepositoryPort);
+    }
 }

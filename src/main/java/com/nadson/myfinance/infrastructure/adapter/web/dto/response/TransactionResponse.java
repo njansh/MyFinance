@@ -6,14 +6,18 @@ import com.nadson.myfinance.domain.enums.TransactionType;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record TransactionResponse(String description,
+public record TransactionResponse(
+        UUID id,
+        String description,
                                   BigDecimal amount,
                                   TransactionType type,
                                   UUID accountId,
                                   UUID categoryId,
                                   boolean isTransfer) {
     public static TransactionResponse fromDomain(Transaction t){
-        return new TransactionResponse(t.getDescription(),
+        return new TransactionResponse(
+                t.getTransactionId(),
+                t.getDescription(),
                 t.getAmount(),
                 t.getType(),
                 t.getAccountId(),

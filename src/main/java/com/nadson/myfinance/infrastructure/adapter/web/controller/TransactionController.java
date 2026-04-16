@@ -3,8 +3,10 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
 import com.nadson.myfinance.application.port.in.GetExpensesByCategoryPort;
 import com.nadson.myfinance.application.port.in.GetTransactionPort;
+import com.nadson.myfinance.application.port.in.UpdateTransactionPort;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateTransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +22,13 @@ public class TransactionController {
     private final CreateTransactionPort createTransactionPort;
     private final GetTransactionPort getTransactionPort;
     private final GetExpensesByCategoryPort getExpensesByCategoryPort;
+    private final UpdateTransactionPort updateTransactionPort;
 
-    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort) {
+    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort, UpdateTransactionPort updateTransactionPort) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
         this.getExpensesByCategoryPort = getExpensesByCategoryPort;
+        this.updateTransactionPort = updateTransactionPort;
     }
 
     @PostMapping
@@ -42,7 +46,22 @@ public class TransactionController {
         Transaction createdTransaction = createTransactionPort.execute(transaction);
         return ResponseEntity.status(201).body(TransactionResponse.fromDomain(createdTransaction));
 
-}
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody UpdateTransactionRequest request) {
+        updateTransactionPort.execute(
+                id,
+                request.description(),
+                request.amount(),
+                request.date(),
+                request.type(),
+                request.accountId(),
+                request.categoryId()
+        );
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> getById(@PathVariable UUID id) {
         Transaction transaction = getTransactionPort.execute(id);

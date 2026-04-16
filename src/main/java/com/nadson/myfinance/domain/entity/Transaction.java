@@ -45,6 +45,38 @@ public class Transaction {
         }
         this.categoryId = categoryId;
     }
+    public void updateDetails(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
+        if (description != null) {
+            if (description.trim().isEmpty()) {
+                throw new IllegalArgumentException("Description cannot be empty");
+            }
+            this.description = description;
+        }
+
+        if (amount != null) {
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Amount must be greater than zero");
+            }
+            this.amount = amount;
+        }
+
+        if (date != null) {
+            this.date = date;
+        }
+
+        if (type != null) {
+            this.type = type;
+        }
+
+        if (accountId != null) {
+            this.accountId = accountId;
+        }
+
+        if (categoryId != null) {
+            this.categoryId = categoryId;
+        }
+    }
+
     public UUID getTransactionId() {
         return transactionId;
     }
