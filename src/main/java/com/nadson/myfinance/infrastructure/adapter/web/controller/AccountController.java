@@ -12,6 +12,8 @@ import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionR
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,12 +45,27 @@ public class AccountController {
         );
 
         return ResponseEntity.status(201).body(AccountResponse.fromDomain(account));
-    }
-    @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable UUID id) {
-        List<Transaction> transactions = listTransactionsPort.execute(id);
-        return ResponseEntity.ok(transactions.stream()
+    }@GetMapping("/{id}/transactions")
+    public ResponseEntity<List<TransactionResponse>> listTransactions(
+            @PathVariable UUID id, // <-- Mudei para 'id' para bater com a URL
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+
+        if (month != null && year != null) {
+            YearMonth yearMonth = YearMonth.of(year, month);
+            startDate = yearMonth.atDay(1).atStartOfDay();
+            endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+        }
+
+        List<Transaction> transactions = listTransactionsPort.execute(id, startDate, endDate);
+
+        List<TransactionResponse> response = transactions.stream()
                 .map(TransactionResponse::fromDomain)
-                .toList());
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

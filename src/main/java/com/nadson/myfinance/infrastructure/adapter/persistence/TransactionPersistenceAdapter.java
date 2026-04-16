@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.Transactio
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringTransactionRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 @Component
@@ -34,4 +35,11 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     public List<Transaction> findByAccountId(UUID accountId) {
         return repository.findByAccountId(accountId).stream().map(TransactionJpaEntity::toDomain).toList();
     }
+
+    @Override
+    public List<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
+        return repository.findByAccountIdAndDateBetween(accountId, startDate, endDate)
+                .stream()
+                .map(TransactionJpaEntity::toDomain)
+                .toList();    }
 }
