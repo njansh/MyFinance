@@ -23,8 +23,8 @@ public class BeanConfiguration {
     @Bean
     public CreateTransactionPort createTransactionUseCase(
             TransactionRepositoryPort transactionRepo,
-            AccountRepositoryPort accountRepo) {
-        return new CreateTransactionUseCase(transactionRepo, accountRepo);
+            AccountRepositoryPort accountRepo,CategoryRepositoryPort categoryRepo) {
+        return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo);
     }
     @Bean
     public CreateUserPort createUserUseCase(UserRepositoryPort repository) {
@@ -44,6 +44,7 @@ public class BeanConfiguration {
         return new GetTransactionUsecase(transactionRepositoryPort);
 
     }
+
     @Bean
     public GetUserPort getUserUseCase(UserRepositoryPort userRepositoryPort) {
         return new GetUserUseCase(userRepositoryPort);

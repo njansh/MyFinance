@@ -3,6 +3,7 @@ package com.nadson.myfinance.application.usecase;
 import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.domain.entity.Category;
+import com.nadson.myfinance.domain.enums.TransactionType;
 
 public class CreateCategoryUseCase implements CreateCategoryPort {
 
@@ -13,9 +14,8 @@ public class CreateCategoryUseCase implements CreateCategoryPort {
     }
 
     @Override
-    public Category execute(String categoryName, String colorhex) {
-Category category=new Category(null,categoryName,colorhex);
-
+    public Category execute(String categoryName, String colorhex, TransactionType type) {
+        Category category = new Category(null, categoryName, colorhex, type);
         return categoryRepositoryPort.save(category);
     }
-}
+    }

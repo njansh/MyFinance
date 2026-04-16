@@ -23,7 +23,7 @@
 
         @PostMapping
         public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
-            Category category = createCategoryPort.execute(request.name(), request.colorHex());
+            Category category = createCategoryPort.execute(request.name(), request.colorHex(),request.type()   );
             return ResponseEntity.status(201).body(CategoryResponse.fromDomain(category));
         }
 
