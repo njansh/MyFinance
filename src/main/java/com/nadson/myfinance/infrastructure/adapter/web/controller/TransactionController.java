@@ -1,9 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
-import com.nadson.myfinance.application.port.in.CreateTransactionPort;
-import com.nadson.myfinance.application.port.in.GetExpensesByCategoryPort;
-import com.nadson.myfinance.application.port.in.GetTransactionPort;
-import com.nadson.myfinance.application.port.in.UpdateTransactionPort;
+import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateTransactionRequest;
@@ -23,12 +20,14 @@ public class TransactionController {
     private final GetTransactionPort getTransactionPort;
     private final GetExpensesByCategoryPort getExpensesByCategoryPort;
     private final UpdateTransactionPort updateTransactionPort;
+    private final DeleteTransactionPort deleteTransactionPort;
 
-    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort, UpdateTransactionPort updateTransactionPort) {
+    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort, UpdateTransactionPort updateTransactionPort, DeleteTransactionPort deleteTransactionPort) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
         this.getExpensesByCategoryPort = getExpensesByCategoryPort;
         this.updateTransactionPort = updateTransactionPort;
+        this.deleteTransactionPort = deleteTransactionPort;
     }
 
     @PostMapping
@@ -71,5 +70,11 @@ public class TransactionController {
     @GetMapping("/reports/expenses-by-category/{accountId}")
     public ResponseEntity<Map<String, BigDecimal>> getReport(@PathVariable UUID accountId) {
         return ResponseEntity.ok(getExpensesByCategoryPort.execute(accountId));
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable UUID id) {
+        deleteTransactionPort.execute(id);
+        return ResponseEntity.ok().build();
     }
 }

@@ -38,9 +38,9 @@ public class UpdateTransactionUseCase implements UpdateTransactionPort {
             throw new IllegalArgumentException("Account not found");
         }
         if (transaction.getType() == TransactionType.EXPENSE) {
-            oldAccount.deposit(transaction.getAmount()); // Devolve o dinheiro
+            oldAccount.deposit(transaction.getAmount());
         } else {
-            oldAccount.withdraw(transaction.getAmount()); // Tira o dinheiro
+            oldAccount.withdraw(transaction.getAmount());
         }
         accountRepositoryPort.save(oldAccount);
         transaction.updateDetails(description, amount, date, type, accountId, categoryId);

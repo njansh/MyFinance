@@ -47,7 +47,7 @@ public class AccountController {
         return ResponseEntity.status(201).body(AccountResponse.fromDomain(account));
     }@GetMapping("/{id}/transactions")
     public ResponseEntity<List<TransactionResponse>> listTransactions(
-            @PathVariable UUID id, // <-- Mudei para 'id' para bater com a URL
+            @PathVariable UUID id,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
 

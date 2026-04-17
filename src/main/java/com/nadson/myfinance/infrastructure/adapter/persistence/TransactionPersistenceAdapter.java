@@ -42,4 +42,10 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
                 .stream()
                 .map(TransactionJpaEntity::toDomain)
                 .toList();    }
+
+    @Override
+    public void deleteById(UUID transactionId) {
+        repository.deleteById(transactionId);
+
+    }
 }

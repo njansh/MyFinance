@@ -12,6 +12,7 @@ public interface TransactionRepositoryPort {
     Transaction findById(UUID transactionId);
     List<Transaction> findByAccountId(UUID accountId);
     List<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
+    void deleteById(UUID transactionId);
 }
 
 
