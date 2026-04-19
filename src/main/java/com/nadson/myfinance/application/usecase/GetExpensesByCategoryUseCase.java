@@ -23,23 +23,30 @@ public class GetExpensesByCategoryUseCase implements GetExpensesByCategoryPort {
 
     }
 
-       @Override
-       public Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<Transaction> transactions ;
-if(startDate!=null && endDate!=null){
-    transactions=transactionRepository.findAllByAccountIdAndDateBetween(accountId,startDate,endDate);
-}else {
-    transactions=transactionRepository.findAllByAccountId(accountId);
-}
-        Map<String, BigDecimal> report=new HashMap<>();
-           transactions.stream()
-                   .filter(t -> t.getType() == TransactionType.EXPENSE)
-                   .forEach(t -> {
-                       String categoryName = categoryRepository.findById(t.getCategoryId()).getName();
-                       report.put(categoryName, report.getOrDefault(categoryName, BigDecimal.ZERO).add(t.getAmount()));
-                   });
-        return report;
+    @Override
+    public Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<Transaction> transactions;
+        if (startDate != null && endDate != null) {
+            transactions = transactionRepository.findAllByAccountIdAndDateBetween(accountId, startDate, endDate);
+        } else {
+            transactions = transactionRepository.findAllByAccountId(accountId);
+        }
 
+        Map<String, BigDecimal> report = new HashMap<>();
+        transactions.stream()
+                .filter(t -> t.getType() == TransactionType.EXPENSE)
+                .forEach(t -> {
+                    String categoryName = "Sem Categoria";
+                    if (t.getCategoryId() != null) {
+                        var category = categoryRepository.findById(t.getCategoryId());
+                        if (category != null) {
+                            categoryName = category.getName();
+                        }
+                    }
+
+                    report.put(categoryName, report.getOrDefault(categoryName, BigDecimal.ZERO).add(t.getAmount()));
+                });
+        return report;
     }
 
 

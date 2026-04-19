@@ -5,6 +5,7 @@ import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -49,7 +50,7 @@ public class ListTransactionsUseCase implements ListTransactionsPort {
     private void validateAccount(UUID accountId) {
         Account account = accountRepositoryPort.findById(accountId);
         if (account == null) {
-            throw new IllegalArgumentException("Account not found");
+            throw new AccountNotFoundException(accountId);
         }
     }
 

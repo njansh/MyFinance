@@ -8,6 +8,12 @@ import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.exception.AccountNotFoundException;
+import com.nadson.myfinance.domain.exception.BusinessRuleException;
+import com.nadson.myfinance.domain.exception.CategoryNotFoundException;
+import com.nadson.myfinance.domain.exception.InvalidTransactionValueException;
+
+import java.math.BigDecimal;
 
 public class CreateTransactionUseCase implements CreateTransactionPort {
     private final TransactionRepositoryPort transactionRepositoryPort;
@@ -26,17 +32,21 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
     @Override
     public Transaction execute(Transaction transaction) {
         Account account = accountRepositoryPort.findById(transaction.getAccountId());
+        if (transaction.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransactionValueException("Transaction amount must be greater than zero.");
+        }
         if (account == null) {
-            throw new IllegalArgumentException("Account not found");
+            throw new AccountNotFoundException(transaction.getAccountId());
         }
 
         if (transaction.getCategoryId() != null) {
             Category category = categoryRepositoryPort.findById(transaction.getCategoryId());
             if (category == null) {
-                throw new IllegalArgumentException("Category not found");
+                throw new CategoryNotFoundException(transaction.getCategoryId());
             }
             if (category.getType() != transaction.getType()) {
-                throw new IllegalArgumentException("The selected category does not match the transaction type (Income/Expense)");
+                throw new BusinessRuleException("The selected category type (" + category.getType() +
+                        ") does not match the transaction type (" + transaction.getType() + ")");
             }
         }
 

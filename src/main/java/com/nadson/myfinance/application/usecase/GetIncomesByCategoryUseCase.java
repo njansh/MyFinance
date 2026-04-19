@@ -37,7 +37,13 @@ public class GetIncomesByCategoryUseCase implements GetIncomesByCategoryPort {
         transactions.stream()
                 .filter(t -> t.getType() == TransactionType.INCOME)
                 .forEach(t -> {
-                    String categoryName = categoryRepository.findById(t.getCategoryId()).getName();
+                    String categoryName = "Sem Categoria";
+                    if (t.getCategoryId() != null) {
+                        var category = categoryRepository.findById(t.getCategoryId());
+                        if (category != null) {
+                            categoryName = category.getName();
+                        }
+                    }
                     report.put(categoryName, report.getOrDefault(categoryName, BigDecimal.ZERO).add(t.getAmount()));
                 });
 

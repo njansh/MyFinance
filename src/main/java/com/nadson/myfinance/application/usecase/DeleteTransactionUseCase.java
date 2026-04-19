@@ -6,6 +6,8 @@ import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.exception.AccountNotFoundException;
+import com.nadson.myfinance.domain.exception.TransactionNotFoundException;
 
 import java.util.UUID;
 
@@ -22,11 +24,11 @@ public class DeleteTransactionUseCase implements DeleteTransactionPort {
     public void execute(UUID transactionID) {
       Transaction transaction=  transactionRepository.findById(transactionID);
       if(transaction==null){
-          throw new IllegalArgumentException("Transaction not found");
+          throw new TransactionNotFoundException(transactionID);
       }
         Account account = accountRepository.findById(transaction.getAccountId());
       if(account==null){
-          throw new IllegalArgumentException("Account  not found");
+    throw new AccountNotFoundException(transaction.getAccountId());
       }
 
         if (transaction.getType() == TransactionType.EXPENSE) {
