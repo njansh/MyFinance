@@ -1,6 +1,5 @@
 package com.nadson.myfinance.application.usecase;
 
-import com.nadson.myfinance.application.port.in.GetExpensesByCategoryPort;
 import com.nadson.myfinance.application.port.in.GetIncomesByCategoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
@@ -21,27 +20,27 @@ public class GetIncomesByCategoryUseCase implements GetIncomesByCategoryPort {
     public GetIncomesByCategoryUseCase(TransactionRepositoryPort transactionRepository, CategoryRepositoryPort categoryRepository) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
-
     }
 
-       @Override
-       public Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<Transaction> transactions ;
-if(startDate!=null && endDate!=null){
-    transactions=transactionRepository.findByAccountIdAndDateBetween(accountId,startDate,endDate);
-}else {
-    transactions=transactionRepository.findByAccountId(accountId);
-}
-        Map<String, BigDecimal> report=new HashMap<>();
-           transactions.stream()
-                   .filter(t -> t.getType() == TransactionType.INCOME)
-                   .forEach(t -> {
-                       String categoryName = categoryRepository.findById(t.getCategoryId()).getName();
-                       report.put(categoryName, report.getOrDefault(categoryName, BigDecimal.ZERO).add(t.getAmount()));
-                   });
+    @Override
+    public Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<Transaction> transactions;
+
+        if (startDate != null && endDate != null) {
+            transactions = transactionRepository.findAllByAccountIdAndDateBetween(accountId, startDate, endDate);
+        } else {
+            transactions = transactionRepository.findAllByAccountId(accountId);
+        }
+
+        Map<String, BigDecimal> report = new HashMap<>();
+
+        transactions.stream()
+                .filter(t -> t.getType() == TransactionType.INCOME)
+                .forEach(t -> {
+                    String categoryName = categoryRepository.findById(t.getCategoryId()).getName();
+                    report.put(categoryName, report.getOrDefault(categoryName, BigDecimal.ZERO).add(t.getAmount()));
+                });
+
         return report;
-
     }
-
-
 }

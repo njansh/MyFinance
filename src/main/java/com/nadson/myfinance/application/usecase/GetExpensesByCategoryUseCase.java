@@ -1,7 +1,6 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.GetExpensesByCategoryPort;
-import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Transaction;
@@ -28,9 +27,9 @@ public class GetExpensesByCategoryUseCase implements GetExpensesByCategoryPort {
        public Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
         List<Transaction> transactions ;
 if(startDate!=null && endDate!=null){
-    transactions=transactionRepository.findByAccountIdAndDateBetween(accountId,startDate,endDate);
+    transactions=transactionRepository.findAllByAccountIdAndDateBetween(accountId,startDate,endDate);
 }else {
-    transactions=transactionRepository.findByAccountId(accountId);
+    transactions=transactionRepository.findAllByAccountId(accountId);
 }
         Map<String, BigDecimal> report=new HashMap<>();
            transactions.stream()

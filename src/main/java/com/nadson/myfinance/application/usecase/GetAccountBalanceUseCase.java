@@ -1,9 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.GetAccountBalancePort;
-import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
-import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceResponse;
@@ -12,7 +10,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class GetAccountBalanceUseCase  implements GetAccountBalancePort {
     private final TransactionRepositoryPort transactionRepositoryPort;
@@ -26,9 +23,9 @@ public class GetAccountBalanceUseCase  implements GetAccountBalancePort {
     public BalanceResponse execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
      List<Transaction> transactions;
         if (startDate != null && endDate != null) {
-            transactions = transactionRepositoryPort.findByAccountIdAndDateBetween(accountId, startDate, endDate);
+            transactions = transactionRepositoryPort.findAllByAccountIdAndDateBetween(accountId, startDate, endDate);
         } else {
-            transactions = transactionRepositoryPort.findByAccountId(accountId);
+            transactions = transactionRepositoryPort.findAllByAccountId(accountId);
         }
         BigDecimal totalIncomes = transactions.stream().filter(t->t.getType()== TransactionType.INCOME)
                 .map(Transaction::getAmount)
