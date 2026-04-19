@@ -60,7 +60,7 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public GetAccountBalancePort getAccountBalancePort(AccountRepositoryPort repository) {
+    public GetAccountBalancePort getAccountBalancePort(TransactionRepositoryPort repository) {
         return new GetAccountBalanceUseCase(repository);
     }
     @Bean
@@ -73,6 +73,12 @@ public class BeanConfiguration {
             TransactionRepositoryPort transactionRepo,
             CategoryRepositoryPort categoryRepo) {
         return new GetExpensesByCategoryUseCase(transactionRepo, categoryRepo);
+    }
+    @Bean
+    public GetIncomesByCategoryPort getIncomesByCategoryPort(
+            TransactionRepositoryPort transactionRepo,
+            CategoryRepositoryPort categoryRepo) {
+        return new GetIncomesByCategoryUseCase(transactionRepo, categoryRepo);
     }
     @Bean
     public GetTotalBalancePort getTotalBalancePort(AccountRepositoryPort accountRepositoryPort) {

@@ -5,5 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-public interface GetExpensesByCategoryPort {
-    Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);}
+public interface GetIncomesByCategoryPort {
+    Map<String, BigDecimal> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
+}
+

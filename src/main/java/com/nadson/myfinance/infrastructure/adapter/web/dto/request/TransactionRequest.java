@@ -10,6 +10,7 @@ import java.util.UUID;
 public record TransactionRequest (
          String description,
          BigDecimal amount,
+         LocalDateTime date,
          TransactionType type,
          UUID accountId,
          UUID categoryId,

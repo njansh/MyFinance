@@ -2,23 +2,40 @@ package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.GetAccountBalancePort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
+import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceResponse;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class GetAccountBalanceUseCase  implements GetAccountBalancePort {
-    private final AccountRepositoryPort accountRepositoryPort;
-    public GetAccountBalanceUseCase(AccountRepositoryPort accountRepositoryPort) {
-        this.accountRepositoryPort = accountRepositoryPort;
-    }
-    @Override
-    public BigDecimal execute(UUID accountId) {
-        Account account = accountRepositoryPort.findById(accountId);
-        if (account == null) {
-            throw new IllegalArgumentException("Account not found");
-        }
-        return account.getBalance();
+    private final TransactionRepositoryPort transactionRepositoryPort;
 
+    public GetAccountBalanceUseCase(TransactionRepositoryPort transactionRepositoryPort) {
+        this.transactionRepositoryPort = transactionRepositoryPort;
+    }
+
+
+    @Override
+    public BalanceResponse execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
+     List<Transaction> transactions;
+        if (startDate != null && endDate != null) {
+            transactions = transactionRepositoryPort.findByAccountIdAndDateBetween(accountId, startDate, endDate);
+        } else {
+            transactions = transactionRepositoryPort.findByAccountId(accountId);
+        }
+        BigDecimal totalIncomes = transactions.stream().filter(t->t.getType()== TransactionType.INCOME)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal totalExpenses=transactions.stream().filter(t->t.getType()== TransactionType.EXPENSE)
+                .map(Transaction::getAmount).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal balance=totalIncomes.subtract(totalExpenses);
+        return new BalanceResponse(totalIncomes,totalExpenses,balance);
     }
 }
