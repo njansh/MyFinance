@@ -9,6 +9,8 @@ import com.nadson.myfinance.application.usecase.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
 public class BeanConfiguration {
 
@@ -91,5 +93,9 @@ public class BeanConfiguration {
     @Bean
     public DeleteTransactionPort deleteTransactionPort(TransactionRepositoryPort transactionRepo, AccountRepositoryPort accountRepo) {
         return new DeleteTransactionUseCase(transactionRepo, accountRepo);
+    }
+    @Bean
+    public ListAccountsByUserPort listAccountsByUserPort(AccountRepositoryPort accountRepositoryPort, UserRepositoryPort userRepository){
+        return new ListAccountsByUserUseCase(accountRepositoryPort, userRepository);
     }
 }
