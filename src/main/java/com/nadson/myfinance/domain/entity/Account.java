@@ -1,6 +1,7 @@
 package com.nadson.myfinance.domain.entity;
 
 import com.nadson.myfinance.domain.enums.AccountType;
+import com.nadson.myfinance.domain.exception.BusinessRuleException;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -25,27 +26,20 @@ public class Account {
     }
 
     public BigDecimal deposit(BigDecimal amount) {
-        if (amount == null) {
-            throw new IllegalArgumentException("Amount cannot be null");
-        }
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
-        }
+        validateAmount(amount);
         this.balance = this.balance.add(amount);
         return this.balance;
     }
 
     public BigDecimal withdraw(BigDecimal amount) {
-        if (amount == null) {
-            throw new IllegalArgumentException("Amount cannot be null");
-        }
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
-        }
+       validateAmount(amount);
         this.balance = this.balance.subtract(amount);
         return this.balance;
     }
-
+    private void validateAmount(BigDecimal amount) {
+        if (amount == null) throw new BusinessRuleException("Amount cannot be null");
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new BusinessRuleException("Amount must be greater than zero");
+    }
     public UUID getAccountId() {
         return accountID;
     }

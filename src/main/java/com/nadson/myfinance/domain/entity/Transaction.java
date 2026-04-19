@@ -1,6 +1,8 @@
 package com.nadson.myfinance.domain.entity;
 
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.exception.BusinessRuleException;
+import com.nadson.myfinance.domain.exception.InvalidTransactionValueException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,24 +43,23 @@ public class Transaction {
     }
     public void updateCategory(UUID categoryId) {
         if (categoryId == null) {
-            throw new IllegalArgumentException("Category ID cannot be null");
+            throw new BusinessRuleException("Category ID cannot be null");
         }
         this.categoryId = categoryId;
     }
     public void updateDetails(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
         if (description != null) {
             if (description.trim().isEmpty()) {
-                throw new IllegalArgumentException("Description cannot be empty");
+                throw new BusinessRuleException("Description cannot be empty");
             }
             this.description = description;
         }
 
-        if (amount != null) {
-            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Amount must be greater than zero");
-            }
-            this.amount = amount;
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransactionValueException("Transaction amount must be greater than zero");
         }
+        this.amount = amount;
+
 
         if (date != null) {
             this.date = date;
@@ -111,22 +112,22 @@ public class Transaction {
 
     private void validate(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId) {
         if (description == null || description.trim().isEmpty()) {
-            throw new IllegalArgumentException("Description cannot be null or empty");
+            throw new BusinessRuleException("Description cannot be null or empty");
         }
         if (amount == null) {
-            throw new IllegalArgumentException("Amount cannot be null");
+            throw new BusinessRuleException("Amount cannot be null");
         }
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
+            throw new BusinessRuleException("Amount must be greater than zero");
         }
         if (date == null) {
-            throw new IllegalArgumentException("Date cannot be null");
+            throw new BusinessRuleException("Date cannot be null");
         }
         if (type == null) {
-            throw new IllegalArgumentException("Transaction type cannot be null");
+            throw new BusinessRuleException("Transaction type cannot be null");
         }
         if (accountId == null) {
-            throw new IllegalArgumentException("Account cannot be null");
+            throw new BusinessRuleException("Account cannot be null");
         }
     }
 }
