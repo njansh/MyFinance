@@ -4,7 +4,10 @@ import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringTransactionRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,16 +35,31 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     }
 
     @Override
-    public List<Transaction> findByAccountId(UUID accountId) {
-        return repository.findByAccountId(accountId).stream().map(TransactionJpaEntity::toDomain).toList();
+    public Page<Transaction> findByAccountId(UUID accountId, Pageable pageable) {
+        return repository.findByAccountId(accountId, pageable)
+                .map(TransactionJpaEntity::toDomain); // O Page já tem o map!
     }
 
     @Override
-    public List<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
-        return repository.findByAccountIdAndDateBetween(accountId, startDate, endDate)
+    public Page<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return repository.findByAccountIdAndDateBetween(accountId, startDate, endDate, pageable)
+                .map(TransactionJpaEntity::toDomain);
+    }
+    @Override
+    public List<Transaction> findAllByAccountId(UUID accountId) {
+        return repository.findAllByAccountId(accountId)
                 .stream()
                 .map(TransactionJpaEntity::toDomain)
-                .toList();    }
+                .toList();
+    }
+
+    @Override
+    public List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
+        return repository.findAllByAccountIdAndDateBetween(accountId, startDate, endDate)
+                .stream()
+                .map(TransactionJpaEntity::toDomain)
+                .toList();
+    }
 
     @Override
     public void deleteById(UUID transactionId) {
