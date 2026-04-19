@@ -9,13 +9,19 @@ import com.nadson.myfinance.domain.enums.AccountType;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreateAccountRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.List;
 import java.util.UUID;
+
+
 
 @RestController
 @RequestMapping("/accounts")
@@ -46,10 +52,12 @@ public class AccountController {
 
         return ResponseEntity.status(201).body(AccountResponse.fromDomain(account));
     }@GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionResponse>> listTransactions(
+    public ResponseEntity<Page<TransactionResponse>> listTransactions(
             @PathVariable UUID id,
             @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Integer year) {
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String desc,
+            @PageableDefault(size = 10, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
 
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
@@ -60,12 +68,9 @@ public class AccountController {
             endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
         }
 
-        List<Transaction> transactions = listTransactionsPort.execute(id, startDate, endDate);
+        Page<Transaction> transactionsPage = listTransactionsPort.execute(id, startDate, endDate,desc, pageable);
 
-        List<TransactionResponse> response = transactions.stream()
-                .map(TransactionResponse::fromDomain)
-                .toList();
+        Page<TransactionResponse> response = transactionsPage.map(TransactionResponse::fromDomain);
 
         return ResponseEntity.ok(response);
-    }
-}
+    }}
