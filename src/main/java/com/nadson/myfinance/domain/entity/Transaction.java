@@ -29,7 +29,7 @@ public class Transaction {
         }
         this.transferID = transferID;
 
-}        this.description = description;
+      this.description = description;
         this.amount = amount;
         this.date = date;
         this.type = type;
