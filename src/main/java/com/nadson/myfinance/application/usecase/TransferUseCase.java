@@ -42,9 +42,9 @@ public class TransferUseCase implements TransferPort {
         }
         senderAccount.withdraw(amount);
         receiverAccount.deposit(amount);
-
-        Transaction debit = new Transaction(senderAccountId, amount, TransactionType.EXPENSE, "Transfer to " + receiverAccount.getName());
-        Transaction credit = new Transaction(receiverAccountId, amount, TransactionType.INCOME, "Transfer from " + senderAccount.getName());
+UUID transferID = UUID.randomUUID();
+        Transaction debit = new Transaction(senderAccountId, amount, TransactionType.EXPENSE, "Transfer to " + receiverAccount.getName(), transferID);
+        Transaction credit = new Transaction(receiverAccountId, amount, TransactionType.INCOME, "Transfer from " + senderAccount.getName(), transferID);
 
         accountRepositoryPort.save(senderAccount);
         accountRepositoryPort.save(receiverAccount);

@@ -9,6 +9,9 @@ import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import com.nadson.myfinance.domain.exception.TransactionNotFoundException;
 
+import jakarta.transaction.Transactional;
+
+import java.util.List;
 import java.util.UUID;
 
 public class DeleteTransactionUseCase implements DeleteTransactionPort {
@@ -21,23 +24,36 @@ public class DeleteTransactionUseCase implements DeleteTransactionPort {
     }
 
     @Override
+    @Transactional
     public void execute(UUID transactionID) {
       Transaction transaction=  transactionRepository.findById(transactionID);
       if(transaction==null){
           throw new TransactionNotFoundException(transactionID);
       }
-        Account account = accountRepository.findById(transaction.getAccountId());
-      if(account==null){
-    throw new AccountNotFoundException(transaction.getAccountId());
-      }
-
-        if (transaction.getType() == TransactionType.EXPENSE) {
-            account.deposit(transaction.getAmount());
-        } else {
-            account.withdraw(transaction.getAmount());
-        }
-        accountRepository.save(account);
-        transactionRepository.deleteById(transaction.getTransactionId());
-
+      
+    if(transaction.isTransfer()) {
+   List<Transaction> transferTransactions = transactionRepository.findAllByTransferID(transaction.getTransferID());
+    for (Transaction t : transferTransactions) {
+         reverseTransaction(t);
+         transactionRepository.deleteById(t.getTransactionId());
+   }
+    } else {
+        reverseTransaction(transaction);
+        transactionRepository.deleteById(transactionID);
     }
+
+                
+    }
+    private void reverseTransaction(Transaction t) {
+    Account acc = accountRepository.findById(t.getAccountId());
+    if (acc == null) {
+        throw new AccountNotFoundException(t.getAccountId());
+    }  
+    if (t.getType() == TransactionType.EXPENSE) {
+        acc.deposit(t.getAmount()); // Devolve o gasto
+    } else {
+        acc.withdraw(t.getAmount()); // Remove o ganho
+    }
+    accountRepository.save(acc);
+}
 }

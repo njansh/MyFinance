@@ -15,6 +15,9 @@ public class TransactionJpaEntity {
     @Id
     private UUID transactionId;
 
+    @Column
+    private UUID transferID;
+
     @Column(nullable = false)
     private String description;
 
@@ -42,6 +45,7 @@ public class TransactionJpaEntity {
 
     public TransactionJpaEntity(Transaction transaction) {
         this.transactionId = transaction.getTransactionId();
+        this.transferID = transaction.getTransferID();
         this.description = transaction.getDescription();
         this.amount = transaction.getAmount();
         this.date = transaction.getDate();
@@ -60,7 +64,8 @@ public class TransactionJpaEntity {
                 this.type,
                 this.accountId,
                 this.categoryId,
-                this.isTransfer
+                this.isTransfer,
+                this.transferID
         );
     }
 
@@ -127,4 +132,11 @@ public class TransactionJpaEntity {
     public void setTransfer(boolean transfer) {
         isTransfer = transfer;
     }
+    public UUID getTransferID() {
+        return transferID;
+    }
+    public void setTransferID(UUID transferID) {
+        this.transferID = transferID;
+    }
+
 }
