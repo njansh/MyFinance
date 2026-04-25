@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:15
+    container_name: myfinance-db
+    restart: always
+    environment:
+      POSTGRES_USER: nadson
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: myfinance
+      POSTGRES_HOST_AUTH_METHOD: trust # Permite conexões da rede interna do Docker
+    ports:
+      - "5432:5432"
+    # Comente o volume temporariamente para forçar um banco "limpo"
+    # volumes:
+    #   - ./postgres-data:/var/lib/postgresql/data
