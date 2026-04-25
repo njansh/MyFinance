@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public class Transaction {
     private UUID transactionId;
+    private UUID transferID;
     private String description;
     private BigDecimal amount;
     private LocalDateTime date;
@@ -18,10 +19,17 @@ public class Transaction {
     private UUID categoryId;
     private boolean isTransfer;
 
-    public Transaction(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId, boolean isTransfer) {
+    public Transaction(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId, boolean isTransfer, UUID transferID) {
         validate(description, amount, date, type, accountId);
         this.transactionId = transactionId;
-        this.description = description;
+        if(transferID == null) {
+            this.transferID = null;
+        } else {
+            this.transferID = transferID;
+        }
+        this.transferID = transferID;
+
+}        this.description = description;
         this.amount = amount;
         this.date = date;
         this.type = type;
@@ -29,7 +37,7 @@ public class Transaction {
         this.categoryId = categoryId;
         this.isTransfer = isTransfer;
     }
-    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description) {
+    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID) {
         LocalDateTime now = LocalDateTime.now();
         validate(description, amount,now, type, accountId);
         this.transactionId = UUID.randomUUID();
@@ -40,6 +48,7 @@ public class Transaction {
         this.description = description;
         this.isTransfer = true;
         this.categoryId = null;
+        this.transferID = transferID;
     }
     public void updateCategory(UUID categoryId) {
         if (categoryId == null) {
@@ -109,6 +118,10 @@ public class Transaction {
     public boolean isTransfer() {
         return isTransfer;
     }
+    public UUID getTransferID() {
+        return transferID;
+    }
+
 
     private void validate(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId) {
         if (description == null || description.trim().isEmpty()) {
@@ -130,4 +143,5 @@ public class Transaction {
             throw new BusinessRuleException("Account cannot be null");
         }
     }
+   
 }
