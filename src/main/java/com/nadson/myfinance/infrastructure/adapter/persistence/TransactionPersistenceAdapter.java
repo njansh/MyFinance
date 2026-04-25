@@ -60,6 +60,13 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
                 .map(TransactionJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+public List<Transaction> findAllByTransferID(UUID transferID) {
+    return repository.findByTransferID(transferID)
+            .stream()
+            .map(TransactionJpaEntity::toDomain)
+            .toList();
+}
 
     @Override
     public void deleteById(UUID transactionId) {

@@ -19,8 +19,10 @@ public class Transaction {
     private UUID categoryId;
     private boolean isTransfer;
 
-    public Transaction(UUID transactionId, String description, BigDecimal amount,
+[    public Transaction(UUID transactionId, String description, BigDecimal amount,
                        LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId, boolean isTransfer, UUID transferID) {
+
+    public Transaction(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId, boolean isTransfer, UUID transferID) {
         validate(description, amount, date, type, accountId);
         this.transactionId = transactionId;
         if(transferID == null) {
@@ -30,6 +32,7 @@ public class Transaction {
         }
         this.transferID = transferID;
         this.description = description;
+      this.description = description;
         this.amount = amount;
         this.date = date;
         this.type = type;
@@ -142,6 +145,3 @@ public class Transaction {
         if (accountId == null) {
             throw new BusinessRuleException("Account cannot be null");
         }
-    }    }
-   
-

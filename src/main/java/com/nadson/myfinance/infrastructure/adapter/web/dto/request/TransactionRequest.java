@@ -14,5 +14,6 @@ public record TransactionRequest (
          TransactionType type,
          UUID accountId,
          UUID categoryId,
+         UUID transferID,
          boolean isTransfer){
 }

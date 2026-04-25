@@ -10,21 +10,25 @@ import java.util.UUID;
 public record TransactionResponse(
         UUID id,
         String description,
-                                  BigDecimal amount,
-                                  TransactionType type,
-                                  UUID accountId,
-                                  UUID categoryId,
+        BigDecimal amount,
+        TransactionType type,
+        UUID accountId,
+        UUID categoryId,
         LocalDateTime date,
-                                  boolean isTransfer) {
-    public static TransactionResponse fromDomain(Transaction t){
+        boolean isTransfer,
+        UUID transferID
+    ) {
+    public static TransactionResponse fromDomain(Transaction t) {
         return new TransactionResponse(
-                        t.getTransactionId(),
-                        t.getDescription(),
-                        t.getAmount(),
-                        t.getType(),
-                        t.getAccountId(),
-                        t.getCategoryId(),
+                t.getTransactionId(),
+                t.getDescription(),
+                t.getAmount(),
+                t.getType(),
+                t.getAccountId(),
+                t.getCategoryId(),
                 t.getDate(),
-                t.isTransfer());
+                t.isTransfer(),
+                t.getTransferID()
+            );
     }
 }

@@ -14,4 +14,5 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     Page<TransactionJpaEntity> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<TransactionJpaEntity> findAllByAccountId(UUID accountId);
     List<TransactionJpaEntity> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
+    List<TransactionJpaEntity> findByTransferID(UUID transferID);
 }
