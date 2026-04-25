@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -67,6 +68,10 @@ public List<Transaction> findAllByTransferID(UUID transferID) {
             .map(TransactionJpaEntity::toDomain)
             .toList();
 }
+    @Override
+    public boolean exists(UUID accountId, LocalDateTime date, BigDecimal amount) {
+        return repository.existsByAccountIdAndDateAndAmount(accountId, date, amount);
+    }
 
     @Override
     public void deleteById(UUID transactionId) {

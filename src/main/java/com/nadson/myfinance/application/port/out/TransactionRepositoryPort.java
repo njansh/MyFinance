@@ -16,6 +16,7 @@ public interface TransactionRepositoryPort {
     Page<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Transaction> findAllByAccountId(UUID accountId);
     List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
+    boolean exists(UUID accountId, LocalDateTime date, java.math.BigDecimal amount);
     void deleteById(UUID transactionId);
 }
 
