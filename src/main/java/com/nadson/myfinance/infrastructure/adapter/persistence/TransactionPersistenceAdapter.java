@@ -125,12 +125,19 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         return mapResults(results);
     }
     @Override
-    public Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount) {
-        return repository.findUnmatchedTransactions(accountId, date, amount)
-                .stream()
-                .findFirst()
-                .map(TransactionJpaEntity::toDomain)
-                .orElse(null);
+    public Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount, com.nadson.myfinance.domain.enums.TransactionType type, UUID destinationId) {
+        List<TransactionJpaEntity> unmatched = repository.findUnmatchedTransactions(accountId, date, amount, type);
+
+        for (TransactionJpaEntity entity : unmatched) {
+            List<TransactionJpaEntity> counterparts = repository.findByTransferID(entity.getTransferID());
+            for (TransactionJpaEntity counterpart : counterparts) {
+                if (!counterpart.getTransactionId().equals(entity.getTransactionId()) &&
+                        counterpart.getAccountId().equals(destinationId)) {
+                    return entity.toDomain(); // Só retorna se o destino for exatamente a conta esperada
+                }
+            }
+        }
+        return null;
     }
 
     private java.util.Map<String, BigDecimal> mapResults(List<Object> results) {

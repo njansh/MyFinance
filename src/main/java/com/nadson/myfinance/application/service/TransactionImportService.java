@@ -114,6 +114,9 @@ public class TransactionImportService {
         boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
+        // O TIPO É DECLARADO AQUI EM CIMA AGORA (Passo 10)
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
+
         if (isManualTransfer || isInvestment) {
             UUID destinationId;
             if (isInvestment) {
@@ -122,8 +125,9 @@ public class TransactionImportService {
                 destinationId = (currentAccountId.equals(interId))? mpId : interId;
             }
 
-            // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS (Passo 8)
-            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount);
+            // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS COM CASAMENTO ESTRITO (Passo 8 + Passo 10)
+            // Agora passamos o 'type' e o 'destinationId' para garantir que a transação certa seja atualizada
+            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
             if (unmatched!= null) {
                 Transaction updatedUnmatched = new Transaction(
@@ -148,8 +152,6 @@ public class TransactionImportService {
             }
             return;
         }
-
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
