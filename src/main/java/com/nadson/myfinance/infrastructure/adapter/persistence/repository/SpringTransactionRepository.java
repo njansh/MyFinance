@@ -57,7 +57,16 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     );
     @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type GROUP BY c.name")
     List<Object> sumAmountByCategoryAndType(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type);
-
+    @Query("SELECT t FROM TransactionJpaEntity t WHERE " +
+            "t.accountId = :accountId AND " +
+            "t.date = :date AND " +
+            "t.amount = :amount AND " +
+            "t.accountBalanceAfter IS NULL")
+    List<TransactionJpaEntity> findUnmatchedTransactions(
+            @Param("accountId") java.util.UUID accountId,
+            @Param("date") java.time.LocalDateTime date,
+            @Param("amount") java.math.BigDecimal amount
+    );
     @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate GROUP BY c.name")
     List<Object> sumAmountByCategoryAndTypeAndDateBetween(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
     List<TransactionJpaEntity> findByTransferID(UUID transferID);

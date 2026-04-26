@@ -109,13 +109,23 @@ public class TransactionImportService {
                 destinationId = (currentAccountId.equals(interId))? mpId : interId;
             }
 
-            boolean otherSideExists = false;
+            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount);
 
-            if (!isInvestment) {
-                otherSideExists = transactionRepositoryPort.existsTransferCounterpart(destinationId, date, absAmount);
-            }
-
-            if (!otherSideExists) {
+            if (unmatched!= null) {
+                Transaction updatedUnmatched = new Transaction(
+                        unmatched.getTransactionId(),
+                        description,
+                        unmatched.getAmount(),
+                        unmatched.getDate(),
+                        unmatched.getType(),
+                        unmatched.getAccountId(),
+                        unmatched.getCategoryId(),
+                        unmatched.isTransfer(),
+                        unmatched.getTransferID(),
+                        balanceAfter
+                );
+                transactionRepositoryPort.save(updatedUnmatched);
+            } else {
                 if (amount.compareTo(BigDecimal.ZERO) < 0) {
                     transferPort.execute(currentAccountId, destinationId, absAmount, date, description, currentAccountId, balanceAfter);
                 } else {

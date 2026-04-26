@@ -124,6 +124,14 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         List<Object> results = repository.sumAmountByCategoryAndTypeAndDateBetween(accountId, type, startDate, endDate);
         return mapResults(results);
     }
+    @Override
+    public Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount) {
+        return repository.findUnmatchedTransactions(accountId, date, amount)
+                .stream()
+                .findFirst()
+                .map(TransactionJpaEntity::toDomain)
+                .orElse(null);
+    }
 
     private java.util.Map<String, BigDecimal> mapResults(List<Object> results) {
         java.util.Map<String, BigDecimal> map = new java.util.HashMap<>();

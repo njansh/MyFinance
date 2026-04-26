@@ -40,6 +40,8 @@ public interface TransactionRepositoryPort {
     java.util.Map<String, BigDecimal> getSumByCategoryAndType(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type);
 
     java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate);
+    Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount);
+
 }
 
 
