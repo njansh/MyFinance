@@ -63,7 +63,7 @@ public class TransactionImportService {
                     ? DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     : DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            UUID currentAccountId = bankType.equalsIgnoreCase("MP")? mpId : interId;
+            UUID currentAccountId = bankType.equalsIgnoreCase("MP") ? mpId : interId;
 
             // Mapa para contar as ocorrências de transações idênticas no arquivo atual
             java.util.Map<String, Integer> currentFileCount = new java.util.HashMap<>();
@@ -78,7 +78,7 @@ public class TransactionImportService {
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 String dateStr = record.get(0);
-                String description = bankType.equalsIgnoreCase("MP")? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();
+                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();
                 String amountStr = record.get(3);
                 String balanceAfterStr = record.get(4);
 
@@ -100,7 +100,7 @@ public class TransactionImportService {
         String descLower = description.toLowerCase();
 
         // 1. FILTRO INTELIGENTE DE CONTAGEM (Passo 9)
-        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter!= null? balanceAfter.toString() : "null");
+        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter != null ? balanceAfter.toString() : "null");
         int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
         currentFileCount.put(rowKey, localCount);
 
@@ -111,25 +111,29 @@ public class TransactionImportService {
             return; // Se a contagem no arquivo atual for menor ou igual à do banco, ignora (já foi importado)
         }
 
-        boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos");
+        boolean isManualTransfer = descLower.contains("nadson") &&
+                descLower.contains("santos") &&
+                !descLower.contains("fatura") &&
+                !descLower.contains("cartão") &&
+                !descLower.contains("cartao");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
         // O TIPO É DECLARADO AQUI EM CIMA AGORA (Passo 10)
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
             UUID destinationId;
             if (isInvestment) {
                 destinationId = investmentId;
             } else {
-                destinationId = (currentAccountId.equals(interId))? mpId : interId;
+                destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
             }
 
             // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS COM CASAMENTO ESTRITO (Passo 8 + Passo 10)
             // Agora passamos o 'type' e o 'destinationId' para garantir que a transação certa seja atualizada
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
-            if (unmatched!= null) {
+            if (unmatched != null) {
                 Transaction updatedUnmatched = new Transaction(
                         unmatched.getTransactionId(),
                         description,
