@@ -17,7 +17,7 @@ private final TransferPort transferPort;
 	}
     @PostMapping
     public ResponseEntity<Void> execute(@RequestBody TransferRequest request) {
-        transferPort.execute(request.fromId(), request.toId(), request.amount());
+        transferPort.execute(request.fromId(), request.toId(), request.amount(),request.date());
         return ResponseEntity.noContent().build();
     }
 

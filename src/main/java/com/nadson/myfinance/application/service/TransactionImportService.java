@@ -2,7 +2,7 @@ package com.nadson.myfinance.application.service;
 
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
 import com.nadson.myfinance.application.port.in.TransferPort;
-import com.nadson.myfinance.application.port.in.ListAccountsByUserPort; // Importe sua porta aqui
+import com.nadson.myfinance.application.port.in.ListAccountsByUserPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
@@ -28,7 +28,7 @@ public class TransactionImportService {
     private final TransferPort transferPort;
     private final CreateTransactionPort createTransactionPort;
     private final TransactionRepositoryPort transactionRepositoryPort;
-    private final ListAccountsByUserPort listAccountsByUserPort; // Nova porta injetada
+    private final ListAccountsByUserPort listAccountsByUserPort;
 
     public TransactionImportService(TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
@@ -40,10 +40,7 @@ public class TransactionImportService {
         this.listAccountsByUserPort = listAccountsByUserPort;
     }
 
-    // Agora recebemos o userId para buscar as contas dele
     public void importCsv(MultipartFile file, String bankType, UUID userId) throws Exception {
-
-        // 1. BUSCA AS CONTAS DO USUÁRIO DINAMICAMENTE
         List<Account> userAccounts = listAccountsByUserPort.execute(userId);
 
         UUID interId = findAccountIdByName(userAccounts, "Inter");
@@ -59,14 +56,15 @@ public class TransactionImportService {
              CSVParser csvParser = new CSVParser(reader, format)) {
 
             boolean dataStarted = false;
-            DateTimeFormatter formatter = bankType.equals("MP")
+            DateTimeFormatter formatter = bankType.equalsIgnoreCase("MP")
                     ? DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     : DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            UUID currentAccountId = bankType.equals("MP") ? mpId : interId;
+            UUID currentAccountId = bankType.equalsIgnoreCase("MP") ? mpId : interId;
 
             for (CSVRecord record : csvParser) {
                 String firstCell = record.get(0);
+
                 if (firstCell.contains("RELEASE_DATE") || firstCell.contains("Data Lançamento")) {
                     dataStarted = true;
                     continue;
@@ -74,55 +72,49 @@ public class TransactionImportService {
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 String dateStr = record.get(0);
-                String description = bankType.equals("MP") ? record.get(1) : record.get(1) + " " + record.get(2);
+                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() : (record.get(1) + " " + record.get(2)).trim();
                 String amountStr = record.get(3);
+                String balanceAfterStr = record.get(4);
 
-                BigDecimal amount = new BigDecimal(amountStr.replace(".", "").replace(",", "."));
-                LocalDateTime dateTime = LocalDate.parse(dateStr, formatter).atStartOfDay();
+                BigDecimal amount = parseCurrency(amountStr);
+                BigDecimal balanceAfter = parseCurrency(balanceAfterStr);
+                LocalDateTime dateTime = LocalDate.parse(dateStr.trim(), formatter).atStartOfDay();
 
-                // Passamos os IDs dinâmicos para o processamento
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType);
+                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter);
             }
         }
     }
 
-    // Método auxiliar para filtrar a conta pelo nome
-    private UUID findAccountIdByName(List<Account> accounts, String name) {
-        return accounts.stream()
-                .filter(acc -> acc.getName().equalsIgnoreCase(name))
-                .map(Account::getAccountId)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Account not found with name: " + name));
-    }
-
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
-                            String description, BigDecimal amount, LocalDateTime date, String bankType) {
+                            String description, BigDecimal amount, LocalDateTime date, String bankType,
+                            BigDecimal balanceAfter) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
-        if (transactionRepositoryPort.exists(currentAccountId, date, absAmount)) {
+        if (transactionRepositoryPort.exists(currentAccountId, date, absAmount, description, balanceAfter)) {
             return;
         }
 
-        if (descLower.contains("nadson jhony alves nascimento santos")) {
-            if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                UUID destinationId = bankType.equals("MP") ? interId : mpId;
-                transferPort.execute(currentAccountId, destinationId, absAmount);
+        boolean isManualTransfer = descLower.contains("nadson jhony alves nascimento santos");
+        boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
+
+        if (isManualTransfer || isInvestment) {
+            UUID destinationId;
+            if (isInvestment) {
+                destinationId = investmentId;
+            } else {
+                destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
             }
-            return;
-        }
 
-        if (descLower.contains("reserva") || descLower.contains("reservado")) {
-            if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                transferPort.execute(currentAccountId, investmentId, absAmount);
-            }
-            return;
-        }
+            boolean otherSideExists = transactionRepositoryPort.existsTransferCounterpart(destinationId, date, absAmount);
 
-        if (descLower.contains("retirado")) {
-            if (amount.compareTo(BigDecimal.ZERO) > 0) {
-                transferPort.execute(investmentId, currentAccountId, absAmount);
+            if (!otherSideExists) {
+                if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                    transferPort.execute(currentAccountId, destinationId, absAmount, date);
+                } else {
+                    transferPort.execute(destinationId, currentAccountId, absAmount, date);
+                }
             }
             return;
         }
@@ -138,9 +130,24 @@ public class TransactionImportService {
                 currentAccountId,
                 null,
                 false,
-                null
+                null,
+                balanceAfter
         );
 
         createTransactionPort.execute(transaction);
+    }
+
+    private BigDecimal parseCurrency(String value) {
+        return new BigDecimal(value.trim()
+                .replace(".", "")
+                .replace(",", "."));
+    }
+
+    private UUID findAccountIdByName(List<Account> accounts, String name) {
+        return accounts.stream()
+                .filter(acc -> acc.getName().equalsIgnoreCase(name))
+                .map(Account::getAccountId)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Account not found with name: " + name));
     }
 }

@@ -48,7 +48,7 @@ public class TransactionController {
                 request.type(),
                 request.accountId(),
                 request.categoryId(),
-                request.isTransfer(),request.transferID()
+                request.isTransfer(),request.transferID(),request.accountBalanceAfter()
         );
         Transaction createdTransaction = createTransactionPort.execute(transaction);
         return ResponseEntity.status(201).body(TransactionResponse.fromDomain(createdTransaction));

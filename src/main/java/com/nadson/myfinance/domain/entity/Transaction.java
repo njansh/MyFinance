@@ -13,6 +13,7 @@ public class Transaction {
     private UUID transferID;
     private String description;
     private BigDecimal amount;
+    private BigDecimal accountBalanceAfter;
     private LocalDateTime date;
     private TransactionType type;
     private UUID accountId;
@@ -21,7 +22,8 @@ public class Transaction {
 
     public Transaction(UUID transactionId, String description, BigDecimal amount,
                        LocalDateTime date, TransactionType type, UUID accountId,
-                       UUID categoryId, boolean isTransfer, UUID transferID) {
+                       UUID categoryId, boolean isTransfer, UUID transferID,
+                       BigDecimal accountBalanceAfter) {
         validate(description, amount, date, type, accountId);
         this.transactionId = transactionId;
         this.description = description;
@@ -32,9 +34,10 @@ public class Transaction {
         this.categoryId = categoryId;
         this.isTransfer = isTransfer;
         this.transferID = transferID;
+        this.accountBalanceAfter = accountBalanceAfter;
     }
 
-    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID) {
+    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID, LocalDateTime date) {
         LocalDateTime now = LocalDateTime.now();
         validate(description, amount, now, type, accountId);
         this.transactionId = UUID.randomUUID();
@@ -86,6 +89,7 @@ public class Transaction {
     public UUID getCategoryId() { return categoryId; }
     public boolean isTransfer() { return isTransfer; }
     public UUID getTransferID() { return transferID; }
+    public BigDecimal getAccountBalanceAfter() { return accountBalanceAfter; }
 
     private void validate(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId) {
         if (description == null || description.trim().isEmpty()) {

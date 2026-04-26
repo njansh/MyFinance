@@ -15,5 +15,8 @@ public record TransactionRequest (
          UUID accountId,
          UUID categoryId,
          UUID transferID,
-         boolean isTransfer){
+         boolean isTransfer
+         ,BigDecimal accountBalanceAfter
+
+){
 }

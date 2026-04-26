@@ -18,6 +18,9 @@ public class TransactionJpaEntity {
     @Column
     private UUID transferID;
 
+    @Column(name = "account_balance_after", nullable = true)
+    private BigDecimal accountBalanceAfter;
+
     @Column(nullable = false)
     private String description;
 
@@ -46,6 +49,7 @@ public class TransactionJpaEntity {
     public TransactionJpaEntity(Transaction transaction) {
         this.transactionId = transaction.getTransactionId();
         this.transferID = transaction.getTransferID();
+        this.accountBalanceAfter = transaction.getAccountBalanceAfter();
         this.description = transaction.getDescription();
         this.amount = transaction.getAmount();
         this.date = transaction.getDate();
@@ -65,7 +69,8 @@ public class TransactionJpaEntity {
                 this.accountId,
                 this.categoryId,
                 this.isTransfer,
-                this.transferID
+                this.transferID,
+                this.accountBalanceAfter
         );
     }
 
@@ -137,6 +142,14 @@ public class TransactionJpaEntity {
     }
     public void setTransferID(UUID transferID) {
         this.transferID = transferID;
+    }
+
+    public BigDecimal getAccountBalanceAfter() {
+        return accountBalanceAfter;
+    }
+
+    public void setAccountBalanceAfter(BigDecimal accountBalanceAfter) {
+        this.accountBalanceAfter = accountBalanceAfter;
     }
 
 }

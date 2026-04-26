@@ -1,6 +1,7 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.service.TransactionImportService;
+import org.springframework.http.MediaType; // Importante!
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,9 +18,9 @@ public class ImportController {
         this.importService = importService;
     }
 
-    @PostMapping("/mercado-pago")
+    @PostMapping(value = "/mercado-pago", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> importMercadoPago(
-            @RequestParam("file") MultipartFile file,
+            @RequestPart("file") MultipartFile file, // Mudamos de @RequestParam para @RequestPart
             @RequestHeader("X-User-Id") UUID userId) {
         try {
             importService.importCsv(file, "MP", userId);
@@ -29,9 +30,9 @@ public class ImportController {
         }
     }
 
-    @PostMapping("/inter")
+    @PostMapping(value = "/inter", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> importInter(
-            @RequestParam("file") MultipartFile file,
+            @RequestPart("file") MultipartFile file, // Mudamos de @RequestParam para @RequestPart
             @RequestHeader("X-User-Id") UUID userId) {
         try {
             importService.importCsv(file, "INTER", userId);
