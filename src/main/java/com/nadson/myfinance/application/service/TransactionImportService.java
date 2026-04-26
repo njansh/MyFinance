@@ -13,6 +13,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -96,7 +99,7 @@ public class TransactionImportService {
             return;
         }
 
-        boolean isManualTransfer = descLower.contains("nadson jhony alves nascimento santos");
+        boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
         if (isManualTransfer || isInvestment) {
@@ -138,16 +141,25 @@ public class TransactionImportService {
     }
 
     private BigDecimal parseCurrency(String value) {
-        return new BigDecimal(value.trim()
-                .replace(".", "")
-                .replace(",", "."));
+        try {
+            String cleanValue = value.trim();
+            if (cleanValue.matches(".*\\d,\\d{3}\\.\\d{2}$")) {
+                NumberFormat format = NumberFormat.getInstance(Locale.US);
+                return new BigDecimal(format.parse(cleanValue).toString());
+            } else {
+                NumberFormat format = NumberFormat.getInstance(new Locale("pt", "BR"));
+                return new BigDecimal(format.parse(cleanValue).toString());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao processar valor financeiro do CSV: " + value, e);
+        }
     }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
         return accounts.stream()
-                .filter(acc -> acc.getName().equalsIgnoreCase(name))
+                .filter(acc -> acc.getName().toLowerCase().contains(name.toLowerCase()))
                 .map(Account::getAccountId)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Account not found with name: " + name));
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada contendo o termo: " + name));
     }
 }
