@@ -11,6 +11,7 @@
     import com.nadson.myfinance.domain.exception.AccountNotFoundException;
     import com.nadson.myfinance.domain.exception.CategoryNotFoundException;
     import com.nadson.myfinance.domain.exception.TransactionNotFoundException;
+    import jakarta.transaction.Transactional;
 
     import java.math.BigDecimal;
     import java.time.LocalDateTime;
@@ -28,6 +29,7 @@
         }
 
         @Override
+        @Transactional
         public void execute(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
             Transaction transaction = this.transactionRepositoryPort.findById(transactionId);
             if (transaction == null) throw new TransactionNotFoundException(transactionId);
