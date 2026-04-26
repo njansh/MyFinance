@@ -1,14 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.handler;
 
-public class ErrorResponse {
-    private int status;
-    private String message;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDateTime;
 
-    public ErrorResponse(int status, String message) {
-        this.status = status;
-        this.message = message;
-    }
-
-    public int getStatus() { return status; }
-    public String getMessage() { return message; }
-}
+public record ErrorResponse(int status, String message, LocalDateTime timestamp) {}
