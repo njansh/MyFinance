@@ -64,8 +64,8 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     }
 
     @Override
-    public boolean exists(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter) {
-        return repository.existsWithAllFilters(
+    public long count(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter) {
+        return repository.countWithAllFilters(
                 accountId, date, amount, description, accountBalanceAfter);
     }
 

@@ -63,7 +63,10 @@ public class TransactionImportService {
                     ? DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     : DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            UUID currentAccountId = bankType.equalsIgnoreCase("MP") ? mpId : interId;
+            UUID currentAccountId = bankType.equalsIgnoreCase("MP")? mpId : interId;
+
+            // Mapa para contar as ocorrências de transações idênticas no arquivo atual
+            java.util.Map<String, Integer> currentFileCount = new java.util.HashMap<>();
 
             for (CSVRecord record : csvParser) {
                 String firstCell = record.get(0);
@@ -75,27 +78,37 @@ public class TransactionImportService {
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 String dateStr = record.get(0);
-                String description = bankType.equalsIgnoreCase("MP")? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();                String amountStr = record.get(3);
+                String description = bankType.equalsIgnoreCase("MP")? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();
+                String amountStr = record.get(3);
                 String balanceAfterStr = record.get(4);
 
                 BigDecimal amount = parseCurrency(amountStr);
                 BigDecimal balanceAfter = parseCurrency(balanceAfterStr);
                 LocalDateTime dateTime = LocalDate.parse(dateStr.trim(), formatter).atStartOfDay();
 
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter);
+                // Passamos o mapa de contagem para o processRow
+                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter, currentFileCount);
             }
         }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
                             String description, BigDecimal amount, LocalDateTime date, String bankType,
-                            BigDecimal balanceAfter) {
+                            BigDecimal balanceAfter, java.util.Map<String, Integer> currentFileCount) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
-        if (transactionRepositoryPort.exists(currentAccountId, date, absAmount, description, balanceAfter)) {
-            return;
+        // 1. FILTRO INTELIGENTE DE CONTAGEM (Passo 9)
+        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter!= null? balanceAfter.toString() : "null");
+        int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
+        currentFileCount.put(rowKey, localCount);
+
+        // Busca no banco de dados quantas vezes essa mesma transação já foi salva
+        long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
+
+        if (localCount <= dbCount) {
+            return; // Se a contagem no arquivo atual for menor ou igual à do banco, ignora (já foi importado)
         }
 
         boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos");
@@ -109,6 +122,7 @@ public class TransactionImportService {
                 destinationId = (currentAccountId.equals(interId))? mpId : interId;
             }
 
+            // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS (Passo 8)
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount);
 
             if (unmatched!= null) {
@@ -135,7 +149,7 @@ public class TransactionImportService {
             return;
         }
 
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),

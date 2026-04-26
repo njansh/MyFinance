@@ -25,8 +25,7 @@ public interface TransactionRepositoryPort {
 
     List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
 
-    boolean exists(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter);
-
+    long count(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter);
     void deleteById(UUID transactionId);
 
     List<Transaction> findPossibleDuplicates(UUID accountId, LocalDateTime date, BigDecimal amount);

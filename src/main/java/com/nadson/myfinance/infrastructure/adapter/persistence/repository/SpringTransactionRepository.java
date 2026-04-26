@@ -22,18 +22,18 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
 
     List<TransactionJpaEntity> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT COUNT(t) > 0 FROM TransactionJpaEntity t WHERE " +
+    @Query("SELECT COUNT(t) FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
             "t.date = :date AND " +
             "t.amount = :amount AND " +
             "t.description = :description AND " +
             "t.accountBalanceAfter = :balanceAfter")
-    boolean existsWithAllFilters(
-            @Param("accountId") UUID accountId,
-            @Param("date") LocalDateTime date,
-            @Param("amount") BigDecimal amount,
+    long countWithAllFilters(
+            @Param("accountId") java.util.UUID accountId,
+            @Param("date") java.time.LocalDateTime date,
+            @Param("amount") java.math.BigDecimal amount,
             @Param("description") String description,
-            @Param("balanceAfter") BigDecimal balanceAfter
+            @Param("balanceAfter") java.math.BigDecimal balanceAfter
     );
 
      @Query("SELECT COUNT(t) > 0 FROM TransactionJpaEntity t WHERE " +
