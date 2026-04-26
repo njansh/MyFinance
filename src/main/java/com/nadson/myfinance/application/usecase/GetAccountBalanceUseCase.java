@@ -26,7 +26,6 @@ public class GetAccountBalanceUseCase implements GetAccountBalancePort {
 
     @Override
     public BalanceResponse execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate) {
-        // 1. Verifica se a conta existe e obtém os dados dela
         Account account = accountRepositoryPort.findById(accountId);
         if (account == null) {
             throw new AccountNotFoundException(accountId);
@@ -34,36 +33,23 @@ public class GetAccountBalanceUseCase implements GetAccountBalancePort {
 
         List<Transaction> transactions;
 
-        // 2. Filtra as transações por data se os parâmetros forem passados
         if (startDate != null && endDate != null) {
             transactions = transactionRepositoryPort.findAllByAccountIdAndDateBetween(accountId, startDate, endDate);
         } else {
             transactions = transactionRepositoryPort.findAllByAccountId(accountId);
         }
 
-        // 3. Calcula o total de entradas (INCOME)
         BigDecimal totalIncomes = transactions.stream()
                 .filter(t -> t.getType() == TransactionType.INCOME)
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 4. Calcula o total de saídas (EXPENSE)
         BigDecimal totalExpenses = transactions.stream()
                 .filter(t -> t.getType() == TransactionType.EXPENSE)
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 5. Cálculo do Saldo
-        // Se startDate e endDate forem nulos, o balance deve bater com o que está na conta.
-        // Se houver datas, o balance representa o saldo acumulado considerando o histórico.
-        BigDecimal balance;
-        if (startDate != null && endDate != null) {
-            // Se for um relatório por período, calculamos a variação
-            balance = totalIncomes.subtract(totalExpenses);
-        } else {
-            // Se for o saldo geral, usamos o valor atualizado que está na entidade Account
-            balance = account.getBalance();
-        }
+        BigDecimal balance = account.getBalance();
 
         return new BalanceResponse(totalIncomes, totalExpenses, balance);
     }

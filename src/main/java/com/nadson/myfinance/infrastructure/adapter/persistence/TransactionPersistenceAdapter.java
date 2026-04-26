@@ -64,8 +64,8 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     }
 
     @Override
-    public boolean exists(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter) {
-        return repository.existsWithAllFilters(
+    public long count(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter) {
+        return repository.countWithAllFilters(
                 accountId, date, amount, description, accountBalanceAfter);
     }
 
@@ -101,5 +101,57 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     @Override
     public void deleteById(UUID transactionId) {
         repository.deleteById(transactionId);
+    }
+    @Override
+    public Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable) {
+        return repository.findByAccountIdAndDescriptionContainingIgnoreCase(accountId, description, pageable)
+                .map(TransactionJpaEntity::toDomain);
+    }
+
+    @Override
+    public Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable) {
+        return repository.findByAccountIdAndDateBetweenAndDescriptionContainingIgnoreCase(accountId, startDate, endDate, description, pageable)
+                .map(TransactionJpaEntity::toDomain);
+    }
+    @Override
+    public java.util.Map<String, BigDecimal> getSumByCategoryAndType(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type) {
+        List<Object> results = repository.sumAmountByCategoryAndType(accountId, type);
+        return mapResults(results);
+    }
+
+    @Override
+    public java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object> results = repository.sumAmountByCategoryAndTypeAndDateBetween(accountId, type, startDate, endDate);
+        return mapResults(results);
+    }
+    @Override
+    public Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount, com.nadson.myfinance.domain.enums.TransactionType type, UUID destinationId) {
+        List<TransactionJpaEntity> unmatched = repository.findUnmatchedTransactions(accountId, date, amount, type);
+
+        for (TransactionJpaEntity entity : unmatched) {
+            List<TransactionJpaEntity> counterparts = repository.findByTransferID(entity.getTransferID());
+            for (TransactionJpaEntity counterpart : counterparts) {
+                if (!counterpart.getTransactionId().equals(entity.getTransactionId()) &&
+                        counterpart.getAccountId().equals(destinationId)) {
+                    return entity.toDomain(); // Só retorna se o destino for exatamente a conta esperada
+                }
+            }
+        }
+        return null;
+    }
+
+    private java.util.Map<String, BigDecimal> mapResults(List<Object> results) {
+        java.util.Map<String, BigDecimal> map = new java.util.HashMap<>();
+
+        for (Object result : results) {
+            Object[] row = (Object[]) result;
+
+            String categoryName = (row[0] != null) ? row[0].toString() : "Sem Categoria";
+
+            BigDecimal sum = (row[1] != null) ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+
+            map.put(categoryName, sum);
+        }
+        return map;
     }
 }

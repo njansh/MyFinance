@@ -5,5 +5,5 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface TransferPort {
-    void execute(UUID senderAccountId, UUID receiverAccountId, BigDecimal amount, LocalDateTime date);
+    void execute(UUID senderAccountId, UUID receiverAccountId, BigDecimal amount, LocalDateTime date, String description, UUID sourceAccountId, BigDecimal sourceBalanceAfter);
 }

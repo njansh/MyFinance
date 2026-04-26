@@ -13,6 +13,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -62,6 +65,9 @@ public class TransactionImportService {
 
             UUID currentAccountId = bankType.equalsIgnoreCase("MP") ? mpId : interId;
 
+            // Mapa para contar as ocorrências de transações idênticas no arquivo atual
+            java.util.Map<String, Integer> currentFileCount = new java.util.HashMap<>();
+
             for (CSVRecord record : csvParser) {
                 String firstCell = record.get(0);
 
@@ -72,7 +78,7 @@ public class TransactionImportService {
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 String dateStr = record.get(0);
-                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() : (record.get(1) + " " + record.get(2)).trim();
+                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();
                 String amountStr = record.get(3);
                 String balanceAfterStr = record.get(4);
 
@@ -80,24 +86,40 @@ public class TransactionImportService {
                 BigDecimal balanceAfter = parseCurrency(balanceAfterStr);
                 LocalDateTime dateTime = LocalDate.parse(dateStr.trim(), formatter).atStartOfDay();
 
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter);
+                // Passamos o mapa de contagem para o processRow
+                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter, currentFileCount);
             }
         }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
                             String description, BigDecimal amount, LocalDateTime date, String bankType,
-                            BigDecimal balanceAfter) {
+                            BigDecimal balanceAfter, java.util.Map<String, Integer> currentFileCount) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
-        if (transactionRepositoryPort.exists(currentAccountId, date, absAmount, description, balanceAfter)) {
-            return;
+        // 1. FILTRO INTELIGENTE DE CONTAGEM (Passo 9)
+        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter != null ? balanceAfter.toString() : "null");
+        int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
+        currentFileCount.put(rowKey, localCount);
+
+        // Busca no banco de dados quantas vezes essa mesma transação já foi salva
+        long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
+
+        if (localCount <= dbCount) {
+            return; // Se a contagem no arquivo atual for menor ou igual à do banco, ignora (já foi importado)
         }
 
-        boolean isManualTransfer = descLower.contains("nadson jhony alves nascimento santos");
+        boolean isManualTransfer = descLower.contains("nadson") &&
+                descLower.contains("santos") &&
+                !descLower.contains("fatura") &&
+                !descLower.contains("cartão") &&
+                !descLower.contains("cartao");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
+
+        // O TIPO É DECLARADO AQUI EM CIMA AGORA (Passo 10)
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
             UUID destinationId;
@@ -107,19 +129,33 @@ public class TransactionImportService {
                 destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
             }
 
-            boolean otherSideExists = transactionRepositoryPort.existsTransferCounterpart(destinationId, date, absAmount);
+            // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS COM CASAMENTO ESTRITO (Passo 8 + Passo 10)
+            // Agora passamos o 'type' e o 'destinationId' para garantir que a transação certa seja atualizada
+            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
-            if (!otherSideExists) {
+            if (unmatched != null) {
+                Transaction updatedUnmatched = new Transaction(
+                        unmatched.getTransactionId(),
+                        description,
+                        unmatched.getAmount(),
+                        unmatched.getDate(),
+                        unmatched.getType(),
+                        unmatched.getAccountId(),
+                        unmatched.getCategoryId(),
+                        unmatched.isTransfer(),
+                        unmatched.getTransferID(),
+                        balanceAfter
+                );
+                transactionRepositoryPort.save(updatedUnmatched);
+            } else {
                 if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                    transferPort.execute(currentAccountId, destinationId, absAmount, date);
+                    transferPort.execute(currentAccountId, destinationId, absAmount, date, description, currentAccountId, balanceAfter);
                 } else {
-                    transferPort.execute(destinationId, currentAccountId, absAmount, date);
+                    transferPort.execute(destinationId, currentAccountId, absAmount, date, description, currentAccountId, balanceAfter);
                 }
             }
             return;
         }
-
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -138,16 +174,25 @@ public class TransactionImportService {
     }
 
     private BigDecimal parseCurrency(String value) {
-        return new BigDecimal(value.trim()
-                .replace(".", "")
-                .replace(",", "."));
+        try {
+            String cleanValue = value.trim();
+            if (cleanValue.matches(".*\\d,\\d{3}\\.\\d{2}$")) {
+                NumberFormat format = NumberFormat.getInstance(Locale.US);
+                return new BigDecimal(format.parse(cleanValue).toString());
+            } else {
+                NumberFormat format = NumberFormat.getInstance(new Locale("pt", "BR"));
+                return new BigDecimal(format.parse(cleanValue).toString());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao processar valor financeiro do CSV: " + value, e);
+        }
     }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
         return accounts.stream()
-                .filter(acc -> acc.getName().equalsIgnoreCase(name))
+                .filter(acc -> acc.getName().toLowerCase().contains(name.toLowerCase()))
                 .map(Account::getAccountId)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Account not found with name: " + name));
+                .orElseThrow(() -> new RuntimeException("Conta não encontrada contendo o termo: " + name));
     }
 }

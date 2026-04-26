@@ -27,20 +27,16 @@ public class TransferUseCase implements TransferPort {
 
     @Override
     @Transactional
-    public void execute(UUID senderAccountId, UUID receiverAccountId, BigDecimal amount, LocalDateTime date) {
+    public void execute(UUID senderAccountId, UUID receiverAccountId, BigDecimal amount, LocalDateTime date, String description, UUID sourceAccountId, BigDecimal sourceBalanceAfter) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidTransactionValueException("Transfer amount must be greater than zero.");
         }
 
         Account senderAccount = accountRepositoryPort.findById(senderAccountId);
-        if (senderAccount == null) {
-            throw new AccountNotFoundException(senderAccountId);
-        }
+        if (senderAccount == null) throw new AccountNotFoundException(senderAccountId);
 
         Account receiverAccount = accountRepositoryPort.findById(receiverAccountId);
-        if (receiverAccount == null) {
-            throw new AccountNotFoundException(receiverAccountId);
-        }
+        if (receiverAccount == null) throw new AccountNotFoundException(receiverAccountId);
 
         if (senderAccountId.equals(receiverAccountId)) {
             throw new BusinessRuleException("Sender and receiver accounts must be different.");
@@ -51,30 +47,19 @@ public class TransferUseCase implements TransferPort {
 
         UUID transferID = UUID.randomUUID();
 
+        BigDecimal senderBalanceAfter = (sourceAccountId!= null && sourceAccountId.equals(senderAccountId))? sourceBalanceAfter : null;
+        BigDecimal receiverBalanceAfter = (sourceAccountId!= null && sourceAccountId.equals(receiverAccountId))? sourceBalanceAfter : null;
+
+        String desc = (description!= null &&!description.isBlank())? description : "Transferência";
+
         Transaction debit = new Transaction(
-                UUID.randomUUID(),
-                "Transferência enviada para " + receiverAccount.getName(),
-                amount,
-                date,
-                TransactionType.EXPENSE,
-                senderAccountId,
-                null,
-                true,
-                transferID,
-                null
+                UUID.randomUUID(), desc, amount, date, TransactionType.EXPENSE,
+                senderAccountId, null, true, transferID, senderBalanceAfter
         );
 
         Transaction credit = new Transaction(
-                UUID.randomUUID(),
-                "Transferência recebida de " + senderAccount.getName(),
-                amount,
-                date,
-                TransactionType.INCOME,
-                receiverAccountId,
-                null,
-                true,
-                transferID,
-                null
+                UUID.randomUUID(), desc, amount, date, TransactionType.INCOME,
+                receiverAccountId, null, true, transferID, receiverBalanceAfter
         );
 
         transactionRepositoryPort.save(debit);

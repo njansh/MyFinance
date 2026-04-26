@@ -25,8 +25,7 @@ public interface TransactionRepositoryPort {
 
     List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
 
-    boolean exists(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter);
-
+    long count(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter);
     void deleteById(UUID transactionId);
 
     List<Transaction> findPossibleDuplicates(UUID accountId, LocalDateTime date, BigDecimal amount);
@@ -34,6 +33,13 @@ public interface TransactionRepositoryPort {
     void updateBalance(UUID transactionId, BigDecimal balanceAfter);
 
     boolean existsTransferCounterpart(UUID accountId, LocalDateTime date, BigDecimal amount);
+    Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable);
+
+    Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
+    java.util.Map<String, BigDecimal> getSumByCategoryAndType(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type);
+
+    java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate);
+    Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount, com.nadson.myfinance.domain.enums.TransactionType type, UUID destinationId);
 }
 
 

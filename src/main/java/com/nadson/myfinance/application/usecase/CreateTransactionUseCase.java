@@ -8,6 +8,7 @@ import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import jakarta.transaction.Transactional;
 import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import com.nadson.myfinance.domain.exception.CategoryNotFoundException;
@@ -30,6 +31,7 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
     }
 
     @Override
+    @Transactional
     public Transaction execute(Transaction transaction) {
         Account account = accountRepositoryPort.findById(transaction.getAccountId());
         if (transaction.getAmount().compareTo(BigDecimal.ZERO) <= 0) {

@@ -26,26 +26,23 @@ public class ListTransactionsUseCase implements ListTransactionsPort {
 
 
     @Override
-    public Page<Transaction> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate,String description ,Pageable pageable) {
+    public Page<Transaction> execute(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable) {
         validateAccount(accountId);
-        Page<Transaction> transactionsPage;
-        if (startDate != null && endDate != null) {
-            transactionsPage = transactionRepositoryPort.findByAccountIdAndDateBetween(accountId, startDate, endDate, pageable);
+
+        boolean hasDescription = description!= null &&!description.isBlank();
+
+        if (startDate!= null && endDate!= null) {
+            if (hasDescription) {
+                return transactionRepositoryPort.findByAccountIdAndDateBetweenAndDescription(accountId, startDate, endDate, description, pageable);
+            }
+            return transactionRepositoryPort.findByAccountIdAndDateBetween(accountId, startDate, endDate, pageable);
         } else {
-            transactionsPage = transactionRepositoryPort.findByAccountId(accountId, pageable);
+            if (hasDescription) {
+                return transactionRepositoryPort.findByAccountIdAndDescription(accountId, description, pageable);
+            }
+            return transactionRepositoryPort.findByAccountId(accountId, pageable);
         }
-        if(description!=null && !description.isBlank()){
-            List<Transaction> filteredList = transactionsPage.stream()
-                    .filter(t -> t.getDescription().toLowerCase().contains(description.toLowerCase()))
-                    .toList();
-            return new PageImpl<>(filteredList, pageable, filteredList.size());
-        }
-
-        return transactionsPage;
-
-
     }
-
 
     private void validateAccount(UUID accountId) {
         Account account = accountRepositoryPort.findById(accountId);
