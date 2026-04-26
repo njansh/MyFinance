@@ -34,6 +34,9 @@ public interface TransactionRepositoryPort {
     void updateBalance(UUID transactionId, BigDecimal balanceAfter);
 
     boolean existsTransferCounterpart(UUID accountId, LocalDateTime date, BigDecimal amount);
+    Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable);
+
+    Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
 }
 
 

@@ -22,7 +22,6 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
 
     List<TransactionJpaEntity> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
 
-    // 🛡️ 1. Filtro Rígido: Evita duplicar a mesma linha do mesmo extrato
     @Query("SELECT COUNT(t) > 0 FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
             "t.date = :date AND " +
@@ -58,4 +57,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     );
 
     List<TransactionJpaEntity> findByTransferID(UUID transferID);
+    Page<TransactionJpaEntity> findByAccountIdAndDescriptionContainingIgnoreCase(UUID accountId, String description, Pageable pageable);
+
+    Page<TransactionJpaEntity> findByAccountIdAndDateBetweenAndDescriptionContainingIgnoreCase(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
 }

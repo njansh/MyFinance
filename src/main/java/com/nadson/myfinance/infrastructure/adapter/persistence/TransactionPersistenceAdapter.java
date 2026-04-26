@@ -102,4 +102,15 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     public void deleteById(UUID transactionId) {
         repository.deleteById(transactionId);
     }
+    @Override
+    public Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable) {
+        return repository.findByAccountIdAndDescriptionContainingIgnoreCase(accountId, description, pageable)
+                .map(TransactionJpaEntity::toDomain);
+    }
+
+    @Override
+    public Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable) {
+        return repository.findByAccountIdAndDateBetweenAndDescriptionContainingIgnoreCase(accountId, startDate, endDate, description, pageable)
+                .map(TransactionJpaEntity::toDomain);
+    }
 }
