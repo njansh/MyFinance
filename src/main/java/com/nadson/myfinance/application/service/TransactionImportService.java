@@ -75,8 +75,7 @@ public class TransactionImportService {
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 String dateStr = record.get(0);
-                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() : (record.get(1) + " " + record.get(2)).trim();
-                String amountStr = record.get(3);
+                String description = bankType.equalsIgnoreCase("MP")? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();                String amountStr = record.get(3);
                 String balanceAfterStr = record.get(4);
 
                 BigDecimal amount = parseCurrency(amountStr);
