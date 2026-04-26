@@ -37,6 +37,9 @@ public interface TransactionRepositoryPort {
     Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable);
 
     Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
+    java.util.Map<String, BigDecimal> getSumByCategoryAndType(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type);
+
+    java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate);
 }
 
 
