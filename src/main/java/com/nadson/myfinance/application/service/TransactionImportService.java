@@ -107,16 +107,20 @@ public class TransactionImportService {
             if (isInvestment) {
                 destinationId = investmentId;
             } else {
-                destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
+                destinationId = (currentAccountId.equals(interId))? mpId : interId;
             }
 
-            boolean otherSideExists = transactionRepositoryPort.existsTransferCounterpart(destinationId, date, absAmount);
+            boolean otherSideExists = false;
+
+            if (!isInvestment) {
+                otherSideExists = transactionRepositoryPort.existsTransferCounterpart(destinationId, date, absAmount);
+            }
 
             if (!otherSideExists) {
                 if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                    transferPort.execute(currentAccountId, destinationId, absAmount, date);
+                    transferPort.execute(currentAccountId, destinationId, absAmount, date, description, currentAccountId, balanceAfter);
                 } else {
-                    transferPort.execute(destinationId, currentAccountId, absAmount, date);
+                    transferPort.execute(destinationId, currentAccountId, absAmount, date, description, currentAccountId, balanceAfter);
                 }
             }
             return;
