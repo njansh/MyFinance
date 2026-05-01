@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CategoryResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.UserResponse;
+import com.nadson.myfinance.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +22,14 @@ public class UserController {
     private final GetUserPort getUserPort;
     private final GetTotalBalancePort getTotalBalancePort;
     private final ListAccountsByUserPort listAccountsByUserPort;
+    private final JwtService jwtService;
 
-    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort, ListAccountsByUserPort listAccountsByUserPort) {
+    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort, ListAccountsByUserPort listAccountsByUserPort, JwtService jwtService) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
         this.listAccountsByUserPort = listAccountsByUserPort;
+        this.jwtService = jwtService;
     }
     
     @PostMapping
@@ -53,6 +56,12 @@ public class UserController {
         return ResponseEntity.ok(accounts.stream()
                 .map(AccountResponse::fromDomain)
                 .toList());
+    }
+    @GetMapping("/{id}/token")
+    public ResponseEntity<String> generateDevelopmentToken(@PathVariable UUID id) {
+        // Valida se o usuário existe antes de gerar o token
+        getUserPort.execute(id);
+        return ResponseEntity.ok(jwtService.generateToken(id.toString()));
     }
     }
 

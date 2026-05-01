@@ -3,6 +3,7 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 import com.nadson.myfinance.application.service.TransactionImportService;
 import org.springframework.http.MediaType; // Importante!
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,12 +31,24 @@ public class ImportController {
         }
     }
 
-    @PostMapping(value = "/inter", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> importInter(
-            @RequestPart("file") MultipartFile file, // Mudamos de @RequestParam para @RequestPart
-            @RequestHeader("X-User-Id") UUID userId) {
+    @PostMapping(value = "/mercado-pago", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> importMercadoPago(@RequestPart("file") MultipartFile file) {
         try {
-            importService.importCsv(file, "INTER", userId);
+            // Extração inatacável do usuário autenticado!
+            String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            importService.importCsv(file, "MP", UUID.fromString(authenticatedUserId));
+            return ResponseEntity.ok("Mercado Pago import completed successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Import error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/inter", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> importInter(@RequestPart("file") MultipartFile file) {
+        try {
+            // Extração inatacável do usuário autenticado!
+            String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            importService.importCsv(file, "INTER", UUID.fromString(authenticatedUserId));
             return ResponseEntity.ok("Inter import completed successfully!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Import error: " + e.getMessage());
