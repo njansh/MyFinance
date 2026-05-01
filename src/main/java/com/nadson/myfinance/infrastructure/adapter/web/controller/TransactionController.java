@@ -2,11 +2,14 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.exception.DuplicateResourceException;
+import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringIdempotencyRepository;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateTransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +30,9 @@ public class TransactionController {
     private final DeleteTransactionPort deleteTransactionPort;
     private final GetAccountBalancePort getAccountBalancePort;
     private final GetIncomesByCategoryPort getIncomesByCategoryPort;
+    private final SpringIdempotencyRepository idempotencyRepository;
 
-    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort, UpdateTransactionPort updateTransactionPort, DeleteTransactionPort deleteTransactionPort, GetAccountBalancePort getAccountBalancePort, GetIncomesByCategoryPort getIncomesByCategoryPort) {
+    public TransactionController(CreateTransactionPort createTransactionPort, GetTransactionPort getTransactionPort, GetExpensesByCategoryPort getExpensesByCategoryPort, UpdateTransactionPort updateTransactionPort, DeleteTransactionPort deleteTransactionPort, GetAccountBalancePort getAccountBalancePort, GetIncomesByCategoryPort getIncomesByCategoryPort, SpringIdempotencyRepository idempotencyRepository) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
         this.getExpensesByCategoryPort = getExpensesByCategoryPort;
@@ -36,10 +40,21 @@ public class TransactionController {
         this.deleteTransactionPort = deleteTransactionPort;
         this.getAccountBalancePort = getAccountBalancePort;
         this.getIncomesByCategoryPort = getIncomesByCategoryPort;
+        this.idempotencyRepository = idempotencyRepository;
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> create(@Valid @RequestBody TransactionRequest request) {
+    public ResponseEntity<TransactionResponse> create(
+            @RequestHeader(value = "Idempotency-Key") String idempotencyKey,
+            @Valid @RequestBody TransactionRequest request) {
+
+        // Tentativa de registro da chave de idempotência (Blind Insert)
+        try {
+            idempotencyRepository.insertKey(idempotencyKey);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateResourceException("Uma transação idêntica já foi processada para esta chave de segurança.");
+        }
+
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 request.description(),
@@ -48,11 +63,12 @@ public class TransactionController {
                 request.type(),
                 request.accountId(),
                 request.categoryId(),
-                request.isTransfer(),request.transferID(),request.accountBalanceAfter()
+                request.isTransfer(),
+                request.transferID(),
+                request.accountBalanceAfter()
         );
         Transaction createdTransaction = createTransactionPort.execute(transaction);
         return ResponseEntity.status(201).body(TransactionResponse.fromDomain(createdTransaction));
-
     }
 
     @PutMapping("/{id}")
