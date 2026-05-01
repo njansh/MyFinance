@@ -2,12 +2,8 @@ package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.enums.AccountType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -28,8 +24,11 @@ public class AccountJpaEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal balance;
+
+    @Version
+    private Long version;
 
     public AccountJpaEntity() {
     }
@@ -103,4 +102,11 @@ public class AccountJpaEntity {
         this.balance = balance;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
 }

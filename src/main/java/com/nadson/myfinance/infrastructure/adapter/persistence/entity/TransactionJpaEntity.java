@@ -18,14 +18,19 @@ public class TransactionJpaEntity {
     @Column
     private UUID transferID;
 
-    @Column(name = "account_balance_after", nullable = true)
-    private BigDecimal accountBalanceAfter;
 
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
+
+    @Column(name = "account_balance_after", precision = 19, scale = 4)
+    private BigDecimal accountBalanceAfter;
+
+    @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
+
+    @Version
+    private Long version;
 
     @Column(nullable = false)
     private LocalDateTime date;
@@ -152,4 +157,11 @@ public class TransactionJpaEntity {
         this.accountBalanceAfter = accountBalanceAfter;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
 }

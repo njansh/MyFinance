@@ -24,7 +24,20 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
 
     @Override
     public Transaction save(Transaction transaction) {
-        TransactionJpaEntity entity = new TransactionJpaEntity(transaction);
+        TransactionJpaEntity entity = repository.findById(transaction.getTransactionId())
+                .orElseGet(TransactionJpaEntity::new);
+
+        entity.setTransactionId(transaction.getTransactionId());
+        entity.setTransferID(transaction.getTransferID());
+        entity.setAccountBalanceAfter(transaction.getAccountBalanceAfter());
+        entity.setDescription(transaction.getDescription());
+        entity.setAmount(transaction.getAmount());
+        entity.setDate(transaction.getDate());
+        entity.setType(transaction.getType());
+        entity.setAccountId(transaction.getAccountId());
+        entity.setCategoryId(transaction.getCategoryId());
+        entity.setTransfer(transaction.isTransfer());
+
         return repository.save(entity).toDomain();
     }
 
