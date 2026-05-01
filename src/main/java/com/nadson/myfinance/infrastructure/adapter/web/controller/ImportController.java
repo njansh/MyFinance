@@ -19,17 +19,6 @@ public class ImportController {
         this.importService = importService;
     }
 
-    @PostMapping(value = "/mercado-pago", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> importMercadoPago(
-            @RequestPart("file") MultipartFile file, // Mudamos de @RequestParam para @RequestPart
-            @RequestHeader("X-User-Id") UUID userId) {
-        try {
-            importService.importCsv(file, "MP", userId);
-            return ResponseEntity.ok("Mercado Pago import completed successfully!");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Import error: " + e.getMessage());
-        }
-    }
 
     @PostMapping(value = "/mercado-pago", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> importMercadoPago(@RequestPart("file") MultipartFile file) {
