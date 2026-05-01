@@ -3,31 +3,31 @@ package com.nadson.myfinance.infrastructure.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.Customizer;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        http
+                // 1. Desabilita CSRF para que o POST do Swagger não seja bloqueado com 403
+                .csrf(csrf -> csrf.disable())
+
+                // 2. Define as regras de acesso
                 .authorizeHttpRequests(auth -> auth
-                        // Permite a criação de usuários e swagger sem autenticação
-                        .requestMatchers("/users/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Todas as outras rotas (transações, contas, importação) EXIGEM o JWT
+                        // Libera o acesso visual ao Swagger e à documentação
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Exige autenticação para qualquer outra rota (como /transactions)
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // 3. Habilita o formulário de login e o suporte a login básico
+                .formLogin(Customizer.withDefaults())
+                .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
