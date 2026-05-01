@@ -9,4 +9,5 @@ public interface CategoryRepositoryPort {
     Category save(Category category);
     Category findById(UUID categoryId);
     List<Category> findAll();
+    Category findByName(String name);
 }
