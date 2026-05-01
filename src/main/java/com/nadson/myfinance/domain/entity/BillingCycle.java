@@ -62,5 +62,5 @@ public class BillingCycle {
     public LocalDate getDueDate() { return dueDate; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public BillingCycleStatus getStatus() { return status; }
-}
+
 }
