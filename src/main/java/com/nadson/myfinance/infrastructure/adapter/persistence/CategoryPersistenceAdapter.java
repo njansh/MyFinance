@@ -36,4 +36,10 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+    public Category findByName(String name) {
+        return springCategoryRepository.findByNameIgnoreCase(name)
+                .map(CategoryJpaEntity::toDomain)
+                .orElse(null);
+    }
 }

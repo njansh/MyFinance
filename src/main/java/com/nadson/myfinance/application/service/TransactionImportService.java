@@ -3,10 +3,13 @@ package com.nadson.myfinance.application.service;
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
 import com.nadson.myfinance.application.port.in.TransferPort;
 import com.nadson.myfinance.application.port.in.ListAccountsByUserPort;
+import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.service.CategorizationEngine;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -32,15 +35,17 @@ public class TransactionImportService {
     private final CreateTransactionPort createTransactionPort;
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final ListAccountsByUserPort listAccountsByUserPort;
+    private final CategoryRepositoryPort categoryRepositoryPort;
 
     public TransactionImportService(TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
                                     TransactionRepositoryPort transactionRepositoryPort,
-                                    ListAccountsByUserPort listAccountsByUserPort) {
+                                    ListAccountsByUserPort listAccountsByUserPort, CategoryRepositoryPort categoryRepositoryPort) {
         this.transferPort = transferPort;
         this.createTransactionPort = createTransactionPort;
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.listAccountsByUserPort = listAccountsByUserPort;
+        this.categoryRepositoryPort = categoryRepositoryPort;
     }
 
     public void importCsv(MultipartFile file, String bankType, UUID userId) throws Exception {
@@ -99,7 +104,6 @@ public class TransactionImportService {
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
-        // 1. FILTRO INTELIGENTE DE CONTAGEM (Passo 9)
         String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter != null ? balanceAfter.toString() : "null");
         int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
         currentFileCount.put(rowKey, localCount);
@@ -108,7 +112,7 @@ public class TransactionImportService {
         long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
 
         if (localCount <= dbCount) {
-            return; // Se a contagem no arquivo atual for menor ou igual à do banco, ignora (já foi importado)
+            return;
         }
 
         boolean isManualTransfer = descLower.contains("nadson") &&
@@ -118,7 +122,6 @@ public class TransactionImportService {
                 !descLower.contains("cartao");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
-        // O TIPO É DECLARADO AQUI EM CIMA AGORA (Passo 10)
         TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
@@ -129,8 +132,6 @@ public class TransactionImportService {
                 destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
             }
 
-            // 2. RECONCILIAÇÃO DE TRANSFERÊNCIAS COM CASAMENTO ESTRITO (Passo 8 + Passo 10)
-            // Agora passamos o 'type' e o 'destinationId' para garantir que a transação certa seja atualizada
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
             if (unmatched != null) {
@@ -157,19 +158,21 @@ public class TransactionImportService {
             return;
         }
 
-        Transaction transaction = new Transaction(
-                UUID.randomUUID(),
-                description,
-                absAmount,
-                date,
-                type,
-                currentAccountId,
-                null,
-                false,
-                null,
-                balanceAfter
-        );
+        String suggestedCategoryName = CategorizationEngine.suggestCategoryName(description);
+        UUID predictedCategoryId = null;
 
+        if (suggestedCategoryName!= null) {
+            Category category = categoryRepositoryPort.findByName(suggestedCategoryName);
+            if (category!= null) {
+                predictedCategoryId = category.getCategoryId();
+            }
+        }
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(), description, absAmount, date, type, currentAccountId,
+                predictedCategoryId,
+                false, null, balanceAfter
+        );
         createTransactionPort.execute(transaction);
     }
 
