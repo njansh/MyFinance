@@ -116,4 +116,10 @@ public class BeanConfiguration {
     public GetFinancialDashboardKpisPort getFinancialDashboardKpisPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
         return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo);
     }
+    @Bean
+    public CreateCreditCardPort createCreditCardUseCase(CreditCardRepositoryPort creditCardRepository,AccountRepositoryPort accountRepository) {
+        return new CreateCreditCardUseCase(creditCardRepository, accountRepository);
+    }
+
+
 }
