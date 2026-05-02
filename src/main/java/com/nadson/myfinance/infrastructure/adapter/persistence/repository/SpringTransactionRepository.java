@@ -1,5 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.persistence.repository;
 
+import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -75,4 +76,22 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     Page<TransactionJpaEntity> findByAccountIdAndDescriptionContainingIgnoreCase(UUID accountId, String description, Pageable pageable);
 
     Page<TransactionJpaEntity> findByAccountIdAndDateBetweenAndDescriptionContainingIgnoreCase(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
+    @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t " +
+            "WHERE t.accountId IN :accountIds " +
+            "AND t.date BETWEEN :start AND :end " +
+            "AND t.type = :type AND t.isTransfer = false")
+    BigDecimal sumTransactionsByAccountsAndPeriod(
+            @Param("accountIds") List<UUID> accountIds,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("type") TransactionType type);
+
+    @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t " +
+            "WHERE t.accountId IN :investmentAccountIds " +
+            "AND t.date BETWEEN :start AND :end " +
+            "AND t.isTransfer = true AND t.type = 'INCOME'")
+    BigDecimal sumSavingsByAccountsAndPeriod(
+            @Param("investmentAccountIds") List<UUID> investmentAccountIds,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 }
