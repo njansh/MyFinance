@@ -97,4 +97,8 @@ public class BeanConfiguration {
     public ProcessCreditCardTransactionPort processCreditCardTransactionPort(CreditCardRepositoryPort creditCardRepository,BillingCycleRepositoryPort billingCycleRepository) {
         return new ProcessCreditCardTransactionUseCase(creditCardRepository, billingCycleRepository);
     }
+    @Bean
+    public GetFinancialDashboardKpisPort getFinancialDashboardKpisPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
+        return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo);
+    }
 }
