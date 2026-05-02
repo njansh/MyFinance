@@ -2,12 +2,12 @@ package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.application.port.out.CreditCardRepositoryPort;
 import com.nadson.myfinance.domain.entity.CreditCard;
-import com.nadson.myfinance.infrastructure.adapter.persistence.entity.CategoryJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.CreditCardJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringCreditCardRepository;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-
+@Component
 public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
     private final SpringCreditCardRepository springCreditCardRepository;
     public CreditCardPersistenceAdapter(SpringCreditCardRepository springCreditCardRepository) {
