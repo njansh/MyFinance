@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface CategoryRepositoryPort {
     Category save(Category category);
     Category findById(UUID categoryId);
-    List<Category> findAll();
-    Category findByName(String name);
+    List<Category> findAllByUserId(UUID userId);
+    Category findByNameAndUserId(String name, UUID userId);
+
 }

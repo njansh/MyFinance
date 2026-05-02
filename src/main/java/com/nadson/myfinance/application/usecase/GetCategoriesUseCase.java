@@ -5,6 +5,7 @@ import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.domain.entity.Category;
 
 import java.util.List;
+import java.util.UUID;
 
 public class GetCategoriesUseCase implements GetCategoriesPort {
     private final CategoryRepositoryPort categoryRepositoryPort;
@@ -12,6 +13,6 @@ public class GetCategoriesUseCase implements GetCategoriesPort {
         this.categoryRepositoryPort = categoryRepositoryPort;
     }
     @Override
-    public List<Category> execute() {
-return categoryRepositoryPort.findAll();    }
+    public List<Category> execute(UUID userId) {
+return categoryRepositoryPort.findAllByUserId(userId);    }
 }

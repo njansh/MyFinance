@@ -31,14 +31,14 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
     }
 
     @Override
-    public List<Category> findAll() {
-        return springCategoryRepository.findAll().stream()
+    public List<Category> findAllByUserId(UUID userId) {
+        return springCategoryRepository.findAllByUserId(userId).stream()
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
     @Override
-    public Category findByName(String name) {
-        return springCategoryRepository.findByNameIgnoreCase(name)
+    public Category findByNameAndUserId(String name,UUID userId) {
+        return springCategoryRepository.findByNameAndUserId(name,userId )
                 .map(CategoryJpaEntity::toDomain)
                 .orElse(null);
     }
