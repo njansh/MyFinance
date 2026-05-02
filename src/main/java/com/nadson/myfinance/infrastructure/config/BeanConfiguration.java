@@ -94,9 +94,7 @@ public class BeanConfiguration {
         return new ListAccountsByUserUseCase(accountRepositoryPort, userRepository);
     }
     @Bean
-    public ProcessCreditCardTransactionPort processCreditCardTransactionPort(
-            CreditCardRepositoryPort creditCardRepository,
-            BillingCycleRepositoryPort billingCycleRepository) {
+    public ProcessCreditCardTransactionPort processCreditCardTransactionPort(CreditCardRepositoryPort creditCardRepository,BillingCycleRepositoryPort billingCycleRepository) {
         return new ProcessCreditCardTransactionUseCase(creditCardRepository, billingCycleRepository);
     }
 }

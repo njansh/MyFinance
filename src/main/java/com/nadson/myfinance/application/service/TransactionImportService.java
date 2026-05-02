@@ -1,5 +1,6 @@
 package com.nadson.myfinance.application.service;
 
+import com.nadson.myfinance.application.parser.CsvRowMapperStrategy;
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
 import com.nadson.myfinance.application.port.in.TransferPort;
 import com.nadson.myfinance.application.port.in.ListAccountsByUserPort;
@@ -16,16 +17,13 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.text.NumberFormat;
-import java.util.Locale;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -36,19 +34,29 @@ public class TransactionImportService {
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final ListAccountsByUserPort listAccountsByUserPort;
     private final CategoryRepositoryPort categoryRepositoryPort;
+    private final List<CsvRowMapperStrategy> mapperStrategies;
 
     public TransactionImportService(TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
                                     TransactionRepositoryPort transactionRepositoryPort,
-                                    ListAccountsByUserPort listAccountsByUserPort, CategoryRepositoryPort categoryRepositoryPort) {
+                                    ListAccountsByUserPort listAccountsByUserPort,
+                                    CategoryRepositoryPort categoryRepositoryPort,
+                                    List<CsvRowMapperStrategy> mapperStrategies) {
         this.transferPort = transferPort;
         this.createTransactionPort = createTransactionPort;
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.listAccountsByUserPort = listAccountsByUserPort;
         this.categoryRepositoryPort = categoryRepositoryPort;
+        this.mapperStrategies = mapperStrategies;
     }
 
-    public void importCsv(MultipartFile file, String bankType, UUID userId) throws Exception {
+    public void importCsv(MultipartFile file, String bankCode, UUID userId) throws Exception {
+        // 1. Delegação: Pega a estratégia correta dinamicamente
+        CsvRowMapperStrategy strategy = mapperStrategies.stream()
+                .filter(s -> s.getBankCode().equalsIgnoreCase(bankCode))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Banco não suportado ou ainda não implementado: " + bankCode));
+
         List<Account> userAccounts = listAccountsByUserPort.execute(userId);
 
         UUID interId = findAccountIdByName(userAccounts, "Inter");
@@ -64,51 +72,42 @@ public class TransactionImportService {
              CSVParser csvParser = new CSVParser(reader, format)) {
 
             boolean dataStarted = false;
-            DateTimeFormatter formatter = bankType.equalsIgnoreCase("MP")
-                    ? DateTimeFormatter.ofPattern("dd-MM-yyyy")
-                    : DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-            UUID currentAccountId = bankType.equalsIgnoreCase("MP") ? mpId : interId;
+            UUID currentAccountId = bankCode.equalsIgnoreCase("MP")? mpId : interId;
 
             // Mapa para contar as ocorrências de transações idênticas no arquivo atual
-            java.util.Map<String, Integer> currentFileCount = new java.util.HashMap<>();
+            Map<String, Integer> currentFileCount = new HashMap<>();
 
             for (CSVRecord record : csvParser) {
                 String firstCell = record.get(0);
 
-                if (firstCell.contains("RELEASE_DATE") || firstCell.contains("Data Lançamento")) {
+                // Pula o cabeçalho
+                if (firstCell.contains("RELEASE_DATE") || firstCell.contains("Data Lançamento") || firstCell.contains("Data")) {
                     dataStarted = true;
                     continue;
                 }
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
-                String dateStr = record.get(0);
-                String description = bankType.equalsIgnoreCase("MP") ? record.get(1).trim() + " (Ref: " + record.get(2).trim() + ")" : (record.get(1) + " " + record.get(2)).trim();
-                String amountStr = record.get(3);
-                String balanceAfterStr = record.get(4);
+                String description = strategy.extractDescription(record);
+                BigDecimal amount = strategy.extractAmount(record);
+                LocalDateTime dateTime = strategy.extractDate(record);
+                BigDecimal balanceAfter = strategy.extractBalanceAfter(record);
 
-                BigDecimal amount = parseCurrency(amountStr);
-                BigDecimal balanceAfter = parseCurrency(balanceAfterStr);
-                LocalDateTime dateTime = LocalDate.parse(dateStr.trim(), formatter).atStartOfDay();
-
-                // Passamos o mapa de contagem para o processRow
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, bankType, balanceAfter, currentFileCount);
+                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount);
             }
         }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
-                            String description, BigDecimal amount, LocalDateTime date, String bankType,
-                            BigDecimal balanceAfter, java.util.Map<String, Integer> currentFileCount) {
+                            String description, BigDecimal amount, LocalDateTime date,
+                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
-        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter != null ? balanceAfter.toString() : "null");
+        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter!= null? balanceAfter.toString() : "null");
         int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
         currentFileCount.put(rowKey, localCount);
 
-        // Busca no banco de dados quantas vezes essa mesma transação já foi salva
         long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
 
         if (localCount <= dbCount) {
@@ -122,19 +121,19 @@ public class TransactionImportService {
                 !descLower.contains("cartao");
         boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
             UUID destinationId;
             if (isInvestment) {
                 destinationId = investmentId;
             } else {
-                destinationId = (currentAccountId.equals(interId)) ? mpId : interId;
+                destinationId = (currentAccountId.equals(interId))? mpId : interId;
             }
 
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
-            if (unmatched != null) {
+            if (unmatched!= null) {
                 Transaction updatedUnmatched = new Transaction(
                         unmatched.getTransactionId(),
                         description,
@@ -174,21 +173,6 @@ public class TransactionImportService {
                 false, null, balanceAfter
         );
         createTransactionPort.execute(transaction);
-    }
-
-    private BigDecimal parseCurrency(String value) {
-        try {
-            String cleanValue = value.trim();
-            if (cleanValue.matches(".*\\d,\\d{3}\\.\\d{2}$")) {
-                NumberFormat format = NumberFormat.getInstance(Locale.US);
-                return new BigDecimal(format.parse(cleanValue).toString());
-            } else {
-                NumberFormat format = NumberFormat.getInstance(new Locale("pt", "BR"));
-                return new BigDecimal(format.parse(cleanValue).toString());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar valor financeiro do CSV: " + value, e);
-        }
     }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
