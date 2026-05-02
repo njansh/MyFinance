@@ -1,16 +1,16 @@
 package com.nadson.myfinance.application.service;
 
 import com.nadson.myfinance.application.parser.CsvRowMapperStrategy;
+import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
+import com.nadson.myfinance.application.port.in.GetCategoriesPort;
 import com.nadson.myfinance.application.port.in.TransferPort;
 import com.nadson.myfinance.application.port.in.ListAccountsByUserPort;
-import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
-import com.nadson.myfinance.domain.service.CategorizationEngine;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -33,73 +33,88 @@ public class TransactionImportService {
     private final CreateTransactionPort createTransactionPort;
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final ListAccountsByUserPort listAccountsByUserPort;
-    private final CategoryRepositoryPort categoryRepositoryPort;
+    private final GetCategoriesPort getCategoriesPort;
+    private final CreateCategoryPort createCategoryPort;
     private final List<CsvRowMapperStrategy> mapperStrategies;
 
     public TransactionImportService(TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
                                     TransactionRepositoryPort transactionRepositoryPort,
                                     ListAccountsByUserPort listAccountsByUserPort,
-                                    CategoryRepositoryPort categoryRepositoryPort,
+                                    GetCategoriesPort getCategoriesPort,
+                                    CreateCategoryPort createCategoryPort,
                                     List<CsvRowMapperStrategy> mapperStrategies) {
         this.transferPort = transferPort;
         this.createTransactionPort = createTransactionPort;
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.listAccountsByUserPort = listAccountsByUserPort;
-        this.categoryRepositoryPort = categoryRepositoryPort;
+        this.getCategoriesPort = getCategoriesPort;
+        this.createCategoryPort = createCategoryPort;
         this.mapperStrategies = mapperStrategies;
     }
 
     public void importCsv(MultipartFile file, String bankCode, UUID userId) throws Exception {
-        // 1. Delegação: Pega a estratégia correta dinamicamente
         CsvRowMapperStrategy strategy = mapperStrategies.stream()
                 .filter(s -> s.getBankCode().equalsIgnoreCase(bankCode))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Banco não suportado ou ainda não implementado: " + bankCode));
+                .orElseThrow(() -> new IllegalArgumentException("Banco não suportado: " + bankCode));
 
         List<Account> userAccounts = listAccountsByUserPort.execute(userId);
 
+        // Proteção: Se o usuário não tiver as contas com esses nomes, o sistema avisará em vez de quebrar
         UUID interId = findAccountIdByName(userAccounts, "Inter");
         UUID mpId = findAccountIdByName(userAccounts, "Mercado Pago");
         UUID investmentId = findAccountIdByName(userAccounts, "Investimento");
+
+        List<Category> userCategories = getCategoriesPort.execute(userId);
+        Map<String, UUID> categoryCache = new HashMap<>();
+        for (Category cat : userCategories) {
+            categoryCache.put(cat.getName().toLowerCase(), cat.getCategoryId());
+        }
 
         CSVFormat format = CSVFormat.DEFAULT.builder()
                 .setDelimiter(';')
                 .setIgnoreEmptyLines(true)
                 .build();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8"));
              CSVParser csvParser = new CSVParser(reader, format)) {
 
             boolean dataStarted = false;
             UUID currentAccountId = bankCode.equalsIgnoreCase("MP")? mpId : interId;
-
-            // Mapa para contar as ocorrências de transações idênticas no arquivo atual
             Map<String, Integer> currentFileCount = new HashMap<>();
 
             for (CSVRecord record : csvParser) {
+                if (record.size() == 0) continue;
                 String firstCell = record.get(0);
 
-                // Pula o cabeçalho
-                if (firstCell.contains("RELEASE_DATE") || firstCell.contains("Data Lançamento") || firstCell.contains("Data")) {
+                if (firstCell.contains("RELEASE_DATE")
+                        || firstCell.contains("Data Lançamento")
+                        || firstCell.contains("Data")) {
                     dataStarted = true;
                     continue;
                 }
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
-                String description = strategy.extractDescription(record);
-                BigDecimal amount = strategy.extractAmount(record);
-                LocalDateTime dateTime = strategy.extractDate(record);
-                BigDecimal balanceAfter = strategy.extractBalanceAfter(record);
+                try {
+                    String description = strategy.extractDescription(record);
+                    BigDecimal amount = strategy.extractAmount(record);
+                    LocalDateTime dateTime = strategy.extractDate(record);
+                    BigDecimal balanceAfter = strategy.extractBalanceAfter(record);
 
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount, userId);
+                    processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount, userId, categoryCache);
+                } catch (Exception e) {
+                    // Ignora linhas malformadas do CSV sem parar o processo inteiro
+                    continue;
+                }
             }
         }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
                             String description, BigDecimal amount, LocalDateTime date,
-                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount, UUID userId) {
+                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount,
+                            UUID userId, Map<String, UUID> categoryCache) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
@@ -109,43 +124,22 @@ public class TransactionImportService {
         currentFileCount.put(rowKey, localCount);
 
         long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
+        if (localCount <= dbCount) return;
 
-        if (localCount <= dbCount) {
-            return;
-        }
+        boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos") &&
+                !descLower.contains("fatura") && !descLower.contains("cartão") && !descLower.contains("cartao");
+        boolean isInvestment = descLower.contains("reserva")
+                || descLower.contains("reservado")
+                || descLower.contains("retirado");
 
-        boolean isManualTransfer = descLower.contains("nadson") &&
-                descLower.contains("santos") &&
-                !descLower.contains("fatura") &&
-                !descLower.contains("cartão") &&
-                !descLower.contains("cartao");
-        boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
-
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0? TransactionType.INCOME : TransactionType.EXPENSE;
+        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
-            UUID destinationId;
-            if (isInvestment) {
-                destinationId = investmentId;
-            } else {
-                destinationId = (currentAccountId.equals(interId))? mpId : interId;
-            }
-
+            UUID destinationId = isInvestment? investmentId : (currentAccountId.equals(interId)? mpId : interId);
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
 
             if (unmatched!= null) {
-                Transaction updatedUnmatched = new Transaction(
-                        unmatched.getTransactionId(),
-                        description,
-                        unmatched.getAmount(),
-                        unmatched.getDate(),
-                        unmatched.getType(),
-                        unmatched.getAccountId(),
-                        unmatched.getCategoryId(),
-                        unmatched.isTransfer(),
-                        unmatched.getTransferID(),
-                        balanceAfter
-                );
+                Transaction updatedUnmatched = new Transaction(unmatched.getTransactionId(), description, unmatched.getAmount(), unmatched.getDate(), unmatched.getType(), unmatched.getAccountId(), unmatched.getCategoryId(), unmatched.isTransfer(), unmatched.getTransferID(), balanceAfter);
                 transactionRepositoryPort.save(updatedUnmatched);
             } else {
                 if (amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -157,23 +151,44 @@ public class TransactionImportService {
             return;
         }
 
-        String suggestedCategoryName = CategorizationEngine.suggestCategoryName(description);
-        UUID predictedCategoryId = null;
+        String extractedName = extractSmartCategoryName(description);
+        UUID predictedCategoryId;
 
-        if (suggestedCategoryName!= null) {
-            // CORREÇÃO: Agora passamos o suggestedCategoryName e o userId
-            Category category = categoryRepositoryPort.findByNameAndUserId(suggestedCategoryName, userId);
-            if (category!= null) {
-                predictedCategoryId = category.getCategoryId();
-            }
+        if (categoryCache.containsKey(extractedName.toLowerCase())) {
+            predictedCategoryId = categoryCache.get(extractedName.toLowerCase());
+        } else {
+            // CORREÇÃO: Gerador de cor com padding para garantir 7 caracteres (# + 6 hex)
+            String randomColor = String.format("#%06x", (extractedName.hashCode() & 0xffffff));
+            Category newCategory = createCategoryPort.execute(userId, extractedName, randomColor, type);
+            predictedCategoryId = newCategory.getCategoryId();
+            categoryCache.put(extractedName.toLowerCase(), predictedCategoryId);
         }
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(), description, absAmount, date, type, currentAccountId,
-                predictedCategoryId,
-                false, null, balanceAfter
+                predictedCategoryId, false, null, balanceAfter
         );
         createTransactionPort.execute(transaction);
+    }
+
+    private String extractSmartCategoryName(String rawDescription) {
+        if (rawDescription == null || rawDescription.trim().isEmpty()) return "Outros";
+
+        String clean = rawDescription.toLowerCase()
+                .replaceAll("[^a-zà-ú\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        if (clean.isEmpty()) return "Outros";
+
+        String[] words = clean.split(" ");
+        String mainWord = words[0];
+
+        if (mainWord.length() <= 2 && words.length > 1) {
+            mainWord = words[1];
+        }
+
+        return mainWord.substring(0, 1).toUpperCase() + mainWord.substring(1);
     }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
@@ -181,6 +196,6 @@ public class TransactionImportService {
                 .filter(acc -> acc.getName().toLowerCase().contains(name.toLowerCase()))
                 .map(Account::getAccountId)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada contendo o termo: " + name));
+                .orElseThrow(() -> new RuntimeException("Erro: Você precisa criar uma conta chamada '" + name + "' antes de importar o CSV."));
     }
 }
