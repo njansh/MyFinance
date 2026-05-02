@@ -1,10 +1,7 @@
 package com.nadson.myfinance.infrastructure.config;
 
 import com.nadson.myfinance.application.port.in.*;
-import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
-import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
-import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
-import com.nadson.myfinance.application.port.out.UserRepositoryPort;
+import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.application.usecase.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -95,5 +92,11 @@ public class BeanConfiguration {
     @Bean
     public ListAccountsByUserPort listAccountsByUserPort(AccountRepositoryPort accountRepositoryPort, UserRepositoryPort userRepository){
         return new ListAccountsByUserUseCase(accountRepositoryPort, userRepository);
+    }
+    @Bean
+    public ProcessCreditCardTransactionPort processCreditCardTransactionPort(
+            CreditCardRepositoryPort creditCardRepository,
+            BillingCycleRepositoryPort billingCycleRepository) {
+        return new ProcessCreditCardTransactionUseCase(creditCardRepository, billingCycleRepository);
     }
 }
