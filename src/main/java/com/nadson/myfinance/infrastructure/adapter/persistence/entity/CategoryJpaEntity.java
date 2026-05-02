@@ -14,7 +14,8 @@ public class CategoryJpaEntity {
 
     @Column(nullable = false)
     private String name;
-
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
     @Column(nullable = false)
     private String color;
 
@@ -25,8 +26,9 @@ public class CategoryJpaEntity {
     public CategoryJpaEntity() {
     }
 
-    public CategoryJpaEntity(UUID id, String name, String color, TransactionType type) {
+    public CategoryJpaEntity(UUID id, UUID userId, String name, String color, TransactionType type) {
         this.id = id;
+        this.userId = userId;
         this.name = name;
         this.color = color;
         this.type = type;
@@ -34,13 +36,14 @@ public class CategoryJpaEntity {
 
     public CategoryJpaEntity(Category category) {
         this.id = category.getCategoryId();
+        this.userId = category.getUserId();
         this.name = category.getName();
         this.color = category.getColorHex();
         this.type = category.getType();
     }
 
     public Category toDomain() {
-        return new Category(this.id, this.name, this.color, this.type);
+        return new Category(this.id, this.userId, this.name, this.color, this.type);
     }
 
     public UUID getId() {
@@ -49,6 +52,14 @@ public class CategoryJpaEntity {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public String getName() {

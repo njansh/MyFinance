@@ -92,14 +92,14 @@ public class TransactionImportService {
                 LocalDateTime dateTime = strategy.extractDate(record);
                 BigDecimal balanceAfter = strategy.extractBalanceAfter(record);
 
-                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount);
+                processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount, userId);
             }
         }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
                             String description, BigDecimal amount, LocalDateTime date,
-                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount) {
+                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount, UUID userId) {
 
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
@@ -161,7 +161,8 @@ public class TransactionImportService {
         UUID predictedCategoryId = null;
 
         if (suggestedCategoryName!= null) {
-            Category category = categoryRepositoryPort.findByName(suggestedCategoryName);
+            // CORREÇÃO: Agora passamos o suggestedCategoryName e o userId
+            Category category = categoryRepositoryPort.findByNameAndUserId(suggestedCategoryName, userId);
             if (category!= null) {
                 predictedCategoryId = category.getCategoryId();
             }

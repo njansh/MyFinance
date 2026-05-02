@@ -6,16 +6,22 @@ import java.util.UUID;
 
 public class Category {
     private UUID categoryId;
+    private  UUID userId;
     private String name;
     private String colorHex;
     private TransactionType type;
 
-    public Category(UUID categoryId, String name, String colorHex, TransactionType type) {
+    public Category(UUID categoryId, UUID userId, String name, String colorHex, TransactionType type) {
         validate(name, colorHex);
-        this.categoryId = (categoryId == null) ? UUID.randomUUID() : categoryId;
+        this.categoryId = (categoryId == null)? UUID.randomUUID() : categoryId;
+        this.userId = userId;
         this.name = name;
         this.colorHex = colorHex;
-            this.type = type;
+        this.type = type;
+    }
+
+    public UUID getUserId() {
+        return userId;
     }
 
     public UUID getCategoryId() {
