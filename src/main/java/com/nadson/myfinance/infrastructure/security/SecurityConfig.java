@@ -4,30 +4,35 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+        this.jwtAuthFilter = jwtAuthFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Desabilita CSRF para que o POST do Swagger não seja bloqueado com 403
-                .csrf(csrf -> csrf.disable())
-
-                // 2. Define as regras de acesso
+                .csrf(AbstractHttpConfigurer::disable)
+                // Política Stateless obrigatória para JWT
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Libera o acesso visual ao Swagger e à documentação
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        // Exige autenticação para qualquer outra rota (como /transactions)
+                        // Rotas de Swagger e Bootstrap de Usuários Abertas
+                        .requestMatchers("/users/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Protege todas as outras rotas
                         .anyRequest().authenticated()
                 )
-
-                // 3. Habilita o formulário de login e o suporte a login básico
-                .formLogin(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults());
+                // Reinsere o Filtro JWT
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
