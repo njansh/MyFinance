@@ -19,28 +19,22 @@ public class ImportController {
         this.importService = importService;
     }
 
-
-    @PostMapping(value = "/mercado-pago", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> importMercadoPago(@RequestPart("file") MultipartFile file) {
+    @PostMapping(value = "/{bankCode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> importStatement(
+            @PathVariable String bankCode,
+            @RequestPart("file") MultipartFile file) {
         try {
-            // Extração inatacável do usuário autenticado!
             String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            importService.importCsv(file, "MP", UUID.fromString(authenticatedUserId));
-            return ResponseEntity.ok("Mercado Pago import completed successfully!");
+
+            importService.importCsv(file, bankCode.toUpperCase(), UUID.fromString(authenticatedUserId));
+
+            return ResponseEntity.ok("Importação para " + bankCode.toUpperCase() + " concluída com sucesso!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Import error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Import error: " + e.getMessage());
         }
     }
 
-    @PostMapping(value = "/inter", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> importInter(@RequestPart("file") MultipartFile file) {
-        try {
-            // Extração inatacável do usuário autenticado!
-            String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            importService.importCsv(file, "INTER", UUID.fromString(authenticatedUserId));
-            return ResponseEntity.ok("Inter import completed successfully!");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Import error: " + e.getMessage());
-        }
-    }
+
 }

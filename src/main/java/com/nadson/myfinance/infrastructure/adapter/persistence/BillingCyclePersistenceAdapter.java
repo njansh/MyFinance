@@ -1,12 +1,14 @@
-package com.nadson.myfinance.infrastructure.adapter.persistence.repository;
+package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.application.port.out.BillingCycleRepositoryPort;
 import com.nadson.myfinance.domain.entity.BillingCycle;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.BillingCycleJpaEntity;
+import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringBillingCycleRepository;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
-
+@Component
 public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPort {
     private final SpringBillingCycleRepository springBillingCycleRepository;
 
