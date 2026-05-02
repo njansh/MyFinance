@@ -26,8 +26,8 @@ public class BeanConfiguration {
         return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo);
     }
     @Bean
-    public CreateUserPort createUserUseCase(UserRepositoryPort repository) {
-        return new CreateUserUseCase(repository);
+    public CreateUserPort createUserUseCase(UserRepositoryPort repository, CreateCategoryPort createCategoryPort) {
+        return new CreateUserUseCase(repository, createCategoryPort);
     }
 
     @Bean
