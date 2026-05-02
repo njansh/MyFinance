@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.AccountJpa
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringAccountRepository;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,5 +43,10 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
         return springAccountRepository.findByUserId(userId).stream()
                 .map(AccountJpaEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void updateBalanceAtomic(UUID accountId, BigDecimal amount) {
+        springAccountRepository.updateBalanceAtomic(accountId, amount);
     }
 }

@@ -53,12 +53,11 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
         }
 
         if (transaction.getType() == TransactionType.INCOME) {
-            account.deposit(transaction.getAmount());
+            accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount());
         } else {
-            account.withdraw(transaction.getAmount());
+            accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount().negate());
         }
 
-        accountRepositoryPort.save(account);
         return transactionRepositoryPort.save(transaction);
     }
 }
