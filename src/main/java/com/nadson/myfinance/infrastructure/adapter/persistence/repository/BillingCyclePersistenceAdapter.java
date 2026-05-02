@@ -1,0 +1,36 @@
+package com.nadson.myfinance.infrastructure.adapter.persistence.repository;
+
+import com.nadson.myfinance.application.port.out.BillingCycleRepositoryPort;
+import com.nadson.myfinance.domain.entity.BillingCycle;
+import com.nadson.myfinance.infrastructure.adapter.persistence.entity.BillingCycleJpaEntity;
+
+import java.util.List;
+import java.util.UUID;
+
+public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPort {
+    private final SpringBillingCycleRepository springBillingCycleRepository;
+
+    public BillingCyclePersistenceAdapter(SpringBillingCycleRepository springBillingCycleRepository) {
+        this.springBillingCycleRepository = springBillingCycleRepository;
+    }
+
+    @Override
+    public BillingCycle save(BillingCycle billingCycle) {
+        BillingCycleJpaEntity billingCycleJpaEntity =new BillingCycleJpaEntity(billingCycle);
+        return springBillingCycleRepository.save(billingCycleJpaEntity).toDomain();
+    }
+
+    @Override
+    public BillingCycle findOpenCycleByCardId(UUID creditCardId) {
+        return springBillingCycleRepository.findById(creditCardId)
+                .map(BillingCycleJpaEntity::toDomain)
+                .orElse(null);
+    }
+
+    @Override
+    public List<BillingCycle> findUnpaidCyclesByCardId(UUID creditCardId) {
+        return springBillingCycleRepository.findAll().stream()
+                .map(BillingCycleJpaEntity::toDomain)
+                .toList();
+    }
+}
