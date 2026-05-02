@@ -42,8 +42,8 @@ public class TransferUseCase implements TransferPort {
             throw new BusinessRuleException("Sender and receiver accounts must be different.");
         }
 
-        senderAccount.withdraw(amount);
-        receiverAccount.deposit(amount);
+        accountRepositoryPort.updateBalanceAtomic(senderAccountId, amount.negate());
+        accountRepositoryPort.updateBalanceAtomic(receiverAccountId, amount);
 
         UUID transferID = UUID.randomUUID();
 
@@ -64,8 +64,5 @@ public class TransferUseCase implements TransferPort {
 
         transactionRepositoryPort.save(debit);
         transactionRepositoryPort.save(credit);
-
-        accountRepositoryPort.save(senderAccount);
-        accountRepositoryPort.save(receiverAccount);
     }
 }
