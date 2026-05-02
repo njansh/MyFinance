@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringTransactionRepository;
 import org.springframework.data.domain.Page;
@@ -151,6 +152,18 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
             }
         }
         return null;
+    }
+
+    @Override
+    public BigDecimal sumSavingsByAccountsAndPeriod(List<UUID> investmentAccountIds, LocalDateTime startDate, LocalDateTime endDate) {
+        BigDecimal result = repository.sumSavingsByAccountsAndPeriod(investmentAccountIds, startDate, endDate);
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    @Override
+    public BigDecimal sumTransactionsByAccountsAndPeriod(List<UUID> allAccountIds, LocalDateTime startDate, LocalDateTime endDate, TransactionType transactionType) {
+        BigDecimal result = repository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, transactionType);
+        return result != null ? result : BigDecimal.ZERO;
     }
 
     private java.util.Map<String, BigDecimal> mapResults(List<Object> results) {

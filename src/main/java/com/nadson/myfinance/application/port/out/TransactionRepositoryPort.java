@@ -1,6 +1,7 @@
 package com.nadson.myfinance.application.port.out;
 
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -40,6 +41,10 @@ public interface TransactionRepositoryPort {
 
     java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate);
     Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount, com.nadson.myfinance.domain.enums.TransactionType type, UUID destinationId);
+
+    BigDecimal sumSavingsByAccountsAndPeriod(List<UUID> investmentAccountIds, LocalDateTime startDate, LocalDateTime endDate);
+
+    BigDecimal sumTransactionsByAccountsAndPeriod(List<UUID> allAccountIds, LocalDateTime startDate, LocalDateTime endDate, TransactionType transactionType);
 }
 
 
