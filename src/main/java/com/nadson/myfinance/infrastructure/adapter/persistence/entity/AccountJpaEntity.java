@@ -3,11 +3,13 @@ package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.enums.AccountType;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
+@Audited
 @Table(name = "accounts")
 public class AccountJpaEntity {
 
@@ -43,25 +45,25 @@ public class AccountJpaEntity {
 
     public static AccountJpaEntity fromDomain(Account account) {
         return new AccountJpaEntity(
-            account.getAccountId(),
-            account.getUserId(),
-            account.getType(),
-            account.getName(),
-            account.getBalance()
+                account.getAccountId(),
+                account.getUserId(),
+                account.getType(),
+                account.getName(),
+                account.getBalance()
         );
     }
 
     public Account toDomain() {
         return new Account(
-            this.id,
-            this.userId,
-            this.type,
-            this.name,
-            this.balance
+                this.id,
+                this.userId,
+                this.type,
+                this.name,
+                this.balance
         );
     }
-    
-    
+
+
     public UUID getId() {
         return id;
     }

@@ -3,12 +3,14 @@ package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Audited
 @Table(name = "transactions")
 public class TransactionJpaEntity {
 

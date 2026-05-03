@@ -3,10 +3,12 @@ package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.util.UUID;
 
 @Entity
+@Audited
 @Table(name = "categories")
 public class CategoryJpaEntity {
     @Id
