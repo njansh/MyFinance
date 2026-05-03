@@ -5,6 +5,7 @@ import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.application.service.TransactionImportService;
 import com.nadson.myfinance.application.usecase.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,8 +25,8 @@ public class BeanConfiguration {
     @Bean
     public CreateTransactionPort createTransactionUseCase(
             TransactionRepositoryPort transactionRepo,
-            AccountRepositoryPort accountRepo,CategoryRepositoryPort categoryRepo) {
-        return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo);
+            AccountRepositoryPort accountRepo, CategoryRepositoryPort categoryRepo, ApplicationEventPublisher eventPublisher) {
+        return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo, eventPublisher);
     }
     @Bean
     public CreateUserPort createUserUseCase(UserRepositoryPort repository, CreateCategoryPort createCategoryPort) {
@@ -125,8 +126,18 @@ public class BeanConfiguration {
     public ConfirmRecurringPort confirmRecurringPort(RecurringTemplateRepositoryPort repository, CreateTransactionPort createTransactionPort) {
         return new ConfirmRecurringUseCase(repository, createTransactionPort);
     }
+    @Bean
     public CreateCreditCardPort createCreditCardUseCase(CreditCardRepositoryPort creditCardRepository,AccountRepositoryPort accountRepository) {
         return new CreateCreditCardUseCase(creditCardRepository, accountRepository);
+    }
+    @Bean
+    public CreateBudgetPort createBudgetPort(BudgetRepositoryPort repository,UserRepositoryPort userRepository, CategoryRepositoryPort categoryRepository) {
+        return new CreateBudgetUseCase(repository, userRepository, categoryRepository);
+    }
+
+    @Bean
+    public CreateGoalPort createGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository) {
+        return new CreateGoalUseCase(repository, userRepository);
     }
 
 
