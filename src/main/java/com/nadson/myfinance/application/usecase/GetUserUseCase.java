@@ -9,16 +9,19 @@ import java.util.UUID;
 
 public class GetUserUseCase implements GetUserPort {
     private final UserRepositoryPort userRepositoryPort;
+
     public GetUserUseCase(UserRepositoryPort userRepositoryPort) {
         this.userRepositoryPort = userRepositoryPort;
     }
 
     @Override
     public User execute(UUID userId) {
-        if (userRepositoryPort.findById(userId) == null){
+        User user = userRepositoryPort.findById(userId);
+
+        if (user == null) {
             throw new UserNotFoundException(userId);
         }
 
-        return userRepositoryPort.findById(userId);
+        return user;
     }
 }
