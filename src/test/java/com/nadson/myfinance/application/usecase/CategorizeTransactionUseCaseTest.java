@@ -37,7 +37,6 @@ class CategorizeTransactionUseCaseTest {
     @Test
     @DisplayName("Deve atualizar a categoria de uma transação com sucesso")
     void shouldCategorizeTransactionSuccessfully() {
-        // Arrange
         UUID transactionId = UUID.randomUUID();
         UUID oldCategoryId = UUID.randomUUID();
         UUID newCategoryId = UUID.randomUUID();
@@ -56,10 +55,8 @@ class CategorizeTransactionUseCaseTest {
         when(categoryRepositoryPort.findById(newCategoryId)).thenReturn(category);
         when(transactionRepositoryPort.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Transaction result = useCase.execute(transactionId, newCategoryId);
 
-        // Assert
         assertNotNull(result);
         assertEquals(newCategoryId, result.getCategoryId());
         verify(transactionRepositoryPort, times(1)).save(transaction);
@@ -68,13 +65,11 @@ class CategorizeTransactionUseCaseTest {
     @Test
     @DisplayName("Deve lançar exceção quando a transação não for encontrada")
     void shouldThrowExceptionWhenTransactionNotFound() {
-        // Arrange
         UUID transactionId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
 
         when(transactionRepositoryPort.findById(transactionId)).thenReturn(null);
 
-        // Act & Assert
         assertThrows(TransactionNotFoundException.class, () -> useCase.execute(transactionId, categoryId));
         verify(categoryRepositoryPort, never()).findById(any());
         verify(transactionRepositoryPort, never()).save(any());
@@ -83,7 +78,6 @@ class CategorizeTransactionUseCaseTest {
     @Test
     @DisplayName("Deve lançar exceção quando a categoria não for encontrada")
     void shouldThrowExceptionWhenCategoryNotFound() {
-        // Arrange
         UUID transactionId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
         Transaction transaction = mock(Transaction.class);
@@ -91,7 +85,6 @@ class CategorizeTransactionUseCaseTest {
         when(transactionRepositoryPort.findById(transactionId)).thenReturn(transaction);
         when(categoryRepositoryPort.findById(categoryId)).thenReturn(null);
 
-        // Act & Assert
         assertThrows(CategoryNotFoundException.class, () -> useCase.execute(transactionId, categoryId));
         verify(transactionRepositoryPort, never()).save(any());
     }
