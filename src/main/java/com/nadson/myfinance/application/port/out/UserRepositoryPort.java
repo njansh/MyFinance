@@ -8,4 +8,6 @@ public interface UserRepositoryPort {
     User save(User user);
 
     User findById(UUID userId);
+
+    void deleteById(UUID userId);
 }

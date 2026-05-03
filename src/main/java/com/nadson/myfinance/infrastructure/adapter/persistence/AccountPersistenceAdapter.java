@@ -49,4 +49,9 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
     public void updateBalanceAtomic(UUID accountId, BigDecimal amount) {
         springAccountRepository.updateBalanceAtomic(accountId, amount);
     }
+
+    @Override
+    public void deleteById(UUID accountId) {
+        springAccountRepository.deleteById(accountId);
+    }
 }

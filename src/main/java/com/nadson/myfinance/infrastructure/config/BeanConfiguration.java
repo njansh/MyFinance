@@ -139,6 +139,18 @@ public class BeanConfiguration {
     public CreateGoalPort createGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository) {
         return new CreateGoalUseCase(repository, userRepository);
     }
-
-
+    @Bean
+    public DeleteUserPort deleteUserPort(UserRepositoryPort userRepo, AccountRepositoryPort accountRepo,
+                                         CategoryRepositoryPort categoryRepo, BudgetRepositoryPort budgetRepo,
+                                         GoalRepositoryPort goalRepo, RecurringTemplateRepositoryPort recurringRepo,
+                                         DeleteAccountPort deleteAccountPort) {
+        return new DeleteUserUseCase(
+                userRepo, accountRepo, categoryRepo, budgetRepo, goalRepo, recurringRepo, deleteAccountPort
+        );
+    }
+    @Bean
+    public DeleteAccountPort deleteAccountPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transactionRepo,
+                                               RecurringTemplateRepositoryPort recurringRepo, CreditCardRepositoryPort creditCardRepo){
+        return new DeleteAccountUseCase(accountRepo, transactionRepo, recurringRepo, creditCardRepo);
+    }
 }

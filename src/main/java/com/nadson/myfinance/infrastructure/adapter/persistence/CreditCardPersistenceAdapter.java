@@ -10,8 +10,11 @@ import java.util.UUID;
 @Component
 public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
     private final SpringCreditCardRepository springCreditCardRepository;
-    public CreditCardPersistenceAdapter(SpringCreditCardRepository springCreditCardRepository) {
+    private final SpringCreditCardRepository springBillingCycleRepository;
+
+    public CreditCardPersistenceAdapter(SpringCreditCardRepository springCreditCardRepository, SpringCreditCardRepository springBillingCycleRepository) {
         this.springCreditCardRepository = springCreditCardRepository;
+        this.springBillingCycleRepository = springBillingCycleRepository;
     }
     @Override
     public CreditCard save(CreditCard creditCard) {
@@ -24,5 +27,11 @@ public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
         return springCreditCardRepository.findById(creditCardId)
                 .map(CreditCardJpaEntity::toDomain)
                 .orElse(null);
+    }
+
+    @Override
+    public void deleteAllByAccountId(UUID accountId) {
+        springBillingCycleRepository.deleteAllByAccountId(accountId);
+        springCreditCardRepository.deleteAllByAccountId(accountId);
     }
 }

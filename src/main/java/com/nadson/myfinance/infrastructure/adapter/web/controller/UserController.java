@@ -9,6 +9,7 @@ import com.nadson.myfinance.infrastructure.adapter.web.dto.response.UserResponse
 import com.nadson.myfinance.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -23,13 +24,15 @@ public class UserController {
     private final GetTotalBalancePort getTotalBalancePort;
     private final ListAccountsByUserPort listAccountsByUserPort;
     private final JwtService jwtService;
+    private final DeleteUserPort deleteUserPort;
 
-    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort, ListAccountsByUserPort listAccountsByUserPort, JwtService jwtService) {
+    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort, ListAccountsByUserPort listAccountsByUserPort, JwtService jwtService, DeleteUserPort deleteUserPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
         this.listAccountsByUserPort = listAccountsByUserPort;
         this.jwtService = jwtService;
+        this.deleteUserPort = deleteUserPort;
     }
     
     @PostMapping
@@ -62,6 +65,12 @@ public class UserController {
         // Valida se o usuário existe antes de gerar o token
         getUserPort.execute(id);
         return ResponseEntity.ok(jwtService.generateToken(id.toString()));
+    }
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyUser() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        deleteUserPort.execute(UUID.fromString(userId));
+        return ResponseEntity.noContent().build();
     }
     }
 

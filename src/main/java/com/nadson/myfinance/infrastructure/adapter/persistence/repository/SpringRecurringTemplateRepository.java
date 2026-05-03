@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.persistence.repository;
 
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.RecurringTemplateJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
@@ -21,4 +22,11 @@ public interface SpringRecurringTemplateRepository extends JpaRepository<Recurri
             @Param("currentMonth") int currentMonth,
             @Param("currentYear") int currentYear
     );
+    @Modifying
+    @Query("DELETE FROM RecurringTemplateJpaEntity r WHERE r.userId = :userId")
+    void deleteAllByUserId(@Param("userId") UUID userId);
+
+    @Modifying
+    @Query("DELETE FROM RecurringTemplateJpaEntity r WHERE r.accountId = :accountId")
+    void deleteAllByAccountId(@Param("accountId") UUID accountId);
 }

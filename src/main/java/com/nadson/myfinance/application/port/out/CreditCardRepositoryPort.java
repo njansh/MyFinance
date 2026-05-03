@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface CreditCardRepositoryPort {
     CreditCard save(CreditCard creditCard);
     CreditCard findById(UUID creditCardId);
+
+    void deleteAllByAccountId(UUID accountId);
 }
