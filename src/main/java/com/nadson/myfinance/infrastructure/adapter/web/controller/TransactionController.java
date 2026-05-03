@@ -2,15 +2,12 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.Transaction;
-import com.nadson.myfinance.domain.exception.DuplicateResourceException;
-import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringIdempotencyRepository;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransferRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateTransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
 import jakarta.validation.Valid;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,8 +28,7 @@ public class TransactionController {
     private final DeleteTransactionPort deleteTransactionPort;
     private final GetAccountBalancePort getAccountBalancePort;
     private final GetIncomesByCategoryPort getIncomesByCategoryPort;
-    private final TransferPort transferPort; // Injetada para uso manual
-    private final SpringIdempotencyRepository idempotencyRepository;
+    private final TransferPort transferPort;
 
     public TransactionController(CreateTransactionPort createTransactionPort,
                                  GetTransactionPort getTransactionPort,
@@ -41,8 +37,7 @@ public class TransactionController {
                                  DeleteTransactionPort deleteTransactionPort,
                                  GetAccountBalancePort getAccountBalancePort,
                                  GetIncomesByCategoryPort getIncomesByCategoryPort,
-                                 TransferPort transferPort,
-                                 SpringIdempotencyRepository idempotencyRepository) {
+                                 TransferPort transferPort) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
         this.getExpensesByCategoryPort = getExpensesByCategoryPort;
@@ -51,19 +46,10 @@ public class TransactionController {
         this.getAccountBalancePort = getAccountBalancePort;
         this.getIncomesByCategoryPort = getIncomesByCategoryPort;
         this.transferPort = transferPort;
-        this.idempotencyRepository = idempotencyRepository;
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> create(
-            @RequestHeader(value = "Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody TransactionRequest request) {
-        try {
-            idempotencyRepository.insertKey(idempotencyKey);
-        } catch (DataIntegrityViolationException e) {
-            throw new DuplicateResourceException("Uma transação idêntica já foi processada para esta chave de segurança.");
-        }
-
+    public ResponseEntity<TransactionResponse> create(@Valid @RequestBody TransactionRequest request) {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(), request.description(), request.amount(), request.date(),
                 request.type(), request.accountId(), request.categoryId(),
@@ -74,7 +60,6 @@ public class TransactionController {
         return ResponseEntity.status(201).body(TransactionResponse.fromDomain(createdTransaction));
     }
 
-    // NOVA ROTA DE TRANSFERÊNCIA MANUAL
     @PostMapping("/transfer")
     public ResponseEntity<Void> transfer(@Valid @RequestBody TransferRequest request) {
         transferPort.execute(
@@ -121,7 +106,7 @@ public class TransactionController {
     }
 
     @GetMapping("/reports/expenses-by-category/{accountId}")
-    public ResponseEntity<Map<String, BigDecimal>> getExpensesReport (
+    public ResponseEntity<Map<String, BigDecimal>> getExpensesReport(
             @PathVariable UUID accountId,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
@@ -138,7 +123,7 @@ public class TransactionController {
     }
 
     @GetMapping("/reports/incomes-by-category/{accountId}")
-    public ResponseEntity<Map<String, BigDecimal>> getIncomesReport (
+    public ResponseEntity<Map<String, BigDecimal>> getIncomesReport(
             @PathVariable UUID accountId,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
