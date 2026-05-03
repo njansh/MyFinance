@@ -8,11 +8,13 @@ import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.event.TransactionCreatedEvent;
 import jakarta.transaction.Transactional;
 import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import com.nadson.myfinance.domain.exception.CategoryNotFoundException;
 import com.nadson.myfinance.domain.exception.InvalidTransactionValueException;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 
@@ -20,14 +22,16 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final AccountRepositoryPort accountRepositoryPort;
     private final CategoryRepositoryPort categoryRepositoryPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CreateTransactionUseCase(
             TransactionRepositoryPort transactionRepositoryPort,
             AccountRepositoryPort accountRepositoryPort,
-            CategoryRepositoryPort categoryRepositoryPort) {
+            CategoryRepositoryPort categoryRepositoryPort, ApplicationEventPublisher eventPublisher) {
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.accountRepositoryPort = accountRepositoryPort;
         this.categoryRepositoryPort = categoryRepositoryPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -56,6 +60,15 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
             accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount());
         } else {
             accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount().negate());
+        }
+        if (transaction.getType() == TransactionType.EXPENSE) {
+            eventPublisher.publishEvent(new TransactionCreatedEvent(
+                    account.getUserId(),
+                    transaction.getCategoryId(),
+                    transaction.getAmount(),
+                    transaction.getDate().getMonthValue(),
+                    transaction.getDate().getYear()
+            ));
         }
 
         return transactionRepositoryPort.save(transaction);

@@ -22,7 +22,8 @@ public class CreateCreditCardUseCase implements CreateCreditCardPort {
     public CreditCard execute(String name, BigDecimal creditLimit, int closingDay, int dueDay, UUID accountId) {
         if (accountRepository.findById(accountId) == null) {
             throw new AccountNotFoundException(accountId);
-        }        CreditCard card = new CreditCard(UUID.randomUUID(),accountId, name, creditLimit, closingDay, dueDay);
-       return repository.save(card);
+        }
+        CreditCard card = new CreditCard(UUID.randomUUID(), accountId, name, creditLimit, closingDay, dueDay);
+        return repository.save(card);
     }
 }
