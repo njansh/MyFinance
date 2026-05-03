@@ -25,19 +25,27 @@ class ProcessCreditCardTransactionUseCaseTest {
 
     @Test
     void shouldCreateCorrectInstallmentsForCreditCardPurchase() {
-        // Arrange
         UUID cardId = UUID.randomUUID();
         CreditCard card = new CreditCard(cardId, UUID.randomUUID(), "Visa", new BigDecimal("5000.00"), 5, 10);
 
         when(cardRepo.findById(cardId)).thenReturn(card);
-        // Simula que não há faturas abertas para simplificar o teste
         when(cycleRepo.findOpenCycleByCardId(eq(cardId), any())).thenReturn(null);
 
-        // Act: Compra de 100.00 em 2 parcelas
         useCase.execute(cardId, new BigDecimal("100.00"), LocalDate.now(), 2);
 
-        // Assert
-        // Deve salvar 2 ciclos de faturamento (ou atualizar 2 vezes o saldo das faturas)
         verify(cycleRepo, times(2)).save(any(BillingCycle.class));
+    }
+
+    @Test
+    void shouldHandleCentRoundingCorrectlyOnLastInstallment() {
+        UUID cardId = UUID.randomUUID();
+        CreditCard card = new CreditCard(cardId, UUID.randomUUID(), "Visa", new BigDecimal("500.00"), 5, 10);
+        when(cardRepo.findById(cardId)).thenReturn(card);
+        when(cycleRepo.findOpenCycleByCardId(eq(cardId), any())).thenReturn(null);
+
+        useCase.execute(cardId, new BigDecimal("10.00"), LocalDate.now(), 3);
+
+        verify(cycleRepo, times(2)).save(argThat(c -> c != null && c.getTotalAmount().compareTo(new BigDecimal("3.33")) == 0));
+        verify(cycleRepo).save(argThat(c -> c != null && c.getTotalAmount().compareTo(new BigDecimal("3.34")) == 0));
     }
 }
