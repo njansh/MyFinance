@@ -117,6 +117,14 @@ public class BeanConfiguration {
         return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo);
     }
     @Bean
+    public ListPendingRecurringPort listPendingRecurringPort(UserRepositoryPort userRepositoryPort, RecurringTemplateRepositoryPort recurringTemplateRepository){
+        return new ListPendingRecurringUseCase(userRepositoryPort, recurringTemplateRepository);
+    }
+
+    @Bean
+    public ConfirmRecurringPort confirmRecurringPort(RecurringTemplateRepositoryPort repository, CreateTransactionPort createTransactionPort) {
+        return new ConfirmRecurringUseCase(repository, createTransactionPort);
+    }
     public CreateCreditCardPort createCreditCardUseCase(CreditCardRepositoryPort creditCardRepository,AccountRepositoryPort accountRepository) {
         return new CreateCreditCardUseCase(creditCardRepository, accountRepository);
     }
