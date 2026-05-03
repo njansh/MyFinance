@@ -125,4 +125,9 @@ public class BeanConfiguration {
     public ConfirmRecurringPort confirmRecurringPort(RecurringTemplateRepositoryPort repository, CreateTransactionPort createTransactionPort) {
         return new ConfirmRecurringUseCase(repository, createTransactionPort);
     }
+    public CreateCreditCardPort createCreditCardUseCase(CreditCardRepositoryPort creditCardRepository,AccountRepositoryPort accountRepository) {
+        return new CreateCreditCardUseCase(creditCardRepository, accountRepository);
+    }
+
+
 }

@@ -11,6 +11,7 @@ import com.nadson.myfinance.domain.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -27,31 +28,38 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
 
     @Override
     @Transactional
-    public void execute(UUID creditCardId, BigDecimal amount, LocalDate transactionDate) {
+    public void execute(UUID creditCardId, BigDecimal totalAmount, LocalDate transactionDate, int installmentsCount) {
         CreditCard card = creditCardRepository.findById(creditCardId);
-        if (card == null) throw new ResourceNotFoundException("Cartão de crédito não encontrado");
+        if (card == null) throw new ResourceNotFoundException("Cartão não encontrado");
 
-        List<BillingCycle> unpaidCycles = billingCycleRepository.findUnpaidCyclesByCardId(creditCardId);
-        BigDecimal usedLimit = unpaidCycles.stream()
-                .map(BillingCycle::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // 1. Validar se o valor total cabe no limite
+        BigDecimal usedLimit = billingCycleRepository.findUnpaidCyclesByCardId(creditCardId).stream()
+                .map(BillingCycle::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (usedLimit.add(amount).compareTo(card.getCreditLimit()) > 0) {
-            throw new BusinessRuleException("Transação recusada: Excede o limite disponível do cartão.");
+        if (usedLimit.add(totalAmount).compareTo(card.getCreditLimit()) > 0) {
+            throw new BusinessRuleException("Limite insuficiente");
         }
 
-        BillingCycle currentCycle = billingCycleRepository.findOpenCycleByCardId(creditCardId);
+        // 2. Lógica de Parcelamento
+        BigDecimal installmentAmount = totalAmount.divide(BigDecimal.valueOf(installmentsCount), 2, RoundingMode.HALF_EVEN);
 
-        if (currentCycle == null) {
-            currentCycle = createNextCycle(card, transactionDate);
-        } else if (transactionDate.isAfter(currentCycle.getClosingDate())) {
-            currentCycle.closeCycle();
-            billingCycleRepository.save(currentCycle);
-            currentCycle = createNextCycle(card, transactionDate);
+        for (int i = 0; i < installmentsCount; i++) {
+            LocalDate installmentDate = transactionDate.plusMonths(i);
+
+            // Se for a última parcela, ajusta a diferença de centavos (residual)
+            if (i == installmentsCount - 1) {
+                BigDecimal totalDistributed = installmentAmount.multiply(BigDecimal.valueOf(installmentsCount - 1));
+                installmentAmount = totalAmount.subtract(totalDistributed);
+            }
+
+            BillingCycle cycle = billingCycleRepository.findOpenCycleByCardId(creditCardId, installmentDate);
+            if (cycle == null) {
+                cycle = createNextCycle(card, installmentDate);
+            }
+
+            cycle.addCharge(installmentAmount);
+            billingCycleRepository.save(cycle);
         }
-
-        currentCycle.addCharge(amount);
-        billingCycleRepository.save(currentCycle);
     }
 
     private BillingCycle createNextCycle(CreditCard card, LocalDate referenceDate) {

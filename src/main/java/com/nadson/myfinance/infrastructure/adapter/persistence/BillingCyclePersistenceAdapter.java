@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.BillingCyc
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringBillingCycleRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 @Component
@@ -23,7 +24,7 @@ public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPor
     }
 
     @Override
-    public BillingCycle findOpenCycleByCardId(UUID creditCardId) {
+    public BillingCycle findOpenCycleByCardId(UUID creditCardId, LocalDate installmentDate) {
         return springBillingCycleRepository.findById(creditCardId)
                 .map(BillingCycleJpaEntity::toDomain)
                 .orElse(null);
