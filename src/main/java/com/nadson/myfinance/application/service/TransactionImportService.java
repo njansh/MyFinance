@@ -28,7 +28,7 @@ import java.util.UUID;
 
 @Service
 public class TransactionImportService {
-
+    private final CategorizationEngine categorizationEngine;
     private final TransferPort transferPort;
     private final CreateTransactionPort createTransactionPort;
     private final TransactionRepositoryPort transactionRepositoryPort;
@@ -37,13 +37,15 @@ public class TransactionImportService {
     private final CreateCategoryPort createCategoryPort;
     private final List<CsvRowMapperStrategy> mapperStrategies;
 
-    public TransactionImportService(TransferPort transferPort,
+    public TransactionImportService(CategorizationEngine categorizationEngine, // Injeção corrigida
+                                    TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
                                     TransactionRepositoryPort transactionRepositoryPort,
                                     ListAccountsByUserPort listAccountsByUserPort,
                                     GetCategoriesPort getCategoriesPort,
                                     CreateCategoryPort createCategoryPort,
                                     List<CsvRowMapperStrategy> mapperStrategies) {
+        this.categorizationEngine = categorizationEngine;
         this.transferPort = transferPort;
         this.createTransactionPort = createTransactionPort;
         this.transactionRepositoryPort = transactionRepositoryPort;
@@ -61,7 +63,6 @@ public class TransactionImportService {
 
         List<Account> userAccounts = listAccountsByUserPort.execute(userId);
 
-        // Proteção: Se o usuário não tiver as contas com esses nomes, o sistema avisará em vez de quebrar
         UUID interId = findAccountIdByName(userAccounts, "Inter");
         UUID mpId = findAccountIdByName(userAccounts, "Mercado Pago");
         UUID investmentId = findAccountIdByName(userAccounts, "Investimento");
@@ -116,6 +117,7 @@ public class TransactionImportService {
                             BigDecimal balanceAfter, Map<String, Integer> currentFileCount,
                             UUID userId, Map<String, UUID> categoryCache) {
 
+
         BigDecimal absAmount = amount.abs();
         String descLower = description.toLowerCase();
 
@@ -150,14 +152,12 @@ public class TransactionImportService {
             }
             return;
         }
-
-        String extractedName = extractSmartCategoryName(description);
+        String extractedName = categorizationEngine.process(description);
         UUID predictedCategoryId;
 
         if (categoryCache.containsKey(extractedName.toLowerCase())) {
             predictedCategoryId = categoryCache.get(extractedName.toLowerCase());
         } else {
-            // CORREÇÃO: Gerador de cor com padding para garantir 7 caracteres (# + 6 hex)
             String randomColor = String.format("#%06x", (extractedName.hashCode() & 0xffffff));
             Category newCategory = createCategoryPort.execute(userId, extractedName, randomColor, type);
             predictedCategoryId = newCategory.getCategoryId();
@@ -171,25 +171,7 @@ public class TransactionImportService {
         createTransactionPort.execute(transaction);
     }
 
-    private String extractSmartCategoryName(String rawDescription) {
-        if (rawDescription == null || rawDescription.trim().isEmpty()) return "Outros";
 
-        String clean = rawDescription.toLowerCase()
-                .replaceAll("[^a-zà-ú\\s]", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
-
-        if (clean.isEmpty()) return "Outros";
-
-        String[] words = clean.split(" ");
-        String mainWord = words[0];
-
-        if (mainWord.length() <= 2 && words.length > 1) {
-            mainWord = words[1];
-        }
-
-        return mainWord.substring(0, 1).toUpperCase() + mainWord.substring(1);
-    }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
         return accounts.stream()
