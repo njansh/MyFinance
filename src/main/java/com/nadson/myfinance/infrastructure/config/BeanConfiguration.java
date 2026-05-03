@@ -3,6 +3,7 @@ package com.nadson.myfinance.infrastructure.config;
 import com.nadson.myfinance.application.parser.CsvRowMapperStrategy;
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.application.port.out.*;
+import com.nadson.myfinance.application.service.CategorizationEngine;
 import com.nadson.myfinance.application.service.TransactionImportService;
 import com.nadson.myfinance.application.usecase.*;
 import org.springframework.context.ApplicationEventPublisher;
@@ -48,6 +49,7 @@ public class BeanConfiguration {
     }
     @Bean
     public TransactionImportService transactionImportService(
+            CategorizationEngine categorizationEngine,
             TransferPort transferPort,
             CreateTransactionPort createTransactionPort,
             TransactionRepositoryPort transactionRepositoryPort,
@@ -56,7 +58,7 @@ public class BeanConfiguration {
             CreateCategoryPort createCategoryPort,
             List<CsvRowMapperStrategy> mapperStrategies) {
         return new TransactionImportService(
-                transferPort, createTransactionPort, transactionRepositoryPort,
+                categorizationEngine, transferPort, createTransactionPort, transactionRepositoryPort,
                 listAccountsByUserPort, getCategoriesPort, createCategoryPort, mapperStrategies);
     }
 
