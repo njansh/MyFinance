@@ -5,6 +5,8 @@ import com.nadson.myfinance.application.port.out.UserRepositoryPort;
 import com.nadson.myfinance.domain.entity.RecurringTemplate;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.exception.BusinessRuleException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,48 +14,61 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ListPendingRecurringUseCaseTest {
 
     @Mock
-    private UserRepositoryPort userRepo;
+    private UserRepositoryPort userRepositoryPort;
 
     @Mock
-    private RecurringTemplateRepositoryPort recurringRepo;
+    private RecurringTemplateRepositoryPort recurringTemplateRepositoryPort;
 
     @InjectMocks
     private ListPendingRecurringUseCase useCase;
 
     @Test
-    void shouldReturnPendingTemplatesForValidUser() {
-        // Arrange
+    @DisplayName("Deve listar templates pendentes para um usuário existente")
+    void shouldListPendingTemplatesSuccessfully() {
         UUID userId = UUID.randomUUID();
-        User fakeUser = new User(userId, "Nadson", "nadson@test.com");
+        LocalDate now = LocalDate.now();
 
         RecurringTemplate template = new RecurringTemplate(
                 UUID.randomUUID(), userId, UUID.randomUUID(), UUID.randomUUID(),
-                "Assinatura Netflix", new BigDecimal("45.90"), TransactionType.EXPENSE, 10, true
+                "Assinatura Streaming", new BigDecimal("34.90"), TransactionType.EXPENSE, 10,true
         );
 
-        when(userRepo.findById(userId)).thenReturn(fakeUser);
-
-        // Simula que o repositório encontrou 1 template pendente
-        when(recurringRepo.findPendingTemplates(eq(userId), anyInt(), anyInt(), anyInt()))
+        when(userRepositoryPort.findById(userId)).thenReturn(mock(User.class));
+        when(recurringTemplateRepositoryPort.findPendingTemplates(
+                eq(userId), eq(now.getDayOfMonth()), eq(now.getMonthValue()), eq(now.getYear())))
                 .thenReturn(List.of(template));
 
-        // Act
-        List<RecurringTemplate> pendingList = useCase.execute(userId);
+        List<RecurringTemplate> result = useCase.execute(userId);
 
-        // Assert
-        assertEquals(1, pendingList.size(), "Deveria retornar 1 pendência");
-        assertEquals("Assinatura Netflix", pendingList.get(0).getDescription(), "A descrição deve corresponder ao mock");
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Assinatura Streaming", result.get(0).getDescription());
+        verify(recurringTemplateRepositoryPort).findPendingTemplates(any(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Deve lançar BusinessRuleException quando o usuário não for encontrado")
+    void shouldThrowExceptionWhenUserNotFound() {
+        UUID userId = UUID.randomUUID();
+        when(userRepositoryPort.findById(userId)).thenReturn(null);
+
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class, () ->
+                useCase.execute(userId));
+
+        assertEquals("User not found", exception.getMessage());
+        verifyNoInteractions(recurringTemplateRepositoryPort);
     }
 }
