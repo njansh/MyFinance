@@ -39,10 +39,10 @@ public class RecurringController {
             @RequestParam BigDecimal actualAmount,
             @RequestParam(required = false) LocalDateTime actualDate) {
 
-        // Se a data não for enviada, assume o momento da confirmação
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         LocalDateTime dateToSave = actualDate!= null? actualDate : LocalDateTime.now();
 
-        Transaction confirmedTransaction = confirmRecurringPort.execute(templateId, actualAmount, dateToSave);
+        Transaction confirmedTransaction = confirmRecurringPort.execute(UUID.fromString(authenticatedUserId), templateId, actualAmount, dateToSave);
         return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction));
     }
 }
