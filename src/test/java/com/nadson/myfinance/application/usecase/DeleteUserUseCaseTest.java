@@ -21,25 +21,27 @@ class DeleteUserUseCaseTest {
 
     @Mock private UserRepositoryPort userRepo;
     @Mock private AccountRepositoryPort accountRepo;
+    @Mock private CategoryRepositoryPort categoryRepo;
+    @Mock private BudgetRepositoryPort budgetRepo;
+    @Mock private GoalRepositoryPort goalRepo;
     @Mock private RecurringTemplateRepositoryPort recurringRepo;
-    @Mock private DeleteAccountPort deleteAccountPort; // Porta de entrada reutilizada
+    @Mock private DeleteAccountPort deleteAccountPort;
 
     @InjectMocks private DeleteUserUseCase useCase;
 
     @Test
     void shouldWipeAllUserDataWhenUserIsDeleted() {
         UUID userId = UUID.randomUUID();
-        Account acc1 = new Account(UUID.randomUUID(), userId, AccountType.CHECKING, "C1", BigDecimal.ZERO);
-
-        when(accountRepo.findByUserId(userId)).thenReturn(List.of(acc1));
+        Account acc = new Account(UUID.randomUUID(), userId, AccountType.CHECKING, "Acc", BigDecimal.ZERO);
+        when(accountRepo.findByUserId(userId)).thenReturn(List.of(acc));
 
         useCase.execute(userId);
 
-
-        verify(deleteAccountPort, times(1)).execute(eq(acc1.getAccountId()), eq(userId));
-
+        verify(deleteAccountPort).execute(eq(acc.getAccountId()), eq(userId));
         verify(recurringRepo).deleteAllByUserId(userId);
-
+        verify(goalRepo).deleteAllByUserId(userId);
+        verify(budgetRepo).deleteAllByUserId(userId);
+        verify(categoryRepo).deleteAllByUserId(userId);
         verify(userRepo).deleteById(userId);
     }
 }
