@@ -26,4 +26,9 @@ public class UserPersistence implements UserRepositoryPort {
     public User findById(UUID userId) {
   return  repository.findById(userId).map(UserJpaEntity::toDomain).orElse(null);
     }
+
+    @Override
+    public void deleteById(UUID userId) {
+        repository.deleteById(userId);
+    }
 }

@@ -34,4 +34,14 @@ public class RecurringTemplatePersistenceAdapter implements RecurringTemplateRep
                 .map(RecurringTemplateJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        springRecurringTemplateRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByAccountId(UUID accountId) {
+springRecurringTemplateRepository.deleteAllByAccountId(accountId);
+    }
 }

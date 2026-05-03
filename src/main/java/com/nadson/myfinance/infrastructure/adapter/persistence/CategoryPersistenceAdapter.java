@@ -42,4 +42,9 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
                 .map(CategoryJpaEntity::toDomain)
                 .orElse(null);
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        springCategoryRepository.deleteAllByUserId(userId);
+    }
 }

@@ -1,6 +1,7 @@
     package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
     import com.nadson.myfinance.application.port.in.CreateAccountPort;
+    import com.nadson.myfinance.application.port.in.DeleteAccountPort;
     import com.nadson.myfinance.application.port.in.GetAccountport;
     import com.nadson.myfinance.application.port.in.ListTransactionsPort;
     import com.nadson.myfinance.domain.entity.Account;
@@ -12,6 +13,7 @@
     import org.springframework.data.domain.Sort;
     import org.springframework.data.web.PageableDefault;
     import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.web.bind.annotation.*;
 
     import org.springframework.data.domain.Page;
@@ -29,12 +31,14 @@
         private final ListTransactionsPort listTransactionsPort;
         private final GetAccountport getAccountport;
         private final CreateAccountPort createAccountPort;
+        private final DeleteAccountPort deleteAccountPort;
 
-        public AccountController(ListTransactionsPort listTransactionsPort, GetAccountport getAccountport, CreateAccountPort createAccountPort) {
+        public AccountController(ListTransactionsPort listTransactionsPort, GetAccountport getAccountport, CreateAccountPort createAccountPort, DeleteAccountPort deleteAccountPort) {
             this.listTransactionsPort = listTransactionsPort;
             this.getAccountport = getAccountport;
             this.createAccountPort = createAccountPort;
 
+            this.deleteAccountPort = deleteAccountPort;
         }
         @GetMapping("/{id}")
         public ResponseEntity<AccountResponse> getById(@PathVariable UUID id) {
@@ -73,4 +77,11 @@
             Page<TransactionResponse> response = transactionsPage.map(TransactionResponse::fromDomain);
 
             return ResponseEntity.ok(response);
-        }}
+        }
+        @DeleteMapping("/{id}")
+        public ResponseEntity<Void> deleteAccount(@PathVariable UUID id) {
+            String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            deleteAccountPort.execute(id, UUID.fromString(userId));
+            return ResponseEntity.noContent().build();
+        }
+    }

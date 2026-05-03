@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface GoalRepositoryPort {
     Goal save(Goal goal);
     List<Goal> findByUserId(UUID userId);
+
+    void deleteAllByUserId(UUID userId);
 }

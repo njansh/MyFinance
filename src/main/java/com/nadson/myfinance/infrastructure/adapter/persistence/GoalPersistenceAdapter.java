@@ -29,4 +29,9 @@ public class GoalPersistenceAdapter implements GoalRepositoryPort {
                 .map(GoalJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        repository.deleteAllByUserId(userId);
+    }
 }

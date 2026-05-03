@@ -166,6 +166,11 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         return result != null ? result : BigDecimal.ZERO;
     }
 
+    @Override
+    public void deleteAllByAccountId(UUID accountId) {
+        repository.deleteAllByAccountId(accountId);
+    }
+
     private java.util.Map<String, BigDecimal> mapResults(List<Object> results) {
         java.util.Map<String, BigDecimal> map = new java.util.HashMap<>();
 

@@ -11,4 +11,5 @@ public interface CategoryRepositoryPort {
     List<Category> findAllByUserId(UUID userId);
     Category findByNameAndUserId(String name, UUID userId);
 
+    void deleteAllByUserId(UUID userId);
 }

@@ -5,6 +5,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.Transactio
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -94,4 +95,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("investmentAccountIds") List<UUID> investmentAccountIds,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+    @Modifying
+    @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
+    void deleteAllByAccountId(@Param("accountId") UUID accountId);
 }

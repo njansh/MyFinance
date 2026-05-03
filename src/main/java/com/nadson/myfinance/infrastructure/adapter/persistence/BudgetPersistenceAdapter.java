@@ -28,4 +28,9 @@ public class BudgetPersistenceAdapter implements BudgetRepositoryPort {
                 .map(BudgetJpaEntity::toDomain)
                 .orElse(null);
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        repository.deleteAllByUserId(userId);
+    }
 }
