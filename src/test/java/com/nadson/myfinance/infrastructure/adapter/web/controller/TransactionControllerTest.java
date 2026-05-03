@@ -36,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class TransactionControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -58,7 +57,6 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Should create transaction and return 201 using 9-param DTO")
     void shouldCreateTransaction() throws Exception {
-        // Seguindo a ordem do seu record: description, amount, date, type, accountId, categoryId, transferID, isTransfer, accountBalanceAfter
         TransactionRequest request = new TransactionRequest(
                 "Compra Supermercado",
                 new BigDecimal("150.00"),
@@ -94,7 +92,6 @@ class TransactionControllerTest {
         UUID accountDestination = UUID.randomUUID();
         BigDecimal transferValue = new BigDecimal("500.00");
 
-        // DTO de Transferência (TransferRequest costuma ser diferente do TransactionRequest)
         TransferRequest transferRequest = new TransferRequest(
                 accountOrigin,
                 accountDestination,
@@ -108,7 +105,6 @@ class TransactionControllerTest {
                         .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isNoContent());
 
-        // Verificação robusta: garante que o dinheiro saiu de A e foi para B
         verify(transferPort).execute(
                 eq(accountOrigin),
                 eq(accountDestination),
@@ -118,6 +114,47 @@ class TransactionControllerTest {
                 any(),
                 any()
         );
+    }
+
+    @Test
+    @DisplayName("Should update transaction successfully")
+    void shouldUpdateTransaction() throws Exception {
+        UUID id = UUID.randomUUID();
+        String body = """
+                {
+                    "description": "Updated",
+                    "amount": 200.0,
+                    "date": "2026-05-03T10:00:00",
+                    "type": "EXPENSE",
+                    "accountId": "%s",
+                    "categoryId": "%s"
+                }
+                """.formatted(UUID.randomUUID(), UUID.randomUUID());
+
+        mockMvc.perform(put("/transactions/{id}", id)
+                        .with(csrf()).with(authentication(AUTH))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        verify(updateTransactionPort).execute(eq(id), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should return transaction by ID")
+    void shouldGetTransactionById() throws Exception {
+        UUID id = UUID.randomUUID();
+        Transaction mockTransaction = new Transaction(
+                id, "Test", BigDecimal.TEN, LocalDateTime.now(),
+                TransactionType.INCOME, UUID.randomUUID(), null, false, null, null
+        );
+
+        when(getTransactionPort.execute(id)).thenReturn(mockTransaction);
+
+        mockMvc.perform(get("/transactions/{id}", id)
+                        .with(authentication(AUTH)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.description").value("Test"));
     }
 
     @Test
@@ -133,6 +170,36 @@ class TransactionControllerTest {
                         .param("month", "5").param("year", "2026"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(3000.00));
+    }
+
+    @Test
+    @DisplayName("Should return expenses report by category")
+    void shouldGetExpensesReport() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        Map<String, BigDecimal> report = Map.of("Food", new BigDecimal("100.00"));
+
+        when(getExpensesByCategoryPort.execute(eq(accountId), any(), any())).thenReturn(report);
+
+        mockMvc.perform(get("/transactions/reports/expenses-by-category/{accountId}", accountId)
+                        .with(authentication(AUTH))
+                        .param("month", "5").param("year", "2026"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.Food").value(100.00));
+    }
+
+    @Test
+    @DisplayName("Should return incomes report by category")
+    void shouldGetIncomesReport() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        Map<String, BigDecimal> report = Map.of("Salary", new BigDecimal("5000.00"));
+
+        when(getIncomesByCategoryPort.execute(eq(accountId), any(), any())).thenReturn(report);
+
+        mockMvc.perform(get("/transactions/reports/incomes-by-category/{accountId}", accountId)
+                        .with(authentication(AUTH))
+                        .param("month", "5").param("year", "2026"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.Salary").value(5000.00));
     }
 
     @Test
