@@ -14,6 +14,7 @@ import com.nadson.myfinance.domain.enums.TransactionType;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,10 +22,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionImportService {
@@ -37,7 +36,7 @@ public class TransactionImportService {
     private final CreateCategoryPort createCategoryPort;
     private final List<CsvRowMapperStrategy> mapperStrategies;
 
-    public TransactionImportService(CategorizationEngine categorizationEngine, // Injeção corrigida
+    public TransactionImportService(CategorizationEngine categorizationEngine,
                                     TransferPort transferPort,
                                     CreateTransactionPort createTransactionPort,
                                     TransactionRepositoryPort transactionRepositoryPort,
@@ -78,81 +77,92 @@ public class TransactionImportService {
                 .setIgnoreEmptyLines(true)
                 .build();
 
+        List<CsvRowData> rowsToProcess = new ArrayList<>();
+        
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), "UTF-8"));
              CSVParser csvParser = new CSVParser(reader, format)) {
 
             boolean dataStarted = false;
-            UUID currentAccountId = bankCode.equalsIgnoreCase("MP")? mpId : interId;
-            Map<String, Integer> currentFileCount = new HashMap<>();
-
             for (CSVRecord record : csvParser) {
                 if (record.size() == 0) continue;
                 String firstCell = record.get(0);
 
-                if (firstCell.contains("RELEASE_DATE")
-                        || firstCell.contains("Data Lançamento")
-                        || firstCell.contains("Data")) {
+                if (firstCell.contains("RELEASE_DATE") || firstCell.contains("Data Lançamento") || firstCell.contains("Data")) {
                     dataStarted = true;
                     continue;
                 }
                 if (!dataStarted || firstCell.trim().isEmpty()) continue;
 
                 try {
-                    String description = strategy.extractDescription(record);
-                    BigDecimal amount = strategy.extractAmount(record);
-                    LocalDateTime dateTime = strategy.extractDate(record);
-                    BigDecimal balanceAfter = strategy.extractBalanceAfter(record);
-
-                    processRow(currentAccountId, interId, mpId, investmentId, description, amount, dateTime, balanceAfter, currentFileCount, userId, categoryCache);
+                    rowsToProcess.add(new CsvRowData(
+                            strategy.extractDescription(record),
+                            strategy.extractAmount(record),
+                            strategy.extractDate(record),
+                            strategy.extractBalanceAfter(record)
+                    ));
                 } catch (Exception e) {
-                    // Ignora linhas malformadas do CSV sem parar o processo inteiro
                     continue;
                 }
             }
         }
+
+        if (rowsToProcess.isEmpty()) return;
+
+        LocalDateTime minDate = rowsToProcess.stream().map(CsvRowData::date).min(LocalDateTime::compareTo).orElseThrow();
+        LocalDateTime maxDate = rowsToProcess.stream().map(CsvRowData::date).max(LocalDateTime::compareTo).orElseThrow();
+        UUID currentAccountId = bankCode.equalsIgnoreCase("MP") ? mpId : interId;
+
+        List<Transaction> existingTransactions = transactionRepositoryPort.findAllByAccountIdAndDateBetween(currentAccountId, minDate, maxDate);
+        List<String> existingHashes = existingTransactions.stream()
+                .map(this::generateHash)
+                .collect(Collectors.toList());
+
+        Map<String, Integer> currentFileCount = new HashMap<>();
+
+        for (CsvRowData row : rowsToProcess) {
+            processRow(currentAccountId, interId, mpId, investmentId, row, currentFileCount, existingHashes, userId, categoryCache);
+        }
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
-                            String description, BigDecimal amount, LocalDateTime date,
-                            BigDecimal balanceAfter, Map<String, Integer> currentFileCount,
-                            UUID userId, Map<String, UUID> categoryCache) {
+                            CsvRowData row, Map<String, Integer> currentFileCount,
+                            List<String> existingHashes, UUID userId, Map<String, UUID> categoryCache) {
 
+        BigDecimal absAmount = row.amount().abs();
+        String hash = generateHash(currentAccountId, row.date(), absAmount, row.description(), row.balanceAfter());
+        
+        int localCount = currentFileCount.getOrDefault(hash, 0) + 1;
+        currentFileCount.put(hash, localCount);
 
-        BigDecimal absAmount = amount.abs();
-        String descLower = description.toLowerCase();
+        // Se o hash já existe no DB, precisamos contar quantas vezes ele existe para lidar com duplicatas legítimas no mesmo arquivo
+        long dbOccurrences = existingHashes.stream().filter(h -> h.equals(hash)).count();
+        if (localCount <= dbOccurrences) return;
 
-        String rowKey = currentAccountId.toString() + date.toString() + absAmount.toString() + description + (balanceAfter!= null? balanceAfter.toString() : "null");
-        int localCount = currentFileCount.getOrDefault(rowKey, 0) + 1;
-        currentFileCount.put(rowKey, localCount);
-
-        long dbCount = transactionRepositoryPort.count(currentAccountId, date, absAmount, description, balanceAfter);
-        if (localCount <= dbCount) return;
-
+        String descLower = row.description().toLowerCase();
         boolean isManualTransfer = descLower.contains("nadson") && descLower.contains("santos") &&
                 !descLower.contains("fatura") && !descLower.contains("cartão") && !descLower.contains("cartao");
-        boolean isInvestment = descLower.contains("reserva")
-                || descLower.contains("reservado")
-                || descLower.contains("retirado");
+        boolean isInvestment = descLower.contains("reserva") || descLower.contains("reservado") || descLower.contains("retirado");
 
-        TransactionType type = amount.compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
+        TransactionType type = row.amount().compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
         if (isManualTransfer || isInvestment) {
-            UUID destinationId = isInvestment? investmentId : (currentAccountId.equals(interId)? mpId : interId);
-            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, date, absAmount, type, destinationId);
+            UUID destinationId = isInvestment ? investmentId : (currentAccountId.equals(interId) ? mpId : interId);
+            Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, row.date(), absAmount, type, destinationId);
 
-            if (unmatched!= null) {
-                Transaction updatedUnmatched = new Transaction(unmatched.getTransactionId(), description, unmatched.getAmount(), unmatched.getDate(), unmatched.getType(), unmatched.getAccountId(), unmatched.getCategoryId(), unmatched.isTransfer(), unmatched.getTransferID(), balanceAfter);
+            if (unmatched != null) {
+                Transaction updatedUnmatched = new Transaction(unmatched.getTransactionId(), row.description(), unmatched.getAmount(), unmatched.getDate(), unmatched.getType(), unmatched.getAccountId(), unmatched.getCategoryId(), unmatched.isTransfer(), unmatched.getTransferID(), row.balanceAfter());
                 transactionRepositoryPort.save(updatedUnmatched);
             } else {
-                if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                    transferPort.execute(currentAccountId, destinationId, absAmount, date, description, currentAccountId, balanceAfter);
+                if (row.amount().compareTo(BigDecimal.ZERO) < 0) {
+                    transferPort.execute(currentAccountId, destinationId, absAmount, row.date(), row.description(), currentAccountId, row.balanceAfter());
                 } else {
-                    transferPort.execute(destinationId, currentAccountId, absAmount, date, description, currentAccountId, balanceAfter);
+                    transferPort.execute(destinationId, currentAccountId, absAmount, row.date(), row.description(), currentAccountId, row.balanceAfter());
                 }
             }
             return;
         }
-        String extractedName = categorizationEngine.process(description);
+
+        String extractedName = categorizationEngine.process(row.description());
         UUID predictedCategoryId;
 
         if (categoryCache.containsKey(extractedName.toLowerCase())) {
@@ -165,19 +175,27 @@ public class TransactionImportService {
         }
 
         Transaction transaction = new Transaction(
-                UUID.randomUUID(), description, absAmount, date, type, currentAccountId,
-                predictedCategoryId, false, null, balanceAfter
+                UUID.randomUUID(), row.description(), absAmount, row.date(), type, currentAccountId,
+                predictedCategoryId, false, null, row.balanceAfter()
         );
         createTransactionPort.execute(transaction);
     }
 
+    private String generateHash(Transaction t) {
+        return generateHash(t.getAccountId(), t.getDate(), t.getAmount(), t.getDescription(), t.getAccountBalanceAfter());
+    }
 
+    private String generateHash(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal balanceAfter) {
+        return accountId.toString() + "_" + date.toString() + "_" + amount.toString() + "_" + description + "_" + (balanceAfter != null ? balanceAfter.toString() : "null");
+    }
 
     private UUID findAccountIdByName(List<Account> accounts, String name) {
         return accounts.stream()
                 .filter(acc -> acc.getName().toLowerCase().contains(name.toLowerCase()))
                 .map(Account::getAccountId)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Erro: Você precisa criar uma conta chamada '" + name + "' antes de importar o CSV."));
+                .orElseThrow(() -> new RuntimeException("Error: You must create an account named '" + name + "' before importing the CSV."));
     }
+
+    private record CsvRowData(String description, BigDecimal amount, LocalDateTime date, BigDecimal balanceAfter) {}
 }
