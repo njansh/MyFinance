@@ -26,8 +26,8 @@ public class SecurityConfig {
                 // Política Stateless obrigatória para JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Rotas de Swagger e Bootstrap de Usuários Abertas
-                        .requestMatchers("/users/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Rotas de Swagger, Auth e Bootstrap de Usuários Abertas
+                        .requestMatchers("/users/**", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // Protege todas as outras rotas
                         .anyRequest().authenticated()
                 )
