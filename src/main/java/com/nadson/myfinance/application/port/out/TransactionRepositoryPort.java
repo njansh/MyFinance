@@ -21,7 +21,6 @@ public interface TransactionRepositoryPort {
     Page<Transaction> findByAccountId(UUID accountId, Pageable pageable);
 
     Page<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-
     List<Transaction> findAllByAccountId(UUID accountId);
 
     List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);

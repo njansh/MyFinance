@@ -2,13 +2,12 @@ package com.nadson.myfinance.infrastructure.adapter.web.handler;
 
 import com.nadson.myfinance.domain.exception.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -16,13 +15,10 @@ public class GlobalExceptionHandler {
 
     // 1. RECURSOS NÃO ENCONTRADOS (404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problemDetail.setTitle("Recurso não encontrado");
+        return problemDetail;
     }
 
     // 2. REGRAS DE NEGÓCIO E VALORES INVÁLIDOS (400)
@@ -32,13 +28,10 @@ public class GlobalExceptionHandler {
             IllegalArgumentException.class,
             IllegalStateException.class
     })
-    public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    public ProblemDetail handleBadRequest(RuntimeException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Requisição Inválida");
+        return problemDetail;
     }
 
     // 3. CONFLITOS DE DADOS (409)
@@ -46,50 +39,44 @@ public class GlobalExceptionHandler {
             UserAlreadyExistsException.class,
             DuplicateResourceException.class
     })
-    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    public ProblemDetail handleConflict(RuntimeException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Conflito de dados");
+        return problemDetail;
     }
 
     // 4. ERROS DE VALIDAÇÃO DE CAMPOS (@Valid) (400)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
-        // Coleta todos os erros de validação em uma única String
+    public ProblemDetail handleValidationErrors(MethodArgumentNotValidException ex) {
         String details = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation failed: " + details,
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        problemDetail.setTitle("Erro de Validação");
+        problemDetail.setProperty("invalid_params", details);
+        return problemDetail;
     }
 
     // 5. ERRO GENÉRICO DO SERVIDOR (500)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        // Em produção, evite printStackTrace. Use um Logger.
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred. Please contact support.",
-                LocalDateTime.now()
+    public ProblemDetail handleGenericException(Exception ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR, 
+                "An unexpected error occurred. Please contact support."
         );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        problemDetail.setTitle("Erro Interno do Servidor");
+        return problemDetail;
     }
+
     // 6. FALHAS DE CONCORRÊNCIA E TRANSAÇÃO (409)
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "A conta ou transação foi modificada por outra operação simultânea. Por favor, tente novamente.",
-                LocalDateTime.now()
+    public ProblemDetail handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "A conta ou transação foi modificada por outra operação simultânea. Por favor, tente novamente."
         );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        problemDetail.setTitle("Conflito de Concorrência");
+        return problemDetail;
     }
 }
