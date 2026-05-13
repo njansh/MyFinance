@@ -37,7 +37,7 @@ public class UserController {
     
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody UserRequest request) {
-        User createdUser = createUserPort.execute( request.name(), request.email());
+        User createdUser = createUserPort.execute( request.name(), request.email(),request.password());
         return ResponseEntity.status(201).body(UserResponse.fromDomain(createdUser));
     }
 

@@ -2,6 +2,7 @@ package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.in.CreateUserPort;
+import com.nadson.myfinance.application.port.out.PasswordEncoderPort;
 import com.nadson.myfinance.application.port.out.UserRepositoryPort;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.domain.enums.TransactionType;
@@ -11,15 +12,18 @@ import java.util.UUID;
 public class CreateUserUseCase implements CreateUserPort {
     private final UserRepositoryPort userRepositoryPort;
     private final CreateCategoryPort createCategoryPort;
+    private final PasswordEncoderPort passwordEncoderPort;
 
-    public CreateUserUseCase(UserRepositoryPort userRepositoryPort, CreateCategoryPort createCategoryPort) {
+    public CreateUserUseCase(UserRepositoryPort userRepositoryPort, CreateCategoryPort createCategoryPort, PasswordEncoderPort passwordEncoderPort) {
         this.userRepositoryPort = userRepositoryPort;
         this.createCategoryPort = createCategoryPort;
+        this.passwordEncoderPort = passwordEncoderPort;
     }
 
     @Override
-    public User execute(String name, String email) {
-        User user = new User(null, name, email);
+    public User execute(String name, String email,String password) {
+        User user = new User(null, name, email," ");
+        user.setPassword(passwordEncoderPort.encode(password));
         User savedUser = userRepositoryPort.save(user);
 
         createDefaultCategories(savedUser.getId());

@@ -6,6 +6,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.UserJpaEnt
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringUserRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -30,5 +31,10 @@ public class UserPersistence implements UserRepositoryPort {
     @Override
     public void deleteById(UUID userId) {
         repository.deleteById(userId);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return repository.findByEmail(email).map(UserJpaEntity::toDomain);
     }
 }

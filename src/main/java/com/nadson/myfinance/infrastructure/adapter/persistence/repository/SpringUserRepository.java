@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringUserRepository extends JpaRepository<UserJpaEntity, UUID>
@@ -13,5 +14,6 @@ public interface SpringUserRepository extends JpaRepository<UserJpaEntity, UUID>
     @Modifying
     @Query("DELETE FROM UserJpaEntity u WHERE u.id = :userId")
     void deleteById(@Param("userId") UUID userId);
+    Optional<UserJpaEntity> findByEmail(String email);
 
 }
