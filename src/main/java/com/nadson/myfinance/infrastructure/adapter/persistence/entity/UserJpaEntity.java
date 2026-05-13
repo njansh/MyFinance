@@ -17,19 +17,23 @@ public class UserJpaEntity {
     private String name;
     @Column(nullable = false, unique = true)
     private String email;
+    @Column(name = "password", nullable = false)
+    private String password;
 
     public UserJpaEntity() {}
     public UserJpaEntity(User user) {
         this.id = user.getId();
         this.name = user.getName();
         this.email = user.getEmail();
+        this.password = user.getPassword();
     }
 
     public User toDomain() {
-        return new User(id, name, email);
+        return new User(id, name, email, password);
     }
 
     public UUID getId() { return id; }
     public String getName() { return name; }
     public String getEmail() { return email; }
+    public String getPassword() { return password; }
 }

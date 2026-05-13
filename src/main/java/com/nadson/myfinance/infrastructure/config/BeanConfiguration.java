@@ -30,8 +30,8 @@ public class BeanConfiguration {
         return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo, eventPublisher);
     }
     @Bean
-    public CreateUserPort createUserUseCase(UserRepositoryPort repository, CreateCategoryPort createCategoryPort) {
-        return new CreateUserUseCase(repository, createCategoryPort);
+    public CreateUserPort createUserUseCase(UserRepositoryPort repository, CreateCategoryPort createCategoryPort, PasswordEncoderPort passwordEncoderPort) {
+        return new CreateUserUseCase(repository, createCategoryPort, passwordEncoderPort);
     }
 
     @Bean

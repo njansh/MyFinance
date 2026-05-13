@@ -7,7 +7,7 @@ import com.nadson.myfinance.domain.enums.AccountType;
 
 import java.util.UUID;
 
-public class CreateAccountUseCase implements CreateAccountPort { // Implementando a porta!
+public class CreateAccountUseCase implements CreateAccountPort {
 
     private final AccountRepositoryPort accountRepositoryPort;
 
