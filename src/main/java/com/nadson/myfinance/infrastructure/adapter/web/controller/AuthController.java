@@ -36,17 +36,18 @@ public class AuthController {
         );
 
         String userId = authentication.getName();
-
         String accessToken = jwtService.generateToken(userId);
-        String refreshToken = jwtService.generateToken(userId); // Neste MVP usamos a mesma mecânica para o refresh
+        String refreshToken = jwtService.generateToken(userId);
 
+        // O token agora vai de forma segura pelo cabeçalho HTTP
+        response.addCookie(cookieService.createAccessTokenCookie(accessToken));
         response.addCookie(cookieService.createRefreshTokenCookie(refreshToken));
 
-        return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso"));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         Optional<String> refreshTokenOpt = cookieService.extractRefreshToken(request);
 
         if (refreshTokenOpt.isEmpty()) {
@@ -56,10 +57,11 @@ public class AuthController {
 
         try {
             String userId = jwtService.extractUserId(refreshTokenOpt.get());
-
             String newAccessToken = jwtService.generateToken(userId);
 
-            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+            response.addCookie(cookieService.createAccessTokenCookie(newAccessToken));
+
+            return ResponseEntity.ok(Map.of("message", "Token renovado com sucesso"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Refresh token inválido ou expirado"));
