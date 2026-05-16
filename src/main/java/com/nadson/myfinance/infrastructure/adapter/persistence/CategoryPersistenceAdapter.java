@@ -32,7 +32,7 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
 
     @Override
     public List<Category> findAllByUserId(UUID userId) {
-        return springCategoryRepository.findAllByUserId(userId).stream()
+        return springCategoryRepository.findByUserId(userId).stream()
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }

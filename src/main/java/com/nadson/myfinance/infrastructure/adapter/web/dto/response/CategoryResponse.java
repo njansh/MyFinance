@@ -5,9 +5,9 @@
 
     import java.util.UUID;
 
-    public record CategoryResponse(UUID id, String name, String colorHex, TransactionType type) {
+    public record CategoryResponse(UUID id, String name, String colorHex, TransactionType type,UUID userID) {
         public static CategoryResponse fromDomain(Category c) {
-            return new CategoryResponse(c.getCategoryId(), c.getName(), c.getColorHex(), c.getType());
+            return new CategoryResponse(c.getCategoryId(), c.getName(), c.getColorHex(), c.getType(), c.getUserId());
         }
 
     }
