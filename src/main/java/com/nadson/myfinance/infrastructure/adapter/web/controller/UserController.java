@@ -23,21 +23,29 @@ public class UserController {
     private final GetUserPort getUserPort;
     private final GetTotalBalancePort getTotalBalancePort;
     private final ListAccountsByUserPort listAccountsByUserPort;
+    private final GetCategoriesPort getCategoriesPort;
     private final JwtService jwtService;
     private final DeleteUserPort deleteUserPort;
 
-    public UserController(CreateUserPort createUserPort, GetUserPort getUserPort, GetTotalBalancePort getTotalBalancePort, ListAccountsByUserPort listAccountsByUserPort, JwtService jwtService, DeleteUserPort deleteUserPort) {
+    public UserController(CreateUserPort createUserPort,
+                          GetUserPort getUserPort,
+                          GetTotalBalancePort getTotalBalancePort,
+                          ListAccountsByUserPort listAccountsByUserPort,
+                          GetCategoriesPort getCategoriesPort,
+                          JwtService jwtService,
+                          DeleteUserPort deleteUserPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
         this.listAccountsByUserPort = listAccountsByUserPort;
+        this.getCategoriesPort = getCategoriesPort;
         this.jwtService = jwtService;
         this.deleteUserPort = deleteUserPort;
     }
-    
+
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody UserRequest request) {
-        User createdUser = createUserPort.execute( request.name(), request.email(),request.password());
+        User createdUser = createUserPort.execute(request.name(), request.email(), request.password());
         return ResponseEntity.status(201).body(UserResponse.fromDomain(createdUser));
     }
 
@@ -52,7 +60,6 @@ public class UserController {
         return ResponseEntity.ok(getTotalBalancePort.execute(id));
     }
 
-
     @GetMapping("/{id}/accounts")
     public ResponseEntity<List<AccountResponse>> getAccountsByUserId(@PathVariable UUID id) {
         var accounts = listAccountsByUserPort.execute(id);
@@ -60,17 +67,25 @@ public class UserController {
                 .map(AccountResponse::fromDomain)
                 .toList());
     }
+
+    @GetMapping("/{id}/categories")
+    public ResponseEntity<List<CategoryResponse>> getCategoriesByUserId(@PathVariable UUID id) {
+        var categories = getCategoriesPort.execute(id);
+        return ResponseEntity.ok(categories.stream()
+                .map(CategoryResponse::fromDomain)
+                .toList());
+    }
+
     @GetMapping("/{id}/token")
     public ResponseEntity<String> generateDevelopmentToken(@PathVariable UUID id) {
-        // Valida se o usuário existe antes de gerar o token
         getUserPort.execute(id);
         return ResponseEntity.ok(jwtService.generateToken(id.toString()));
     }
+
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyUser() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         deleteUserPort.execute(UUID.fromString(userId));
         return ResponseEntity.noContent().build();
     }
-    }
-
+}

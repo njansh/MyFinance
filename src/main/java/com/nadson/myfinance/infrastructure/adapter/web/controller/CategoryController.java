@@ -35,7 +35,6 @@ public class CategoryController {
     public ResponseEntity<List<CategoryResponse>> getAll() {
         String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Busca as categorias filtrando pelo usuário logado
         List<Category> categories = getCategoriesPort.execute(UUID.fromString(authenticatedUserId));
 
         List<CategoryResponse> response = categories.stream()
