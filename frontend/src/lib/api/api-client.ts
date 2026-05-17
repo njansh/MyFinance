@@ -9,6 +9,11 @@ export interface Account {
   type: string;
 }
 
+export interface Category {
+  categoryId: string;
+  name: string;
+}
+
 export interface Transaction {
   transactionId: string;
   id?: string;
@@ -19,6 +24,8 @@ export interface Transaction {
   accountId: string;
   categoryId: string;
   accountBalanceAfter: number;
+  isTransfer?: boolean;
+  transferID?: string;
 }
 
 export interface PaginatedTransactions {
@@ -49,6 +56,33 @@ export async function getAccounts(): Promise<Account[]> {
 
   const userId = getUserIdFromToken(token);
   const targetUrl = `${API_BASE_URL}/users/${userId}/accounts`;
+
+  const response = await fetch(targetUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
+  }
+
+  return response.json();
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  if (!token) {
+    throw new Error('UNAUTHORIZED');
+  }
+
+  const userId = getUserIdFromToken(token);
+  const targetUrl = `${API_BASE_URL}/users/${userId}/categories`;
 
   const response = await fetch(targetUrl, {
     method: 'GET',
@@ -100,4 +134,31 @@ export async function getTransactions(
   }
 
   return response.json();
+}
+
+export async function createTransfer(payload: {
+  fromId: string;
+  toId: string;
+  amount: number;
+  date: string;
+}): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  if (!token) {
+    throw new Error('UNAUTHORIZED');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/transactions/transfer`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP_ERROR_${response.status}`);
+  }
 }
