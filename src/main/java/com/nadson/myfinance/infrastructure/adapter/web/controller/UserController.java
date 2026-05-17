@@ -1,13 +1,16 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
+import com.nadson.myfinance.application.usecase.ListTransactionsUseCase;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CategoryResponse;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.UserResponse;
 import com.nadson.myfinance.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +29,7 @@ public class UserController {
     private final GetCategoriesPort getCategoriesPort;
     private final JwtService jwtService;
     private final DeleteUserPort deleteUserPort;
+    private final ListTransactionsUseCase listTransactionsUseCase;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -33,7 +37,7 @@ public class UserController {
                           ListAccountsByUserPort listAccountsByUserPort,
                           GetCategoriesPort getCategoriesPort,
                           JwtService jwtService,
-                          DeleteUserPort deleteUserPort) {
+                          DeleteUserPort deleteUserPort, ListTransactionsUseCase listTransactionsUseCase) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -41,6 +45,7 @@ public class UserController {
         this.getCategoriesPort = getCategoriesPort;
         this.jwtService = jwtService;
         this.deleteUserPort = deleteUserPort;
+        this.listTransactionsUseCase = listTransactionsUseCase;
     }
 
     @PostMapping
