@@ -1,63 +1,74 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { TransactionForm } from './form'
+import { Suspense } from 'react';
+import { getTransactions, getAccounts } from '@/lib/api-client';
+import { TransactionsTable } from '@/components/transactions-table';
+import { TransactionsFilter } from '@/components/transactions-filter';
 
-export default async function TransactionsPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('accessToken')?.value
+interface PageProps {
+  searchParams: Promise<{
+    accountId?: string;
+    startDate?: string;
+    endDate?: string;
+    description?: string;
+    page?: string;
+  }>;
+}
 
-  if (!token) redirect('/login')
+export default async function TransactionsPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
 
-  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
-  const userId = payload.sub
-
-  // CORREÇÃO 1: Inicializando como arrays vazios para evitar erros de undefined
-  let accounts: any[] = []
-  let categories: any[] = []
-
+  let accounts = [];
   try {
-    // CORREÇÃO 2 e 3: Desestruturando as respostas e passando as duas requisições paralelas
-    const [accRes, catRes] = await Promise.all([
-      fetch(`http://localhost:8080/users/${userId}/accounts`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`http://localhost:8080/users/${userId}/categories`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      })
-    ])
-
-    if (accRes.ok) accounts = await accRes.json()
-    if (catRes.ok) categories = await catRes.json()
-  } catch (error) {
-    console.error("Erro ao carregar dados:", error)
+    accounts = await getAccounts();
+  } catch {
+    return (
+      <div className="container mx-auto p-8">
+        <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-sm font-medium">
+          Falha ao conectar com o serviço de contas.
+        </div>
+      </div>
+    );
   }
 
+  const accountId = resolvedParams.accountId || accounts[0]?.accountId || '';
+  const filters = {
+    startDate: resolvedParams.startDate,
+    endDate: resolvedParams.endDate,
+    description: resolvedParams.description,
+    page: resolvedParams.page ? Number(resolvedParams.page) : 0,
+    size: 10,
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-
-        <header className="bg-white p-6 rounded-xl shadow-sm">
-          <h1 className="text-2xl font-bold text-gray-900">Lançamentos</h1>
-          <p className="text-gray-500">Registre suas receitas e despesas para manter seu fluxo de caixa atualizado.</p>
-        </header>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Novo Registro</h2>
-
-          {accounts.length > 0 ? (
-            <TransactionForm accounts={accounts} categories={categories} />
-          ) : (
-            <div className="text-amber-700 p-4 bg-amber-50 rounded-lg">
-              Você precisa criar uma Conta Bancária antes de registrar transações.
-            </div>
-          )}
-        </div>
-
+    <div className="container mx-auto p-8 max-w-7xl space-y-8 antialiased text-slate-900">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Extrato Consolidado</h1>
+        <p className="text-sm text-slate-500 font-medium">Gestão e auditoria de lançamentos e fluxos de caixa.</p>
       </div>
+
+      <TransactionsFilter accounts={accounts} />
+
+      <Suspense fallback={<div className="h-96 w-full bg-slate-50 border border-slate-100 animate-pulse rounded-2xl" />}>
+        {accountId ? (
+          <TransactionsDataWrapper accountId={accountId} filters={filters} />
+        ) : (
+          <div className="p-12 border border-dashed border-slate-200 rounded-2xl text-center text-sm text-slate-400 font-medium bg-white shadow-sm">
+            Nenhuma conta bancária ativa localizada para este perfil.
+          </div>
+        )}
+      </Suspense>
     </div>
-  )
+  );
+}
+
+async function TransactionsDataWrapper({ accountId, filters }: { accountId: string; filters: any }) {
+  try {
+    const data = await getTransactions(accountId, filters);
+    return <TransactionsTable data={data} />;
+  } catch {
+    return (
+      <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-sm font-medium">
+        Não foi possível recuperar os lançamentos para a conta selecionada.
+      </div>
+    );
+  }
 }
