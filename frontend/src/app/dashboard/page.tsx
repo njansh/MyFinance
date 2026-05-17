@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-// Função utilitária para formatar moeda brasileira
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -10,38 +9,32 @@ function formatCurrency(value: number) {
 }
 
 export default async function DashboardPage() {
-  // 1. Lemos o cookie seguro no ambiente do Servidor
   const cookieStore = await cookies()
   const token = cookieStore.get('accessToken')?.value
 
-  // Se não tem token, o proxy já deveria ter bloqueado, mas fazemos dupla checagem
   if (!token) {
     redirect('/login')
   }
 
-  // 2. Descobrimos o mês e ano atual para passar para a API
   const now = new Date()
-  const currentMonth = now.getMonth() + 1 // Em JS, os meses vão de 0 a 11
+  const currentMonth = now.getMonth() + 1
   const currentYear = now.getFullYear()
 
-  // 3. Buscamos os dados reais do Spring Boot
   let kpis = { netWorth: 0, monthlyIncome: 0, monthlyExpense: 0 }
 
   try {
-    // O Next.js atua como intermediário, repassando o token via cabeçalho Authorization
     const res = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      cache: 'no-store' // Garante que o dashboard sempre mostrará dados frescos
+      cache: 'no-store'
     })
 
     if (res.ok) {
       kpis = await res.json()
     } else if (res.status === 403 || res.status === 401) {
-      // Se o token expirou no backend, força o login novamente
       redirect('/login')
     }
   } catch (error) {
@@ -52,7 +45,6 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* Cabeçalho da Página */}
         <header className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Visão Geral Financeira</h1>
@@ -64,7 +56,6 @@ export default async function DashboardPage() {
           </button>
         </header>
 
-        {/* Grid de Resumo com Dados Reais do Banco */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-800">
             <h3 className="text-sm font-medium text-gray-500">Saldo Atual (Patrimônio)</h3>
