@@ -17,19 +17,6 @@ export default async function ExtratoPage({ searchParams }: PageProps) {
   try {
     accounts = await getAccounts();
   } catch (error: any) {
-    if (error.message === 'UNAUTHORIZED' || error.message?.includes('403') || error.message?.includes('401')) {
-      return (
-        <div className="container mx-auto p-8 max-w-md mt-16 antialiased">
-          <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-4 shadow-sm">
-            <h2 className="text-lg font-bold text-amber-900">Sessão Rejeitada ou Expirada</h2>
-            <p className="text-sm text-amber-700 font-medium">É necessário autenticar-se no sistema para ler e consolidar os dados do extrato contábil.</p>
-            <a href="/login" className="inline-block w-full py-2.5 bg-slate-950 text-white text-sm font-semibold rounded-xl hover:bg-slate-850 active:scale-[0.98] transition-all">
-              Acessar Tela de Login
-            </a>
-          </div>
-        </div>
-      );
-    }
     return (
       <div className="container mx-auto p-8 max-w-2xl mt-12 antialiased">
         <div className="p-6 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl space-y-3 shadow-sm">
@@ -91,11 +78,11 @@ async function TransactionsDataWrapper({ accountId, filters, accounts }: { accou
         number: 0
       };
 
-      return <TransactionsTable data={normalizedData} accounts={accounts} />;
+      return <TransactionsTable data={normalizedData} accounts={accounts} isConsolidated={true} />;
     }
 
     const data = await getTransactions(accountId, filters);
-    return <TransactionsTable data={data} accounts={accounts} />;
+    return <TransactionsTable data={data} accounts={accounts} isConsolidated={false} />;
   } catch (error: any) {
     console.error('=== ERRO CRÍTICO NA BUSCA DE TRANSAÇÕES ===', error);
     return (

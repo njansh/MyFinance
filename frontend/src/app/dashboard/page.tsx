@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { getAccounts, getExpensesReport, getIncomesReport } from '../../lib/api/api-client';
 import { DashboardCharts } from '../../components/dashboard/dashboard-charts';
 
@@ -16,10 +15,6 @@ function formatCurrency(value: number) {
 export default async function DashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
-
-  if (!token) {
-    redirect('/login');
-  }
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -44,20 +39,15 @@ export default async function DashboardPage() {
 
     if (resKpis.ok) {
       kpis = await resKpis.json();
-    } else if (resKpis.status === 403 || resKpis.status === 401) {
-      redirect('/login');
     }
 
     if (accounts.length > 0) {
-      // Cria um array de requisições para TODAS as contas
       const expPromises = accounts.map(acc => getExpensesReport(acc.accountId, currentMonth, currentYear).catch(() => ({})));
       const incPromises = accounts.map(acc => getIncomesReport(acc.accountId, currentMonth, currentYear).catch(() => ({})));
 
-      // Dispara tudo em paralelo para máxima performance
       const expResults = await Promise.all(expPromises);
       const incResults = await Promise.all(incPromises);
 
-      // Agrega e soma os valores de categorias iguais de contas diferentes
       expResults.forEach(report => {
         Object.entries(report).forEach(([category, amount]) => {
           expensesReport[category] = (expensesReport[category] || 0) + Number(amount);
