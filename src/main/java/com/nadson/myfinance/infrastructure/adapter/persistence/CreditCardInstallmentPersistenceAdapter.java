@@ -20,7 +20,12 @@ public class CreditCardInstallmentPersistenceAdapter implements CreditCardInstal
 
     @Override
     public CreditCardInstallment save(CreditCardInstallment installment) {
-        CreditCardInstallmentJpaEntity entity = new CreditCardInstallmentJpaEntity(installment);
+        CreditCardInstallmentJpaEntity entity = repository.findById(installment.getId())
+                .orElse(new CreditCardInstallmentJpaEntity(installment));
+
+        entity.setStatus(installment.getStatus());
+        entity.setAmount(installment.getAmount());
+
         return repository.save(entity).toDomain();
     }
 

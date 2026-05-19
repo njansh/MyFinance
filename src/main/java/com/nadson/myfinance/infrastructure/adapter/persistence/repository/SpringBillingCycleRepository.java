@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,4 +17,6 @@ public interface SpringBillingCycleRepository extends JpaRepository<BillingCycle
 
     @Modifying
     @Query("DELETE FROM BillingCycleJpaEntity b WHERE b.creditCardId IN (SELECT c.id FROM CreditCardJpaEntity c WHERE c.accountId = :accountId)")
-    void deleteAllByAccountId(@Param("accountId") UUID accountId);}
+    void deleteAllByAccountId(@Param("accountId") UUID accountId);
+    List<BillingCycleJpaEntity> findByCreditCardIdAndDueDateBetween(UUID creditCardId, LocalDate start, LocalDate end);
+}

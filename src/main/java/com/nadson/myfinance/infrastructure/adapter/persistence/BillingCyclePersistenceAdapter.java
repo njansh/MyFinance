@@ -34,7 +34,8 @@ public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPor
     public BillingCycle findOpenCycleByCardId(UUID creditCardId, LocalDate installmentDate) {
         return springBillingCycleRepository.findByCreditCardIdAndStatus(creditCardId, BillingCycleStatus.OPEN)
                 .stream()
-                .findFirst() // Pega a primeira que estiver aberta
+                .filter(cycle -> !installmentDate.isBefore(cycle.getStartDate()) && !installmentDate.isAfter(cycle.getClosingDate()))
+                .findFirst()
                 .map(BillingCycleJpaEntity::toDomain)
                 .orElse(null);
     }
@@ -50,6 +51,17 @@ public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPor
     @Override
     public BillingCycle findById(UUID billingCycleId) {
         return springBillingCycleRepository.findById(billingCycleId)
+                .map(BillingCycleJpaEntity::toDomain)
+                .orElse(null);
+    }
+    @Override
+    public BillingCycle findByCardIdAndMonthYear(UUID creditCardId, int month, int year) {
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        return springBillingCycleRepository.findByCreditCardIdAndDueDateBetween(creditCardId, start, end)
+                .stream()
+                .findFirst() // Retorna a primeira fatura que coincidir
                 .map(BillingCycleJpaEntity::toDomain)
                 .orElse(null);
     }

@@ -32,6 +32,7 @@ public class UserController {
     private final GetBillingCycleDetailsPort getBillingCycleDetailsPort;
     private final CreateCreditCardPort createCreditCardPort;
     private final GetCreditCardPort getCreditCardPort;
+    private final GetBillingCycleByDatePort getBillingCycleByDatePort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -40,7 +41,12 @@ public class UserController {
                           GetCategoriesPort getCategoriesPort,
                           JwtService jwtService,
                           DeleteUserPort deleteUserPort,
-                          ListCreditCardByUserPort listCreditCardByUserPort, ProcessCreditCardTransactionPort processTransactionPort, GetBillingCycleDetailsPort getBillingCycleDetailsPort, CreateCreditCardPort createCreditCardPort, GetCreditCardPort getCreditCardPort) {
+                          ListCreditCardByUserPort listCreditCardByUserPort,
+                          ProcessCreditCardTransactionPort processTransactionPort,
+                          GetBillingCycleDetailsPort getBillingCycleDetailsPort,
+                          CreateCreditCardPort createCreditCardPort,
+                          GetCreditCardPort getCreditCardPort,
+                          GetBillingCycleByDatePort getBillingCycleByDatePort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -53,7 +59,10 @@ public class UserController {
         this.getBillingCycleDetailsPort = getBillingCycleDetailsPort;
         this.createCreditCardPort = createCreditCardPort;
         this.getCreditCardPort = getCreditCardPort;
+        this.getBillingCycleByDatePort = getBillingCycleByDatePort;
     }
+
+    // --- User Management ---
 
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody UserRequest request) {
@@ -66,15 +75,22 @@ public class UserController {
         User user = getUserPort.execute(id);
         return ResponseEntity.ok(UserResponse.fromDomain(user));
     }
-    @GetMapping("/{id}/credit-cards")
-    public ResponseEntity<List<CreditCardResponse>> creditCardsList(@PathVariable UUID id) {
-        return ResponseEntity.ok(
-                listCreditCardByUserPort.execute(id)
-                        .stream()
-                        .map(CreditCardResponse::from)
-                        .toList()
-        );
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyUser() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        deleteUserPort.execute(UUID.fromString(userId));
+        return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/token")
+    public ResponseEntity<String> generateDevelopmentToken(@PathVariable UUID id) {
+        getUserPort.execute(id);
+        return ResponseEntity.ok(jwtService.generateToken(id.toString()));
+    }
+
+    // --- Financial Overview ---
+
     @GetMapping("/{id}/total-balance")
     public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable UUID id) {
         return ResponseEntity.ok(getTotalBalancePort.execute(id));
@@ -96,11 +112,44 @@ public class UserController {
                 .toList());
     }
 
-    @GetMapping("/{id}/token")
-    public ResponseEntity<String> generateDevelopmentToken(@PathVariable UUID id) {
-        getUserPort.execute(id);
-        return ResponseEntity.ok(jwtService.generateToken(id.toString()));
+    // --- Credit Cards ---
+
+    @PostMapping("/{userId}/credit-cards")
+    public ResponseEntity<Void> createCreditCard(
+            @PathVariable UUID userId,
+            @RequestBody CreditCardRequest request) {
+
+        createCreditCardPort.execute(
+                userId,
+                request.name(),
+                request.creditLimit(),
+                request.closingDay(),
+                request.dueDay(),
+                request.accountId()
+        );
+        return ResponseEntity.status(201).build();
     }
+
+    @GetMapping("/{id}/credit-cards")
+    public ResponseEntity<List<CreditCardResponse>> creditCardsList(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                listCreditCardByUserPort.execute(id)
+                        .stream()
+                        .map(CreditCardResponse::from)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/{userId}/credit-cards/{cardId}")
+    public ResponseEntity<CreditCardResponse> getCreditCardById(
+            @PathVariable UUID userId,
+            @PathVariable UUID cardId) {
+
+        return ResponseEntity.ok(CreditCardResponse.from(getCreditCardPort.execute(userId, cardId)));
+    }
+
+    // --- Credit Card Transactions & Billing Cycles ---
+
     @PostMapping("/{userId}/credit-cards/{cardId}/transactions")
     public ResponseEntity<Void> addTransaction(
             @PathVariable UUID userId,
@@ -120,6 +169,17 @@ public class UserController {
         return ResponseEntity.status(201).build();
     }
 
+    @GetMapping("/{userId}/credit-cards/{cardId}/billing-cycles/search")
+    public ResponseEntity<BillingCycleDetailsDTO> getBillingCycleByDate(
+            @PathVariable UUID userId,
+            @PathVariable UUID cardId,
+            @RequestParam int month,
+            @RequestParam int year) {
+
+        BillingCycleDetailsDTO details = getBillingCycleByDatePort.execute(userId, cardId, month, year);
+        return ResponseEntity.ok(details);
+    }
+
     @GetMapping("/{userId}/credit-cards/{cardId}/billing-cycles/{cycleId}")
     public ResponseEntity<BillingCycleDetailsDTO> getBillingCycleDetails(
             @PathVariable UUID userId,
@@ -128,35 +188,5 @@ public class UserController {
 
         BillingCycleDetailsDTO details = getBillingCycleDetailsPort.execute(userId, cardId, cycleId);
         return ResponseEntity.ok(details);
-    }
-    @PostMapping("/{userId}/credit-cards")
-    public ResponseEntity<Void> createCreditCard(
-            @PathVariable UUID userId,
-            @RequestBody CreditCardRequest request) {
-
-        createCreditCardPort.execute(
-                userId,
-                request.name(),
-                request.creditLimit(),
-                request.closingDay(),
-                request.dueDay(),
-                request.accountId()
-        );
-        return ResponseEntity.status(201).build();
-    }
-
-    @GetMapping("/{userId}/credit-cards/{cardId}")
-    public ResponseEntity<CreditCardResponse> getCreditCardById(
-            @PathVariable UUID userId,
-            @PathVariable UUID cardId) {
-
-        return ResponseEntity.ok(CreditCardResponse.from(getCreditCardPort.execute(userId, cardId)));
-    }
-
-    @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMyUser() {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        deleteUserPort.execute(UUID.fromString(userId));
-        return ResponseEntity.noContent().build();
     }
 }

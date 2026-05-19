@@ -11,5 +11,6 @@ public interface BillingCycleRepositoryPort {
     BillingCycle findOpenCycleByCardId(UUID creditCardId, LocalDate installmentDate);
     List<BillingCycle> findUnpaidCyclesByCardId(UUID creditCardId);
     BillingCycle findById(UUID billingCycleId);
+    BillingCycle findByCardIdAndMonthYear(UUID creditCardId, int month, int year);
 
 }
