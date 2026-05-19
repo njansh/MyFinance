@@ -29,7 +29,7 @@ public class UserController {
     private final DeleteUserPort deleteUserPort;
     private final ListCreditCardByUserPort listCreditCardByUserPort;
     private final ProcessCreditCardTransactionPort processTransactionPort;
-    private final GetBillingCycleDetailsPort getBillingCycleDetailsPort; // Nova injeção
+    private final GetBillingCycleDetailsPort getBillingCycleDetailsPort;
     private final CreateCreditCardPort createCreditCardPort;
     private final GetCreditCardPort getCreditCardPort;
 
@@ -110,6 +110,7 @@ public class UserController {
         processTransactionPort.execute(
                 userId,
                 cardId,
+                request.categoryId(),
                 request.description(),
                 request.amount(),
                 request.date(),
@@ -151,10 +152,11 @@ public class UserController {
 
         return ResponseEntity.ok(CreditCardResponse.from(getCreditCardPort.execute(userId, cardId)));
     }
-        @DeleteMapping("/me")
-        public ResponseEntity<Void> deleteMyUser () {
-            String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            deleteUserPort.execute(UUID.fromString(userId));
-            return ResponseEntity.noContent().build();
 
-    }}
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyUser() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        deleteUserPort.execute(UUID.fromString(userId));
+        return ResponseEntity.noContent().build();
+    }
+}

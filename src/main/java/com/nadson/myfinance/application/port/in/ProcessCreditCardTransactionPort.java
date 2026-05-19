@@ -5,5 +5,4 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public interface ProcessCreditCardTransactionPort {
-    void execute(UUID userId, UUID creditCardId, String description, BigDecimal amount, LocalDate transactionDate, int installments);
-}
+    void execute(UUID userId, UUID creditCardId, UUID categoryId, String description, BigDecimal amount, LocalDate transactionDate, int installments);}

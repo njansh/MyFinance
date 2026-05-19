@@ -1,0 +1,1 @@
+ALTER TABLE credit_card_purchases ADD COLUMN category_id UUID NOT NULL;

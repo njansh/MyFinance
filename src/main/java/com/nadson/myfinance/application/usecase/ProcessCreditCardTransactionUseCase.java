@@ -31,9 +31,10 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
         this.purchaseRepository = purchaseRepository;
         this.installmentRepository = installmentRepository;
     }
+
     @Override
     @Transactional
-    public void execute(UUID userId, UUID creditCardId, String description, BigDecimal totalAmount, LocalDate transactionDate, int installmentsCount) {
+    public void execute(UUID userId, UUID creditCardId,UUID categoryId, String description, BigDecimal totalAmount, LocalDate transactionDate, int installmentsCount) {
 
         CreditCard card = creditCardRepository.findById(creditCardId);
         if (card == null || !card.getUserId().equals(userId)) {
@@ -48,7 +49,7 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
             throw new BusinessRuleException("Insufficient credit limit");
         }
 
-        CreditCardPurchase purchase = new CreditCardPurchase(null, creditCardId, description, totalAmount, installmentsCount, transactionDate);
+        CreditCardPurchase purchase = new CreditCardPurchase(null, creditCardId, categoryId, description, totalAmount, installmentsCount, transactionDate);
         purchase = purchaseRepository.save(purchase);
 
         BigDecimal baseInstallmentAmount = totalAmount.divide(BigDecimal.valueOf(installmentsCount), 2, RoundingMode.HALF_EVEN);
@@ -57,7 +58,6 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
         for (int i = 1; i <= installmentsCount; i++) {
             BigDecimal currentInstallmentAmount = baseInstallmentAmount;
 
-            // Handle rounding differences in the last installment
             if (i == installmentsCount) {
                 currentInstallmentAmount = totalAmount.subtract(sumDistributed);
             } else {
@@ -69,7 +69,6 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
             BillingCycle cycle = billingCycleRepository.findOpenCycleByCardId(creditCardId, installmentDate);
             if (cycle == null) {
                 cycle = createNextCycle(card, installmentDate);
-                cycle = billingCycleRepository.save(cycle);
             }
 
             CreditCardInstallment installment = new CreditCardInstallment(
@@ -78,8 +77,8 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
 
             cycle.addInstallment(installment);
 
+            cycle = billingCycleRepository.save(cycle);
             installmentRepository.save(installment);
-            billingCycleRepository.save(cycle);
         }
     }
 

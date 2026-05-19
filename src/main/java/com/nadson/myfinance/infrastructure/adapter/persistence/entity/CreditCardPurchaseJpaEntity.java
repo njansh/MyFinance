@@ -14,6 +14,8 @@ public class CreditCardPurchaseJpaEntity {
     
     @Column(name = "credit_card_id", nullable = false)
     private UUID creditCardId;
+    @Column(name = "category_id", nullable = false)
+    private UUID categoryId;
     
     @Column(nullable = false)
     private String description;
@@ -32,6 +34,7 @@ public class CreditCardPurchaseJpaEntity {
     public CreditCardPurchaseJpaEntity(CreditCardPurchase domain) {
         this.id = domain.getId();
         this.creditCardId = domain.getCreditCardId();
+        this.categoryId = domain.getCategoryId();
         this.description = domain.getDescription();
         this.totalAmount = domain.getTotalAmount();
         this.totalInstallments = domain.getTotalInstallments();
@@ -39,7 +42,7 @@ public class CreditCardPurchaseJpaEntity {
     }
 
     public CreditCardPurchase toDomain() {
-        return new CreditCardPurchase(id, creditCardId, description, totalAmount, totalInstallments, purchaseDate);
+        return new CreditCardPurchase(id, creditCardId, categoryId, description, totalAmount, totalInstallments, purchaseDate);
     }
 
     public UUID getId() {
@@ -56,6 +59,14 @@ public class CreditCardPurchaseJpaEntity {
 
     public void setCreditCardId(UUID creditCardId) {
         this.creditCardId = creditCardId;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String getDescription() {
