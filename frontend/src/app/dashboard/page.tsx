@@ -1,81 +1,109 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getAccounts, getExpensesReport, getIncomesReport } from '../../lib/api/api-client';
+import { DashboardCharts } from '../../components/dashboard/dashboard-charts';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(value || 0)
+  }).format(value || 0);
 }
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('accessToken')?.value
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
 
   if (!token) {
-    redirect('/login')
+    redirect('/login');
   }
 
-  const now = new Date()
-  const currentMonth = now.getMonth() + 1
-  const currentYear = now.getFullYear()
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
 
-  let kpis = { netWorth: 0, monthlyIncome: 0, monthlyExpense: 0 }
+  let accounts: any[] = [];
+  let kpis = { netWorth: 0, monthlyIncome: 0, monthlyExpense: 0 };
+  const expensesReport: Record<string, number> = {};
+  const incomesReport: Record<string, number> = {};
 
   try {
-    const res = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
+    accounts = await getAccounts();
+
+    const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       cache: 'no-store'
-    })
+    });
 
-    if (res.ok) {
-      kpis = await res.json()
-    } else if (res.status === 403 || res.status === 401) {
-      redirect('/login')
+    if (resKpis.ok) {
+      kpis = await resKpis.json();
+    } else if (resKpis.status === 403 || resKpis.status === 401) {
+      redirect('/login');
+    }
+
+    if (accounts.length > 0) {
+      // Cria um array de requisições para TODAS as contas
+      const expPromises = accounts.map(acc => getExpensesReport(acc.accountId, currentMonth, currentYear).catch(() => ({})));
+      const incPromises = accounts.map(acc => getIncomesReport(acc.accountId, currentMonth, currentYear).catch(() => ({})));
+
+      // Dispara tudo em paralelo para máxima performance
+      const expResults = await Promise.all(expPromises);
+      const incResults = await Promise.all(incPromises);
+
+      // Agrega e soma os valores de categorias iguais de contas diferentes
+      expResults.forEach(report => {
+        Object.entries(report).forEach(([category, amount]) => {
+          expensesReport[category] = (expensesReport[category] || 0) + Number(amount);
+        });
+      });
+
+      incResults.forEach(report => {
+        Object.entries(report).forEach(([category, amount]) => {
+          incomesReport[category] = (incomesReport[category] || 0) + Number(amount);
+        });
+      });
     }
   } catch (error) {
-    console.error("Erro ao conectar com a API de KPIs:", error)
+    console.error("Erro ao conectar com a API do Dashboard:", error);
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-
-        <header className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 text-slate-900 antialiased">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <header className="flex flex-col sm:flex-row justify-between sm:items-center bg-white p-6 border border-slate-200/80 rounded-2xl shadow-sm gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Visão Geral Financeira</h1>
-            <p className="text-gray-500">Acompanhe seu fluxo de caixa de {currentMonth}/{currentYear}.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Visão Geral Financeira</h1>
+            <p className="text-sm font-medium text-slate-400">Acompanhe seu fluxo de caixa de {currentMonth}/{currentYear}.</p>
           </div>
-
-          <button className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
-            Sair
-          </button>
+          <a href="/login" className="px-4 py-2 text-center text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 transition active:scale-[0.98]">
+            Sair do Sistema
+          </a>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-800">
-            <h3 className="text-sm font-medium text-gray-500">Saldo Atual (Patrimônio)</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(kpis.netWorth)}</p>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-1">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Atual (Patrimônio)</h3>
+            <p className="text-3xl font-bold tracking-tight text-slate-900 mt-1">{formatCurrency(kpis.netWorth)}</p>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-            <h3 className="text-sm font-medium text-gray-500">Receitas do Mês</h3>
-            <p className="text-3xl font-bold text-green-600 mt-2">{formatCurrency(kpis.monthlyIncome)}</p>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-1">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Receitas do Mês</h3>
+            <p className="text-3xl font-bold tracking-tight text-emerald-600 mt-1">{formatCurrency(kpis.monthlyIncome)}</p>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
-            <h3 className="text-sm font-medium text-gray-500">Despesas do Mês</h3>
-            <p className="text-3xl font-bold text-red-600 mt-2">{formatCurrency(kpis.monthlyExpense)}</p>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-1">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Despesas do Mês</h3>
+            <p className="text-3xl font-bold tracking-tight text-rose-600 mt-1">{formatCurrency(kpis.monthlyExpense)}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm min-h-[300px] flex items-center justify-center border border-dashed border-gray-300">
-          <p className="text-gray-400">Os Cards acima agora exibem os dados reais do seu usuário!</p>
-        </div>
-
+        <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
       </div>
     </div>
-  )
+  );
 }
