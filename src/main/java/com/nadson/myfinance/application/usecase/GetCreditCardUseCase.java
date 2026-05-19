@@ -23,9 +23,10 @@ public class GetCreditCardUseCase implements GetCreditCardPort {
     }
 
     @Override
-    public CreditCardWithBalanceDTO execute(UUID id) {
+    public CreditCardWithBalanceDTO execute(UUID userId, UUID id) {
         CreditCard creditCard = repositoryPort.findById(id);
-        if (creditCard == null) {
+
+        if (creditCard == null || !creditCard.getUserId().equals(userId)) {
             throw new CreditCardNotFoundException(id);
         }
 

@@ -2,6 +2,9 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.User;
+import com.nadson.myfinance.domain.records.BillingCycleDetailsDTO;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardTransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.*;
 import com.nadson.myfinance.infrastructure.security.JwtService;
@@ -26,6 +29,9 @@ public class UserController {
     private final DeleteUserPort deleteUserPort;
     private final ListCreditCardByUserPort listCreditCardByUserPort;
     private final ProcessCreditCardTransactionPort processTransactionPort;
+    private final GetBillingCycleDetailsPort getBillingCycleDetailsPort; // Nova injeção
+    private final CreateCreditCardPort createCreditCardPort;
+    private final GetCreditCardPort getCreditCardPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -34,7 +40,7 @@ public class UserController {
                           GetCategoriesPort getCategoriesPort,
                           JwtService jwtService,
                           DeleteUserPort deleteUserPort,
-                          ListCreditCardByUserPort listCreditCardByUserPort, ProcessCreditCardTransactionPort processTransactionPort) {
+                          ListCreditCardByUserPort listCreditCardByUserPort, ProcessCreditCardTransactionPort processTransactionPort, GetBillingCycleDetailsPort getBillingCycleDetailsPort, CreateCreditCardPort createCreditCardPort, GetCreditCardPort getCreditCardPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -44,6 +50,9 @@ public class UserController {
         this.deleteUserPort = deleteUserPort;
         this.listCreditCardByUserPort = listCreditCardByUserPort;
         this.processTransactionPort = processTransactionPort;
+        this.getBillingCycleDetailsPort = getBillingCycleDetailsPort;
+        this.createCreditCardPort = createCreditCardPort;
+        this.getCreditCardPort = getCreditCardPort;
     }
 
     @PostMapping
@@ -99,7 +108,9 @@ public class UserController {
             @RequestBody CreditCardTransactionRequest request) {
 
         processTransactionPort.execute(
+                userId,
                 cardId,
+                request.description(),
                 request.amount(),
                 request.date(),
                 request.installments()
@@ -108,10 +119,42 @@ public class UserController {
         return ResponseEntity.status(201).build();
     }
 
-    @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMyUser() {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        deleteUserPort.execute(UUID.fromString(userId));
-        return ResponseEntity.noContent().build();
+    @GetMapping("/{userId}/credit-cards/{cardId}/billing-cycles/{cycleId}")
+    public ResponseEntity<BillingCycleDetailsDTO> getBillingCycleDetails(
+            @PathVariable UUID userId,
+            @PathVariable UUID cardId,
+            @PathVariable UUID cycleId) {
+
+        BillingCycleDetailsDTO details = getBillingCycleDetailsPort.execute(userId, cardId, cycleId);
+        return ResponseEntity.ok(details);
     }
-}
+    @PostMapping("/{userId}/credit-cards")
+    public ResponseEntity<Void> createCreditCard(
+            @PathVariable UUID userId,
+            @RequestBody CreditCardRequest request) {
+
+        createCreditCardPort.execute(
+                userId,
+                request.name(),
+                request.creditLimit(),
+                request.closingDay(),
+                request.dueDay(),
+                request.accountId()
+        );
+        return ResponseEntity.status(201).build();
+    }
+
+    @GetMapping("/{userId}/credit-cards/{cardId}")
+    public ResponseEntity<CreditCardResponse> getCreditCardById(
+            @PathVariable UUID userId,
+            @PathVariable UUID cardId) {
+
+        return ResponseEntity.ok(CreditCardResponse.from(getCreditCardPort.execute(userId, cardId)));
+    }
+        @DeleteMapping("/me")
+        public ResponseEntity<Void> deleteMyUser () {
+            String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            deleteUserPort.execute(UUID.fromString(userId));
+            return ResponseEntity.noContent().build();
+
+    }}

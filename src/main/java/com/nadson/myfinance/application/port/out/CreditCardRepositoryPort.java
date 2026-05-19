@@ -1,8 +1,6 @@
 package com.nadson.myfinance.application.port.out;
 
 import com.nadson.myfinance.domain.entity.CreditCard;
-import com.nadson.myfinance.infrastructure.adapter.persistence.entity.CreditCardJpaEntity;
-
 import java.util.List;
 import java.util.UUID;
 

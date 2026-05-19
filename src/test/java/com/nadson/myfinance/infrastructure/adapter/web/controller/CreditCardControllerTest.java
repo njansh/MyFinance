@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nadson.myfinance.application.port.in.CreateCreditCardPort;
 import com.nadson.myfinance.application.port.in.ProcessCreditCardTransactionPort;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CreditCardTransactionRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

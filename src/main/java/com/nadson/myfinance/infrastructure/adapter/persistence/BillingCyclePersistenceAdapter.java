@@ -36,4 +36,10 @@ public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPor
                 .map(BillingCycleJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+    public BillingCycle findById(UUID billingCycleId) {
+        return springBillingCycleRepository.findById(billingCycleId)
+                .map(BillingCycleJpaEntity::toDomain)
+                .orElse(null);
+    }
 }
