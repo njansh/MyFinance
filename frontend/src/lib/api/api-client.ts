@@ -161,4 +161,62 @@ export async function createTransfer(payload: {
   if (!response.ok) {
     throw new Error(`HTTP_ERROR_${response.status}`);
   }
-}
+}export async function getExpensesReport(
+   accountId: string,
+   month: number,
+   year: number
+ ): Promise<Record<string, number>> {
+   const cookieStore = await cookies();
+   const token = cookieStore.get('accessToken')?.value;
+
+   if (!token) {
+     throw new Error('UNAUTHORIZED');
+   }
+
+   const targetUrl = `${API_BASE_URL}/transactions/reports/expenses-by-category/${accountId}?month=${month}&year=${year}`;
+
+   const response = await fetch(targetUrl, {
+     method: 'GET',
+     headers: {
+       'Authorization': `Bearer ${token}`,
+       'Content-Type': 'application/json',
+     },
+     cache: 'no-store',
+   });
+
+   if (!response.ok) {
+     throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
+   }
+
+   return response.json();
+ }
+
+ export async function getIncomesReport(
+   accountId: string,
+   month: number,
+   year: number
+ ): Promise<Record<string, number>> {
+   const cookieStore = await cookies();
+   const token = cookieStore.get('accessToken')?.value;
+
+   if (!token) {
+     throw new Error('UNAUTHORIZED');
+   }
+
+   const targetUrl = `${API_BASE_URL}/transactions/reports/incomes-by-category/${accountId}?month=${month}&year=${year}`;
+
+   const response = await fetch(targetUrl, {
+     method: 'GET',
+     headers: {
+       'Authorization': `Bearer ${token}`,
+       'Content-Type': 'application/json',
+     },
+     cache: 'no-store',
+   });
+
+   if (!response.ok) {
+     throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
+   }
+
+   return response.json();
+ }
