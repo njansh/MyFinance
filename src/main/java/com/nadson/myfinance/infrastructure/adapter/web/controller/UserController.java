@@ -1,7 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
-import com.nadson.myfinance.application.usecase.ListTransactionsUseCase;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.*;
@@ -26,6 +25,7 @@ public class UserController {
     private final JwtService jwtService;
     private final DeleteUserPort deleteUserPort;
     private final ListCreditCardByUserPort listCreditCardByUserPort;
+    private final ProcessCreditCardTransactionPort processTransactionPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -34,7 +34,7 @@ public class UserController {
                           GetCategoriesPort getCategoriesPort,
                           JwtService jwtService,
                           DeleteUserPort deleteUserPort,
-                          ListCreditCardByUserPort listCreditCardByUserPort) {
+                          ListCreditCardByUserPort listCreditCardByUserPort, ProcessCreditCardTransactionPort processTransactionPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -43,6 +43,7 @@ public class UserController {
         this.jwtService = jwtService;
         this.deleteUserPort = deleteUserPort;
         this.listCreditCardByUserPort = listCreditCardByUserPort;
+        this.processTransactionPort = processTransactionPort;
     }
 
     @PostMapping
@@ -90,6 +91,21 @@ public class UserController {
     public ResponseEntity<String> generateDevelopmentToken(@PathVariable UUID id) {
         getUserPort.execute(id);
         return ResponseEntity.ok(jwtService.generateToken(id.toString()));
+    }
+    @PostMapping("/{userId}/credit-cards/{cardId}/transactions")
+    public ResponseEntity<Void> addTransaction(
+            @PathVariable UUID userId,
+            @PathVariable UUID cardId,
+            @RequestBody CreditCardTransactionRequest request) {
+
+        processTransactionPort.execute(
+                cardId,
+                request.amount(),
+                request.date(),
+                request.installments()
+        );
+
+        return ResponseEntity.status(201).build();
     }
 
     @DeleteMapping("/me")
