@@ -26,7 +26,7 @@ public class CreditCardInstallment {
     private void validate() {
         if (purchaseId == null) throw new BusinessRuleException("Purchase ID is required");
         if (billingCycleId == null) throw new BusinessRuleException("Billing Cycle ID is required");
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) throw new BusinessRuleException("Amount must be greater than zero");
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) throw new BusinessRuleException("Amount cannot be negative");
         if (installmentNumber < 1) throw new BusinessRuleException("Installment number must be at least 1");
     }
 
@@ -41,4 +41,14 @@ public class CreditCardInstallment {
     public int getInstallmentNumber() { return installmentNumber; }
     public BigDecimal getAmount() { return amount; }
     public InstallmentStatus getStatus() { return status; }
+    public void setAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessRuleException("Amount cannot be negative");
+        }
+        this.amount = amount;
+    }
+
+    public void setStatus(InstallmentStatus status) {
+        this.status = status;
+    }
 }

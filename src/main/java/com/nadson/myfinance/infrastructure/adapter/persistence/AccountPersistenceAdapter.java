@@ -13,6 +13,7 @@ import java.util.UUID;
 @Component
 public class AccountPersistenceAdapter implements AccountRepositoryPort {
     private final SpringAccountRepository springAccountRepository;
+
     public AccountPersistenceAdapter(SpringAccountRepository springAccountRepository) {
         this.springAccountRepository = springAccountRepository;
     }
@@ -29,7 +30,11 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
         entity.setBalance(account.getBalance());
 
         return springAccountRepository.save(entity).toDomain();
+    }
 
+    @Override
+    public void debit(UUID accountId, BigDecimal amount) {
+        springAccountRepository.updateBalanceAtomic(accountId, amount.negate());
     }
 
     @Override
@@ -38,6 +43,7 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
                 .map(AccountJpaEntity::toDomain)
                 .orElse(null);
     }
+
     @Override
     public List<Account> findByUserId(UUID userId) {
         return springAccountRepository.findByUserId(userId).stream()

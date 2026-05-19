@@ -3,6 +3,7 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.domain.records.BillingCycleDetailsDTO;
+import com.nadson.myfinance.domain.records.PaymentRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardTransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
@@ -33,6 +34,7 @@ public class UserController {
     private final CreateCreditCardPort createCreditCardPort;
     private final GetCreditCardPort getCreditCardPort;
     private final GetBillingCycleByDatePort getBillingCycleByDatePort;
+    private final BillingProcessPaymentPort billingProcessPaymentPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -46,7 +48,7 @@ public class UserController {
                           GetBillingCycleDetailsPort getBillingCycleDetailsPort,
                           CreateCreditCardPort createCreditCardPort,
                           GetCreditCardPort getCreditCardPort,
-                          GetBillingCycleByDatePort getBillingCycleByDatePort) {
+                          GetBillingCycleByDatePort getBillingCycleByDatePort, BillingProcessPaymentPort billingProcessPaymentPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -60,6 +62,7 @@ public class UserController {
         this.createCreditCardPort = createCreditCardPort;
         this.getCreditCardPort = getCreditCardPort;
         this.getBillingCycleByDatePort = getBillingCycleByDatePort;
+        this.billingProcessPaymentPort = billingProcessPaymentPort;
     }
 
     // --- User Management ---
@@ -188,5 +191,13 @@ public class UserController {
 
         BillingCycleDetailsDTO details = getBillingCycleDetailsPort.execute(userId, cardId, cycleId);
         return ResponseEntity.ok(details);
+    }
+    @PostMapping("/{userId}/credit-cards/{cardId}/billing-cycles/{cycleId}/pay")
+    public ResponseEntity<Void> payBillingCycle(
+            @PathVariable UUID userId,
+            @PathVariable UUID cycleId,
+            @RequestBody PaymentRequest request) {
+        billingProcessPaymentPort.billingProcessPayment(cycleId, request.accountId(), request.amount());
+        return ResponseEntity.ok().build();
     }
 }

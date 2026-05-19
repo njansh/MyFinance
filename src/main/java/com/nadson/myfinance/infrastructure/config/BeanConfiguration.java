@@ -188,4 +188,18 @@ public class BeanConfiguration {
         return new GetBillingCycleByDateUseCase(
                 billingCycleRepository, creditCardRepository, installmentRepository, purchaseRepository);
     }
+    @Bean
+    public BillingProcessPaymentPort processPaymentPort(
+            CreditCardInstallmentRepositoryPort installmentRepository,
+            BillingPaymentRepositoryPort paymentRepository,
+            AccountRepositoryPort accountRepository,
+            BillingCycleRepositoryPort billingCycleRepository) {
+        return new BillingProcessPaymentUseCase(
+                installmentRepository,
+                paymentRepository,
+                accountRepository,
+                billingCycleRepository
+        );
+    }
+
 }
