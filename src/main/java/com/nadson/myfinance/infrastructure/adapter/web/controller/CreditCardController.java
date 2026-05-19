@@ -1,12 +1,17 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateCreditCardPort;
+import com.nadson.myfinance.application.port.in.GetCreditCardPort;
+import com.nadson.myfinance.application.port.in.ListCreditCardByUserPort;
 import com.nadson.myfinance.application.port.in.ProcessCreditCardTransactionPort;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CreditCardResponse;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CreditCardTransactionRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,10 +19,22 @@ import java.util.UUID;
 public class CreditCardController {
     private final CreateCreditCardPort createCreditCardPort;
     private final ProcessCreditCardTransactionPort processTransactionPort;
+    private final ListCreditCardByUserPort listCreditCardByUserPort;
+    private final GetCreditCardPort getCreditCardPort;
 
-    public CreditCardController(CreateCreditCardPort createCreditCardPort, ProcessCreditCardTransactionPort processTransactionPort) {
+    public CreditCardController(CreateCreditCardPort createCreditCardPort,
+                                ProcessCreditCardTransactionPort processTransactionPort,
+                                ListCreditCardByUserPort listCreditCardByUserPort,
+                                GetCreditCardPort getCreditCardPort) {
         this.createCreditCardPort = createCreditCardPort;
         this.processTransactionPort = processTransactionPort;
+        this.listCreditCardByUserPort = listCreditCardByUserPort;
+        this.getCreditCardPort = getCreditCardPort;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CreditCardResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(CreditCardResponse.from(getCreditCardPort.execute(id)));
     }
 
     @PostMapping

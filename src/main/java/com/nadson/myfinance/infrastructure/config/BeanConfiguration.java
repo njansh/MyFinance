@@ -112,6 +112,14 @@ public class BeanConfiguration {
         return new ListAccountsByUserUseCase(accountRepositoryPort, userRepository);
     }
     @Bean
+    public ListCreditCardByUserPort listCreditCardByUserPort(CreditCardRepositoryPort creditCardRepository, UserRepositoryPort userRepository, BillingCycleRepositoryPort billingCycleRepository) {
+        return new ListCreditCardByUserUseCase(creditCardRepository, userRepository, billingCycleRepository);
+    }
+    @Bean
+    public GetCreditCardPort getCreditCardPort(CreditCardRepositoryPort repository, BillingCycleRepositoryPort billingCycleRepository) {
+        return new GetCreditCardUseCase(repository, billingCycleRepository);
+    }
+    @Bean
     public ProcessCreditCardTransactionPort processCreditCardTransactionPort(CreditCardRepositoryPort creditCardRepository,BillingCycleRepositoryPort billingCycleRepository) {
         return new ProcessCreditCardTransactionUseCase(creditCardRepository, billingCycleRepository);
     }

@@ -12,6 +12,8 @@ public class CreditCardJpaEntity {
     private UUID id;
     @Column(name = "account_id", nullable = false)
     private UUID accountId;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
     @Column(nullable = false)
     private String name;
     @Column(name = "credit_limit", nullable = false, precision = 19, scale = 4)
@@ -26,6 +28,7 @@ public class CreditCardJpaEntity {
     public CreditCardJpaEntity(CreditCard domain) {
         this.id = domain.getId();
         this.accountId = domain.getAccountId();
+        this.userId = domain.getUserId();
         this.name = domain.getName();
         this.creditLimit = domain.getCreditLimit();
         this.closingDay = domain.getClosingDay();
@@ -33,7 +36,7 @@ public class CreditCardJpaEntity {
     }
 
     public CreditCard toDomain() {
-        return new CreditCard(id, accountId, name, creditLimit, closingDay, dueDay);
+        return new CreditCard(id, accountId, userId, name, creditLimit, closingDay, dueDay);
     }
 
     public UUID getId() {
@@ -52,6 +55,14 @@ public class CreditCardJpaEntity {
         this.accountId = accountId;
     }
 
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
     public String getName() {
         return name;
     }
@@ -62,10 +73,6 @@ public class CreditCardJpaEntity {
 
     public BigDecimal getCreditLimit() {
         return creditLimit;
-    }
-
-    public void setCreditLimit(BigDecimal creditLimit) {
-        this.creditLimit = creditLimit;
     }
 
     public int getClosingDay() {

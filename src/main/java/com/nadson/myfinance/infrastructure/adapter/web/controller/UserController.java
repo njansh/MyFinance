@@ -4,13 +4,9 @@ import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.application.usecase.ListTransactionsUseCase;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CategoryResponse;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.response.UserResponse;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.response.*;
 import com.nadson.myfinance.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +25,7 @@ public class UserController {
     private final GetCategoriesPort getCategoriesPort;
     private final JwtService jwtService;
     private final DeleteUserPort deleteUserPort;
-    private final ListTransactionsUseCase listTransactionsUseCase;
+    private final ListCreditCardByUserPort listCreditCardByUserPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -37,7 +33,8 @@ public class UserController {
                           ListAccountsByUserPort listAccountsByUserPort,
                           GetCategoriesPort getCategoriesPort,
                           JwtService jwtService,
-                          DeleteUserPort deleteUserPort, ListTransactionsUseCase listTransactionsUseCase) {
+                          DeleteUserPort deleteUserPort,
+                          ListCreditCardByUserPort listCreditCardByUserPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -45,7 +42,7 @@ public class UserController {
         this.getCategoriesPort = getCategoriesPort;
         this.jwtService = jwtService;
         this.deleteUserPort = deleteUserPort;
-        this.listTransactionsUseCase = listTransactionsUseCase;
+        this.listCreditCardByUserPort = listCreditCardByUserPort;
     }
 
     @PostMapping
@@ -59,7 +56,15 @@ public class UserController {
         User user = getUserPort.execute(id);
         return ResponseEntity.ok(UserResponse.fromDomain(user));
     }
-
+    @GetMapping("/{id}/credit-cards")
+    public ResponseEntity<List<CreditCardResponse>> creditCardsList(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                listCreditCardByUserPort.execute(id)
+                        .stream()
+                        .map(CreditCardResponse::from)
+                        .toList()
+        );
+    }
     @GetMapping("/{id}/total-balance")
     public ResponseEntity<BigDecimal> getTotalBalance(@PathVariable UUID id) {
         return ResponseEntity.ok(getTotalBalancePort.execute(id));
