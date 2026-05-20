@@ -47,7 +47,9 @@ public class ListCreditCardByUserUseCase implements ListCreditCardByUserPort {
                     card.getUserId(),
                     card.getName(),
                     card.getCreditLimit(),
-                    availableLimit
+                    availableLimit,
+                    card.getClosingDay(),
+                    card.getDueDay()
             );
         }).toList();
     }

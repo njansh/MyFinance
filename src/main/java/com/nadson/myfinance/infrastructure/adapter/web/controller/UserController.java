@@ -195,9 +195,18 @@ public class UserController {
     @PostMapping("/{userId}/credit-cards/{cardId}/billing-cycles/{cycleId}/pay")
     public ResponseEntity<Void> payBillingCycle(
             @PathVariable UUID userId,
+            @PathVariable UUID cardId,
             @PathVariable UUID cycleId,
             @RequestBody PaymentRequest request) {
-        billingProcessPaymentPort.billingProcessPayment(cycleId, request.accountId(), request.amount());
+
+        billingProcessPaymentPort.BillingProcessPayment(
+                userId,
+                cardId,
+                cycleId,
+                request.accountId(),
+                request.amount()
+        );
+
         return ResponseEntity.ok().build();
     }
 }

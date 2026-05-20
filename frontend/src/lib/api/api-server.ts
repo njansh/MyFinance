@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export interface Account {
@@ -228,18 +230,29 @@ export async function createTransfer(payload: {
    return response.json();
  }
 
-  export async function createCreditCard(payload: any) {
-    const token = document.cookie.replace(/(?:(?:^|.*;\s*)accessToken\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+ export async function getCreditCards(): Promise<CreditCard[]> {
+   const cookieStore = await cookies();
+   const token = cookieStore.get('accessToken')?.value;
 
-    const response = await fetch(`${API_BASE_URL}/credit-cards`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+   if (!token) {
+     throw new Error('UNAUTHORIZED');
+   }
 
-    if (!response.ok) throw new Error('Falha ao criar cartão');
-    return response.json();
-  }
+   const userId = getUserIdFromToken(token);
+   const targetUrl = `${API_BASE_URL}/users/${userId}/credit-cards`;
+
+   const response = await fetch(targetUrl, {
+     method: 'GET',
+     headers: {
+       'Authorization': `Bearer ${token}`,
+       'Content-Type': 'application/json',
+     },
+     cache: 'no-store',
+   });
+
+   if (!response.ok) {
+     throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
+   }
+
+   return response.json();
+ }

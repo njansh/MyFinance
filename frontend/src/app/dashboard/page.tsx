@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { getAccounts, getExpensesReport, getIncomesReport } from '../../lib/api/api-client';
+import { getAccounts, getExpensesReport, getIncomesReport } from '../../lib/api/api-server';
 import { DashboardCharts } from '../../components/dashboard/dashboard-charts';
 
 export const dynamic = 'force-dynamic';

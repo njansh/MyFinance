@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { getTransactions, getAccounts } from '../../lib/api/api-client';
+import { getTransactions, getAccounts } from '../../lib/api/api-server';
 import { TransactionsTable } from '../../components/transactions-table';
 import { TransactionsFilter } from '../../components/transactions-filter';
 

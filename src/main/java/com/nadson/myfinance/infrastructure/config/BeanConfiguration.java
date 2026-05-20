@@ -193,12 +193,14 @@ public class BeanConfiguration {
             CreditCardInstallmentRepositoryPort installmentRepository,
             BillingPaymentRepositoryPort paymentRepository,
             AccountRepositoryPort accountRepository,
-            BillingCycleRepositoryPort billingCycleRepository) {
+            BillingCycleRepositoryPort billingCycleRepository,
+            CreditCardRepositoryPort creditCardRepository) {
         return new BillingProcessPaymentUseCase(
                 installmentRepository,
                 paymentRepository,
                 accountRepository,
-                billingCycleRepository
+                billingCycleRepository,
+                creditCardRepository
         );
     }
 

@@ -34,7 +34,7 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
 
     @Override
     @Transactional
-    public void execute(UUID userId, UUID creditCardId,UUID categoryId, String description, BigDecimal totalAmount, LocalDate transactionDate, int installmentsCount) {
+    public void execute(UUID userId, UUID creditCardId, UUID categoryId, String description, BigDecimal totalAmount, LocalDate transactionDate, int installmentsCount) {
 
         CreditCard card = creditCardRepository.findById(creditCardId);
         if (card == null || !card.getUserId().equals(userId)) {
@@ -56,17 +56,12 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
         BigDecimal sumDistributed = BigDecimal.ZERO;
 
         for (int i = 1; i <= installmentsCount; i++) {
-            BigDecimal currentInstallmentAmount = baseInstallmentAmount;
-
-            if (i == installmentsCount) {
-                currentInstallmentAmount = totalAmount.subtract(sumDistributed);
-            } else {
-                sumDistributed = sumDistributed.add(currentInstallmentAmount);
-            }
+            BigDecimal currentInstallmentAmount = (i == installmentsCount) ? totalAmount.subtract(sumDistributed) : baseInstallmentAmount;
+            if (i != installmentsCount) sumDistributed = sumDistributed.add(currentInstallmentAmount);
 
             LocalDate installmentDate = transactionDate.plusMonths(i - 1);
-
             BillingCycle cycle = billingCycleRepository.findOpenCycleByCardId(creditCardId, installmentDate);
+
             if (cycle == null) {
                 cycle = createNextCycle(card, installmentDate);
             }
@@ -76,24 +71,32 @@ public class ProcessCreditCardTransactionUseCase implements ProcessCreditCardTra
             );
 
             cycle.addInstallment(installment);
-
             cycle = billingCycleRepository.save(cycle);
             installmentRepository.save(installment);
         }
     }
 
     private BillingCycle createNextCycle(CreditCard card, LocalDate referenceDate) {
-        LocalDate closingDate = referenceDate.withDayOfMonth(card.getClosingDay());
+        int maxDaysInMonth = referenceDate.lengthOfMonth();
+
+        int safeClosingDay = Math.min(card.getClosingDay(), maxDaysInMonth);
+        LocalDate closingDate = referenceDate.withDayOfMonth(safeClosingDay);
 
         if (referenceDate.isAfter(closingDate)) {
             closingDate = closingDate.plusMonths(1);
+            int newMaxDays = closingDate.lengthOfMonth();
+            closingDate = closingDate.withDayOfMonth(Math.min(card.getClosingDay(), newMaxDays));
         }
 
         LocalDate startDate = closingDate.minusMonths(1).plusDays(1);
 
-        LocalDate dueDate = closingDate.withDayOfMonth(card.getDueDay());
+        int safeDueDay = Math.min(card.getDueDay(), maxDaysInMonth);
+        LocalDate dueDate = closingDate.withDayOfMonth(safeDueDay);
+
         if (card.getDueDay() <= card.getClosingDay()) {
             dueDate = dueDate.plusMonths(1);
+            int newMaxDaysDue = dueDate.lengthOfMonth();
+            dueDate = dueDate.withDayOfMonth(Math.min(card.getDueDay(), newMaxDaysDue));
         }
 
         return new BillingCycle(null, card.getId(), startDate, closingDate, dueDate, BigDecimal.ZERO, BillingCycleStatus.OPEN);
