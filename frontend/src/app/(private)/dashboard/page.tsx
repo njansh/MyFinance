@@ -12,6 +12,7 @@ interface PageProps {
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
+  // Garante a resolução da Promise caso o Next.js passe o searchParams de forma assíncrona
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
 
   const cookieStore = await cookies();
@@ -22,13 +23,23 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const currentYear = params?.year ? Number(params.year) : now.getFullYear();
 
   let accounts: any[] = [];
-  let kpis = { netWorth: 0, monthlyIncome: 0, monthlyExpense: 0, lastMonthBalance: 0, nextMonthForecast: 0 };
+
+  // Estrutura de KPIs inicializada com os 5 campos estendidos mapeados com o Java
+  let kpis = {
+    netWorth: 0,
+    monthlyIncome: 0,
+    monthlyExpense: 0,
+    lastMonthBalance: 0,
+    nextMonthForecast: 0
+  };
+
   const expensesReport: Record<string, number> = {};
   const incomesReport: Record<string, number> = {};
 
   try {
     accounts = await getAccounts();
 
+    // Chamada à API Spring Boot passando os parâmetros dinâmicos do filtro
     const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
@@ -67,14 +78,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 text-slate-900 antialiased">
+      {/* Cabeçalho de Título + Filtro de Mês/Ano */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Visão Geral</h1>
-          <p className="text-sm font-medium text-slate-400 mt-1">Acompanhe o fluxo de caixa consolidado de {String(currentMonth).padStart(2, '0')}/{currentYear}.</p>
+          <p className="text-sm font-medium text-slate-400 mt-1">
+            Acompanhe o fluxo de caixa consolidado de {String(currentMonth).padStart(2, '0')}/{currentYear}.
+          </p>
         </div>
         <DashboardFilter />
       </div>
 
+      {/* Grid unificado contendo os 3 cards principais e os 2 cards inferiores comparativos/preditivos */}
       <KpiCards
         netWorth={kpis.netWorth}
         monthlyIncome={kpis.monthlyIncome}
@@ -83,6 +98,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         nextMonthForecast={kpis.nextMonthForecast}
       />
 
+      {/* Gráficos de Pizza com animações fluidas */}
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
     </div>
   );
