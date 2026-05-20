@@ -12,7 +12,6 @@ interface PageProps {
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  // Garante a compatibilidade com resoluções de Promise em rotas assíncronas do Next.js
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
 
   const cookieStore = await cookies();
@@ -23,7 +22,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const currentYear = params?.year ? Number(params.year) : now.getFullYear();
 
   let accounts: any[] = [];
-  // Inicializa o objeto contendo as propriedades estendidas mapeadas do backend
   let kpis = { netWorth: 0, monthlyIncome: 0, monthlyExpense: 0, lastMonthBalance: 0, nextMonthForecast: 0 };
   const expensesReport: Record<string, number> = {};
   const incomesReport: Record<string, number> = {};
@@ -31,7 +29,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   try {
     accounts = await getAccounts();
 
-    // Chamada dinâmica usando o mês e o ano selecionados pelo filtro
     const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
@@ -70,7 +67,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 text-slate-900 antialiased">
-      {/* Header institucional e o novo Filtro Dinâmico */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Visão Geral</h1>
@@ -79,7 +75,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <DashboardFilter />
       </div>
 
-      {/* Componente atualizado passando as novas métricas */}
       <KpiCards
         netWorth={kpis.netWorth}
         monthlyIncome={kpis.monthlyIncome}
@@ -88,7 +83,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         nextMonthForecast={kpis.nextMonthForecast}
       />
 
-      {/* Gráficos de Distribuição */}
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
     </div>
   );
