@@ -44,7 +44,9 @@ public class GetCreditCardUseCase implements GetCreditCardPort {
                 creditCard.getUserId(),
                 creditCard.getName(),
                 creditCard.getCreditLimit(),
-                availableLimit
+                availableLimit,
+                creditCard.getClosingDay(),
+                creditCard.getDueDay()
         );
     }
 }

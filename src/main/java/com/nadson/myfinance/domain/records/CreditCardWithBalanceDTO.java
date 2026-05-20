@@ -9,5 +9,7 @@ public record CreditCardWithBalanceDTO(
         UUID userId,
         String name,
         BigDecimal creditLimit,
-        BigDecimal availableLimit
+        BigDecimal availableLimit,
+        int closingDay,
+        int dueDay
 ) {}
