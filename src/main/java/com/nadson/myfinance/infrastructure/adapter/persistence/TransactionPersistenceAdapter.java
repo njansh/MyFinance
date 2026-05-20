@@ -185,4 +185,8 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         }
         return map;
     }
+    @Override
+    public BigDecimal sumBalanceBeforeDate(List<UUID> allAccountIds, LocalDateTime date, TransactionType transactionType) {
+        return repository.sumTransactionsBeforeDate(allAccountIds, date, transactionType);
+    }
 }

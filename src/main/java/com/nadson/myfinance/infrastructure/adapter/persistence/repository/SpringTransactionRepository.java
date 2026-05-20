@@ -98,4 +98,17 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     @Modifying
     @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
+
+    @Query("""
+    SELECT SUM(t.amount) 
+    FROM TransactionEntity t 
+    WHERE t.accountId IN :accountIds 
+      AND t.date < :date 
+      AND t.type = :type
+""")
+    BigDecimal sumTransactionsBeforeDate(
+            @Param("accountIds") List<UUID> accountIds,
+            @Param("date") LocalDateTime date,
+            @Param("type") TransactionType type
+    );
 }

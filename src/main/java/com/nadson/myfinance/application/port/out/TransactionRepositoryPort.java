@@ -44,7 +44,7 @@ public interface TransactionRepositoryPort {
     BigDecimal sumSavingsByAccountsAndPeriod(List<UUID> investmentAccountIds, LocalDateTime startDate, LocalDateTime endDate);
 
     BigDecimal sumTransactionsByAccountsAndPeriod(List<UUID> allAccountIds, LocalDateTime startDate, LocalDateTime endDate, TransactionType transactionType);
-
+    BigDecimal sumBalanceBeforeDate(List<UUID> allAccountIds, LocalDateTime date, TransactionType transactionType);
     void deleteAllByAccountId(UUID accountId);
 }
 
