@@ -199,7 +199,6 @@ public class UserController {
             @PathVariable UUID cycleId,
             @RequestBody PaymentRequest request) {
 
-        // Agora passamos a cadeia de posse completa
         billingProcessPaymentPort.BillingProcessPayment(
                 userId,
                 cardId,
