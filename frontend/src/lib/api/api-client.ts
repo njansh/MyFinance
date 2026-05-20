@@ -220,3 +220,43 @@ export async function createTransfer(payload: {
 
    return response.json();
  }
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  accountId: string;
+}
+
+export async function getCreditCards(): Promise<CreditCard[]> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  const response = await fetch(`${API_BASE_URL}/credit-cards`, {
+    headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    },
+    cache: 'no-store'
+  });
+
+  if (!response.ok) throw new Error('Falha ao buscar cartões');
+  return response.json();
+}
+
+export async function createCreditCard(payload: Omit<CreditCard, 'id'>): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  const response = await fetch(`${API_BASE_URL}/credit-cards`, {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) throw new Error('Falha ao criar cartão');
+}

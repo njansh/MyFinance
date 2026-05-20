@@ -1,0 +1,1 @@
+ALTER TABLE credit_cards ADD COLUMN user_id UUID;

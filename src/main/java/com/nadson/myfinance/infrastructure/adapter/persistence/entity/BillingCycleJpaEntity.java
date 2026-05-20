@@ -44,6 +44,15 @@ public class BillingCycleJpaEntity {
         return new BillingCycle(id, creditCardId, startDate, closingDate, dueDate, totalAmount, status);
     }
 
+    public UUID getId() { return id; }
+    public UUID getCreditCardId() { return creditCardId; }
+    public LocalDate getStartDate() { return startDate; }
+    public LocalDate getClosingDate() { return closingDate; }
+    public LocalDate getDueDate() { return dueDate; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public BillingCycleStatus getStatus() { return status; }
+    public Long getVersion() { return version; }
+
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public void setStatus(BillingCycleStatus status) { this.status = status; }
 }

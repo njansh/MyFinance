@@ -8,15 +8,17 @@ import java.util.UUID;
 public class CreditCard {
     private UUID id;
     private UUID accountId;
+    private UUID userId;
     private String name;
     private BigDecimal creditLimit;
     private int closingDay;
     private int dueDay;
 
-    public CreditCard(UUID id, UUID accountId, String name, BigDecimal creditLimit, int closingDay, int dueDay) {
+    public CreditCard(UUID id, UUID accountId, UUID userId, String name, BigDecimal creditLimit, int closingDay, int dueDay) {
         validate(name, creditLimit, closingDay, dueDay);
         this.id = id;
         this.accountId = accountId;
+        this.userId = userId;
         this.name = name;
         this.creditLimit = creditLimit;
         this.closingDay = closingDay;
@@ -39,6 +41,7 @@ public class CreditCard {
 
     public UUID getId() { return id; }
     public UUID getAccountId() { return accountId; }
+    public UUID getUserId() { return userId; }
     public String getName() { return name; }
     public BigDecimal getCreditLimit() { return creditLimit; }
     public int getClosingDay() { return closingDay; }

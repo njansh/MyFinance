@@ -42,14 +42,15 @@ public class BillingCycle {
             throw new BusinessRuleException("Due date cannot be before closing date");
     }
 
-    public void addCharge(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessRuleException("Charge amount must be greater than zero and not null");
+    public void addInstallment(CreditCardInstallment installment) {
+        if (installment == null || installment.getAmount() == null) {
+            throw new BusinessRuleException("Invalid installment");
         }
         if (this.status != BillingCycleStatus.OPEN) {
-            throw new BusinessRuleException("Cannot add charges to a closed or paid billing cycle");
+            throw new BusinessRuleException("Cannot add installments to a closed or paid billing cycle");
         }
-        this.totalAmount = this.totalAmount.add(amount);
+
+        this.totalAmount = this.totalAmount.add(installment.getAmount());
     }
 
     public void closeCycle() {
@@ -60,6 +61,15 @@ public class BillingCycle {
         this.status = BillingCycleStatus.PAID;
     }
 
+    public void registerPayment(BigDecimal paymentAmount) {
+        if (this.totalAmount != null) {
+            this.totalAmount = this.totalAmount.subtract(paymentAmount);
+            if (this.totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                this.totalAmount = BigDecimal.ZERO;
+            }
+        }
+    }
+
     public UUID getId() { return id; }
     public UUID getCreditCardId() { return creditCardId; }
     public LocalDate getStartDate() { return startDate; }
@@ -67,5 +77,6 @@ public class BillingCycle {
     public LocalDate getDueDate() { return dueDate; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public BillingCycleStatus getStatus() { return status; }
+
 
 }

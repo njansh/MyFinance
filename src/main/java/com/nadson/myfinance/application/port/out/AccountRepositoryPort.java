@@ -15,4 +15,5 @@ public interface AccountRepositoryPort {
     void updateBalanceAtomic(UUID accountId, BigDecimal amount);
 
     void deleteById(UUID accountId);
+    void debit(UUID accountId, BigDecimal amount);
 }

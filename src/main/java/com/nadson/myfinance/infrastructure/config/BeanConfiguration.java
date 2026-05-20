@@ -112,9 +112,14 @@ public class BeanConfiguration {
         return new ListAccountsByUserUseCase(accountRepositoryPort, userRepository);
     }
     @Bean
-    public ProcessCreditCardTransactionPort processCreditCardTransactionPort(CreditCardRepositoryPort creditCardRepository,BillingCycleRepositoryPort billingCycleRepository) {
-        return new ProcessCreditCardTransactionUseCase(creditCardRepository, billingCycleRepository);
+    public ListCreditCardByUserPort listCreditCardByUserPort(CreditCardRepositoryPort creditCardRepository, UserRepositoryPort userRepository, BillingCycleRepositoryPort billingCycleRepository) {
+        return new ListCreditCardByUserUseCase(creditCardRepository, userRepository, billingCycleRepository);
     }
+    @Bean
+    public GetCreditCardPort getCreditCardPort(CreditCardRepositoryPort repository, BillingCycleRepositoryPort billingCycleRepository) {
+        return new GetCreditCardUseCase(repository, billingCycleRepository);
+    }
+
     @Bean
     public GetFinancialDashboardKpisPort getFinancialDashboardKpisPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
         return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo);
@@ -155,4 +160,46 @@ public class BeanConfiguration {
                                                RecurringTemplateRepositoryPort recurringRepo, CreditCardRepositoryPort creditCardRepo){
         return new DeleteAccountUseCase(accountRepo, transactionRepo, recurringRepo, creditCardRepo);
     }
+    @Bean
+    public ProcessCreditCardTransactionPort processCreditCardTransactionPort(
+            CreditCardRepositoryPort creditCardRepository,
+            BillingCycleRepositoryPort billingCycleRepository,
+            CreditCardPurchaseRepositoryPort purchaseRepository,
+            CreditCardInstallmentRepositoryPort installmentRepository) {
+        return new ProcessCreditCardTransactionUseCase(
+                creditCardRepository, billingCycleRepository, purchaseRepository, installmentRepository);
+    }
+
+    @Bean
+    public GetBillingCycleDetailsPort getBillingCycleDetailsPort(
+            BillingCycleRepositoryPort billingCycleRepository,
+            CreditCardRepositoryPort creditCardRepository,
+            CreditCardInstallmentRepositoryPort installmentRepository,
+            CreditCardPurchaseRepositoryPort purchaseRepository) {
+        return new GetBillingCycleDetailsUseCase(
+                billingCycleRepository, creditCardRepository, installmentRepository, purchaseRepository);
+    }
+    @Bean
+    public GetBillingCycleByDatePort getBillingCycleByDatePort(
+            BillingCycleRepositoryPort billingCycleRepository,
+            CreditCardRepositoryPort creditCardRepository,
+            CreditCardInstallmentRepositoryPort installmentRepository,
+            CreditCardPurchaseRepositoryPort purchaseRepository) {
+        return new GetBillingCycleByDateUseCase(
+                billingCycleRepository, creditCardRepository, installmentRepository, purchaseRepository);
+    }
+    @Bean
+    public BillingProcessPaymentPort processPaymentPort(
+            CreditCardInstallmentRepositoryPort installmentRepository,
+            BillingPaymentRepositoryPort paymentRepository,
+            AccountRepositoryPort accountRepository,
+            BillingCycleRepositoryPort billingCycleRepository) {
+        return new BillingProcessPaymentUseCase(
+                installmentRepository,
+                paymentRepository,
+                accountRepository,
+                billingCycleRepository
+        );
+    }
+
 }
