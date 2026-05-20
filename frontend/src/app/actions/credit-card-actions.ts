@@ -39,3 +39,35 @@ export async function createCreditCardAction(data: any) {
   revalidatePath('/credit-cards');
   return { success: true };
 }
+export async function fetchBillingCycleAction(cardId: string, month: number, year: number) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  if (!token) throw new Error('Usuário não autenticado');
+
+  const payload = token.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+  const userId = decoded.sub;
+
+  const response = await fetch(
+    `${API_BASE_URL}/users/${userId}/credit-cards/${cardId}/billing-cycles/search?month=${month}&year=${year}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error('Erro ao buscar detalhes da fatura.');
+  }
+
+  return response.json();
+}
