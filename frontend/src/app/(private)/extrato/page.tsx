@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
-import { getTransactions, getAccounts } from '../../lib/api/api-server';
-import { TransactionsTable } from '../../components/transactions-table';
-import { TransactionsFilter } from '../../components/transactions-filter';
+import { getTransactions, getAccounts } from '../../../lib/api/api-server';
+import { TransactionsTable } from '../../../components/transactions-table';
+import { TransactionsFilter } from '../../../components/transactions-filter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

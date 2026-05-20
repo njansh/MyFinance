@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { createCreditCardAction } from '../../app/actions/credit-card-actions';
+import { createCreditCardAction } from '../../app/(private)/actions/credit-card-actions';
 
 export function CreditCardForm({ accounts, onClose }: any) {
   const [loading, setLoading] = useState(false);

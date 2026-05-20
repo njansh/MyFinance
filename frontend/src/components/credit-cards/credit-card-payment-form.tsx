@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { payBillingCycleAction } from '../../app/actions/credit-card-actions';
+import { payBillingCycleAction } from '../../app/(private)/actions/credit-card-actions';
 
 interface PaymentFormProps {
   cardId: string;
