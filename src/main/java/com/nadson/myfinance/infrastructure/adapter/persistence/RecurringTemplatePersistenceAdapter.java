@@ -42,6 +42,14 @@ public class RecurringTemplatePersistenceAdapter implements RecurringTemplateRep
 
     @Override
     public void deleteAllByAccountId(UUID accountId) {
-springRecurringTemplateRepository.deleteAllByAccountId(accountId);
+        springRecurringTemplateRepository.deleteAllByAccountId(accountId);
+    }
+
+    @Override
+    public List<RecurringTemplate> findActiveByUserId(UUID userId) {
+        return springRecurringTemplateRepository.findByUserIdAndActiveTrue(userId)
+                .stream()
+                .map(RecurringTemplateJpaEntity::toDomain)
+                .toList();
     }
 }

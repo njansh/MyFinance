@@ -37,27 +37,12 @@ public class GetFinancialDashboardKpisUseCase implements GetFinancialDashboardKp
             return new KpiDashboardResponse(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
         }
 
-        // 1. Definição do período do Filtro Dinâmico
         YearMonth targetMonth = (month != null && year != null) ? YearMonth.of(year, month) : YearMonth.now();
         LocalDateTime startDate = targetMonth.atDay(1).atStartOfDay();
         LocalDateTime endDate = targetMonth.atEndOfMonth().atTime(23, 59, 59);
 
         List<UUID> allAccountIds = accounts.stream().map(Account::getAccountId).toList();
 
-        // 2. Patrimônio Líquido (Soma dos saldos atuais no banco)
-        BigDecimal netWorth = accounts.stream()
-                .map(Account::getBalance)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // 3. Receitas e Despesas do Mês Atual Selecionado
-        BigDecimal monthlyIncome = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.INCOME);
-        BigDecimal monthlyExpense = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.EXPENSE);
-
-        monthlyIncome = (monthlyIncome == null) ? BigDecimal.ZERO : monthlyIncome;
-        monthlyExpense = (monthlyExpense == null) ? BigDecimal.ZERO : monthlyExpense;
-
-        // 4. CÁLCULO: Acumulado do Mês Anterior
-        // Soma todas as receitas históricas ocorridas ANTES do 'startDate' e subtrai as despesas do mesmo período
         BigDecimal historicalIncome = transactionRepository.sumBalanceBeforeDate(allAccountIds, startDate, TransactionType.INCOME);
         BigDecimal historicalExpense = transactionRepository.sumBalanceBeforeDate(allAccountIds, startDate, TransactionType.EXPENSE);
 
@@ -66,22 +51,27 @@ public class GetFinancialDashboardKpisUseCase implements GetFinancialDashboardKp
 
         BigDecimal lastMonthBalance = historicalIncome.subtract(historicalExpense);
 
-        // 5. CÁLCULO: Previsão para o Próximo Mês (Métricas Preditivas baseadas em Recorrências)
-        // Equação: Previsão = Saldo Atual do Filtro + Próximas Recorrências
-        BigDecimal nextMonthForecast = netWorth;
+        BigDecimal monthlyIncome = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.INCOME);
+        BigDecimal monthlyExpense = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.EXPENSE);
+
+        monthlyIncome = (monthlyIncome == null) ? BigDecimal.ZERO : monthlyIncome;
+        monthlyExpense = (monthlyExpense == null) ? BigDecimal.ZERO : monthlyExpense;
+
+       BigDecimal currentPeriodNetWorth = lastMonthBalance.add(monthlyIncome).subtract(monthlyExpense);
+
+        BigDecimal nextMonthForecast = currentPeriodNetWorth;
 
         List<RecurringTemplate> activeRecurrences = recurringTemplateRepository.findActiveByUserId(userId);
         if (activeRecurrences != null && !activeRecurrences.isEmpty()) {
             for (RecurringTemplate template : activeRecurrences) {
-                // Se o template for uma receita, soma na projeção. Se for despesa, subtrai.
                 if (template.getType() == TransactionType.INCOME) {
-                    nextMonthForecast = nextMonthForecast.add(template.getAmount());
+                    nextMonthForecast = nextMonthForecast.add(template.getExpectedAmount());
                 } else if (template.getType() == TransactionType.EXPENSE) {
-                    nextMonthForecast = nextMonthForecast.subtract(template.getAmount());
+                    nextMonthForecast = nextMonthForecast.subtract(template.getExpectedAmount());
                 }
             }
         }
 
-        return new KpiDashboardResponse(netWorth, monthlyIncome, monthlyExpense, lastMonthBalance, nextMonthForecast);
+        return new KpiDashboardResponse(currentPeriodNetWorth, monthlyIncome, monthlyExpense, lastMonthBalance, nextMonthForecast);
     }
 }

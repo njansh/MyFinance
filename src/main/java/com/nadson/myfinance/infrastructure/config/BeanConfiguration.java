@@ -121,8 +121,8 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public GetFinancialDashboardKpisPort getFinancialDashboardKpisPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
-        return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo);
+    public GetFinancialDashboardKpisPort getFinancialDashboardKpisPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo, RecurringTemplateRepositoryPort recurringRepo) {
+        return new GetFinancialDashboardKpisUseCase(accountRepo, transRepo, recurringRepo);
     }
     @Bean
     public ListPendingRecurringPort listPendingRecurringPort(UserRepositoryPort userRepositoryPort, RecurringTemplateRepositoryPort recurringTemplateRepository){
