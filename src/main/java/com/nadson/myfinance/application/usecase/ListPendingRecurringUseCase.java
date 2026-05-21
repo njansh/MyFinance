@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,17 +36,20 @@ public class ListPendingRecurringUseCase implements ListPendingRecurringPort {
             throw new BusinessRuleException("User not found");
         }
 
-        List<RecurringTemplate> templatesParaGerar = recurringTemplateRepositoryPort.findPendingTemplates(userId, targetMonth, targetYear);
+        List<RecurringTemplate> pendingTemplates = recurringTemplateRepositoryPort.findPendingTemplates(userId, targetMonth, targetYear);
 
-        for (RecurringTemplate template : templatesParaGerar) {
-            gerarFaturasPendentes(template, targetMonth, targetYear);
+        for (RecurringTemplate template : pendingTemplates) {
+            generatePendingTransactions(template, targetMonth, targetYear);
             recurringTemplateRepositoryPort.save(template);
         }
 
-        return transactionRepositoryPort.findAllPendingByUserId(userId);
+        LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime end = YearMonth.of(targetYear, targetMonth).atEndOfMonth().atTime(23, 59, 59);
+
+        return transactionRepositoryPort.findAllPendingByUserIdUpToDate(userId, start, end);
     }
 
-    private void gerarFaturasPendentes(RecurringTemplate template, int targetMonth, int targetYear) {
+    private void generatePendingTransactions(RecurringTemplate template, int targetMonth, int targetYear) {
         int startMonth = template.getLastExecutedMonth() != null ? template.getLastExecutedMonth() + 1 : targetMonth;
         int startYear = template.getLastExecutedYear() != null ? template.getLastExecutedYear() : targetYear;
 
@@ -58,12 +62,14 @@ public class ListPendingRecurringUseCase implements ListPendingRecurringPort {
         LocalDate target = LocalDate.of(targetYear, targetMonth, 1);
 
         while (!current.isAfter(target)) {
-            // AQUI ESTÁ A CORREÇÃO: O TransactionStatus.PENDING agora é o 11º parâmetro, não tem erro!
-            Transaction faturaPendente = new Transaction(
+            int maxDaysInMonth = YearMonth.of(current.getYear(), current.getMonthValue()).lengthOfMonth();
+            int safeDay = Math.min(template.getFrequencyDay(), maxDaysInMonth);
+
+            Transaction pendingTransaction = new Transaction(
                     UUID.randomUUID(),
                     template.getDescription() + " (" + current.getMonthValue() + "/" + current.getYear() + ")",
                     template.getExpectedAmount(),
-                    LocalDateTime.of(current.getYear(), current.getMonthValue(), template.getFrequencyDay(), 0, 0),
+                    LocalDateTime.of(current.getYear(), current.getMonthValue(), safeDay, 0, 0),
                     template.getType(),
                     template.getAccountId(),
                     template.getCategoryId(),
@@ -73,7 +79,7 @@ public class ListPendingRecurringUseCase implements ListPendingRecurringPort {
                     TransactionStatus.PENDING
             );
 
-            transactionRepositoryPort.save(faturaPendente);
+            transactionRepositoryPort.save(pendingTransaction);
 
             template.setLastExecution(current.getMonthValue(), current.getYear());
 

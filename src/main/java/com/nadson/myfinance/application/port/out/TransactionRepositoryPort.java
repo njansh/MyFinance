@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface TransactionRepositoryPort {
@@ -54,8 +53,6 @@ public interface TransactionRepositoryPort {
 
     void deleteAllByAccountId(UUID accountId);
 
-    List<Transaction> findAllPendingByUserId(UUID userId);
-
-}
+    List<Transaction> findAllPendingByUserIdUpToDate(UUID userId, LocalDateTime start, LocalDateTime end);}
 
 

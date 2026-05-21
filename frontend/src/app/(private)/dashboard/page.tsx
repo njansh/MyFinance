@@ -1,8 +1,14 @@
 import { cookies } from 'next/headers';
-import { getAccounts, getExpensesReport, getIncomesReport } from '../../../lib/api/api-server';
+import {
+  getAccounts,
+  getExpensesReport,
+  getIncomesReport,
+  getPendingTransactions
+} from '../../../lib/api/api-server';
 import { DashboardCharts } from '../../../components/dashboard/dashboard-charts';
 import { KpiCards } from '../../../components/dashboard/kpi-cards';
 import { DashboardFilter } from '../../../components/dashboard/dashboard-filter';
+import { PendingTransactions } from '../../../components/pending/PendingTransactions';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -12,7 +18,6 @@ interface PageProps {
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  // Garante a resolução da Promise caso o Next.js passe o searchParams de forma assíncrona
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
 
   const cookieStore = await cookies();
@@ -23,8 +28,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const currentYear = params?.year ? Number(params.year) : now.getFullYear();
 
   let accounts: any[] = [];
+  let pendingTransactions: any[] = [];
 
-  // Estrutura de KPIs inicializada com os 5 campos estendidos mapeados com o Java
   let kpis = {
     netWorth: 0,
     monthlyIncome: 0,
@@ -39,7 +44,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   try {
     accounts = await getAccounts();
 
-    // Chamada à API Spring Boot passando os parâmetros dinâmicos do filtro
+    pendingTransactions = await getPendingTransactions(currentMonth, currentYear).catch(() => []);
+
     const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
@@ -78,7 +84,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 text-slate-900 antialiased">
-      {/* Cabeçalho de Título + Filtro de Mês/Ano */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Visão Geral</h1>
@@ -89,7 +94,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <DashboardFilter />
       </div>
 
-      {/* Grid unificado contendo os 3 cards principais e os 2 cards inferiores comparativos/preditivos */}
       <KpiCards
         netWorth={kpis.netWorth}
         monthlyIncome={kpis.monthlyIncome}
@@ -98,8 +102,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         nextMonthForecast={kpis.nextMonthForecast}
       />
 
-      {/* Gráficos de Pizza com animações fluidas */}
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
+
+      {/* Listagem de faturas que precisam de ação do usuário */}
+      <PendingTransactions transactions={pendingTransactions} />
     </div>
   );
 }

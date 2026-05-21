@@ -191,8 +191,8 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         return repository.sumTransactionsBeforeDate(allAccountIds, date, transactionType);
     }
     @Override
-    public List<Transaction> findAllPendingByUserId(UUID userId) {
-        return repository.findAllPendingByUserId(userId).stream()
+    public List<Transaction> findAllPendingByUserIdUpToDate(UUID userId, LocalDateTime start, LocalDateTime end) {
+        return repository.findAllPendingByUserIdAndMonth(userId, start, end).stream()
                 .map(TransactionJpaEntity::toDomain)
                 .toList();
     }

@@ -57,7 +57,9 @@ public class GetFinancialDashboardKpisUseCase implements GetFinancialDashboardKp
         monthlyIncome = (monthlyIncome == null) ? BigDecimal.ZERO : monthlyIncome;
         monthlyExpense = (monthlyExpense == null) ? BigDecimal.ZERO : monthlyExpense;
 
-       BigDecimal currentPeriodNetWorth = lastMonthBalance.add(monthlyIncome).subtract(monthlyExpense);
+        BigDecimal currentPeriodNetWorth = accounts.stream()
+                .map(acc -> acc.getBalance() != null ? acc.getBalance() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal nextMonthForecast = currentPeriodNetWorth;
 
