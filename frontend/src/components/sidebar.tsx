@@ -12,6 +12,7 @@ export function Sidebar() {
     { name: 'Extrato', href: '/extrato', icon: '📄' },
     { name: 'Transações', href: '/transactions', icon: '💸' },
     { name: 'Cartões', href: '/credit-cards', icon: '💳' },
+    { name: 'Recorrências', href: '/recurring', icon: '🔄' },
   ];
 
   return (

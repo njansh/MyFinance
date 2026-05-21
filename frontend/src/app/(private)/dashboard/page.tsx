@@ -22,6 +22,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   const now = new Date();
   const currentMonth = params?.month ? Number(params.month) : now.getMonth() + 1;
@@ -46,7 +47,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
     pendingTransactions = await getPendingTransactions(currentMonth, currentYear).catch(() => []);
 
-    const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
+    const resKpis = await fetch(`${API_BASE_URL}/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -104,7 +105,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
 
-      {/* Listagem de faturas que precisam de ação do usuário */}
       <PendingTransactions transactions={pendingTransactions} />
     </div>
   );
