@@ -62,10 +62,10 @@ public class TransactionController {
                 TransactionStatus.COMPLETED, null
         );
 
-        Transaction createdTransaction = createTransactionPort.execute(transaction);
-        return ResponseEntity.status(201).body(TransactionResponse.fromDomain(createdTransaction));
-    }
+        var result = createTransactionPort.execute(transaction);
 
+        return ResponseEntity.status(201).body(TransactionResponse.fromDomain(result.transaction(), result.alert()));
+    }
     @PostMapping("/transfer")
     public ResponseEntity<Void> transfer(@Valid @RequestBody TransferRequest request) {
         transferPort.execute(
@@ -91,7 +91,7 @@ public class TransactionController {
         Transaction confirmedTransaction = confirmRecurringPort.execute(
                 UUID.fromString(authenticatedUserId), transactionId, actualAmount, dateToSave
         );
-        return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction));
+        return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction, null));
     }
 
     @PutMapping("/{id}")
@@ -106,7 +106,7 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> getById(@PathVariable UUID id) {
         Transaction transaction = getTransactionPort.execute(id);
-        return ResponseEntity.ok(TransactionResponse.fromDomain(transaction));
+        return ResponseEntity.ok(TransactionResponse.fromDomain(transaction, null));
     }
 
     @GetMapping("/reports/balance/{accountId}")

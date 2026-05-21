@@ -235,5 +235,8 @@ public class BeanConfiguration {
     @Bean
     public ProcessTransactionInBudgetPort processTransactionInBudgetPort(BudgetRepositoryPort budgetRepository, AccountRepositoryPort accountRepository) {
         return new ProcessTransactionInBudgetUseCase(budgetRepository, accountRepository);
+    }@Bean
+    public GetBudgetPort getBudgetPort(BudgetRepositoryPort repository) {
+        return new GetBudgetUseCase(repository);
     }
 }

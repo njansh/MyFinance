@@ -72,9 +72,9 @@
                 endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
             }
 
-            Page<Transaction> transactionsPage = listTransactionsPort.execute(id, startDate, endDate,desc, pageable);
+            Page<Transaction> transactionsPage = listTransactionsPort.execute(id, startDate, endDate, desc, pageable);
 
-            Page<TransactionResponse> response = transactionsPage.map(TransactionResponse::fromDomain);
+            Page<TransactionResponse> response = transactionsPage.map(t -> TransactionResponse.fromDomain(t, null));
 
             return ResponseEntity.ok(response);
         }

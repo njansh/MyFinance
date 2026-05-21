@@ -1,7 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
-import com.nadson.myfinance.application.port.in.ProcessTransactionInBudgetPort; // Import adicionado
+import com.nadson.myfinance.application.port.in.ProcessTransactionInBudgetPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
@@ -11,7 +11,6 @@ import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.*;
 import jakarta.transaction.Transactional;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 
@@ -19,7 +18,7 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final AccountRepositoryPort accountRepositoryPort;
     private final CategoryRepositoryPort categoryRepositoryPort;
-    private final ProcessTransactionInBudgetPort processTransactionInBudget; // Nova dependência
+    private final ProcessTransactionInBudgetPort processTransactionInBudget;
 
     public CreateTransactionUseCase(
             TransactionRepositoryPort transactionRepositoryPort,
@@ -32,9 +31,11 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
         this.processTransactionInBudget = processTransactionInBudget;
     }
 
+    public record TransactionResult(Transaction transaction, String alert) {}
+
     @Override
     @Transactional
-    public Transaction execute(Transaction transaction) {
+    public TransactionResult execute(Transaction transaction) {
         Account account = accountRepositoryPort.findById(transaction.getAccountId());
 
         if (transaction.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -54,18 +55,16 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
             }
         }
 
-
         if (transaction.getType() == TransactionType.INCOME) {
             accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount());
         } else {
             accountRepositoryPort.updateBalanceAtomic(transaction.getAccountId(), transaction.getAmount().negate());
         }
 
-
         Transaction savedTransaction = transactionRepositoryPort.save(transaction);
 
-        processTransactionInBudget.execute(savedTransaction);
+        String alert = processTransactionInBudget.execute(savedTransaction);
 
-        return savedTransaction;
+        return new TransactionResult(savedTransaction, alert);
     }
 }
