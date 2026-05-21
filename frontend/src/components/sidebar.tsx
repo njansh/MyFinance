@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-// Importe a action. Ajuste a quantidade de "../" dependendo de onde a pasta components está!
 import { logoutAction } from '../app/(private)/actions/auth';
 
 export function Sidebar() {
@@ -11,7 +10,9 @@ export function Sidebar() {
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
     { name: 'Extrato', href: '/extrato', icon: '📄' },
+    { name: 'Transações', href: '/transactions', icon: '💸' },
     { name: 'Cartões', href: '/credit-cards', icon: '💳' },
+    { name: 'Recorrências', href: '/recurring', icon: '🔄' },
   ];
 
   return (
@@ -26,7 +27,8 @@ export function Sidebar() {
         <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Menu Principal</p>
 
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          // A lógica isActive garante que o item fique selecionado mesmo em subrotas
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
@@ -37,7 +39,7 @@ export function Sidebar() {
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="text-lg">{item.icon}</span>
+              <span>{item.icon}</span>
               {item.name}
             </Link>
           );

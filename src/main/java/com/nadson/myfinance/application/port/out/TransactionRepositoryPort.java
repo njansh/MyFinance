@@ -53,6 +53,9 @@ public interface TransactionRepositoryPort {
 
     void deleteAllByAccountId(UUID accountId);
 
-    List<Transaction> findAllPendingByUserIdUpToDate(UUID userId, LocalDateTime start, LocalDateTime end);}
+    List<Transaction> findAllPendingByUserIdUpToDate(UUID userId, LocalDateTime start, LocalDateTime end);
+
+    void deletePendingByTemplateId(UUID templateId);
+}
 
 

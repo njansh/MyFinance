@@ -45,7 +45,6 @@ public class BeanConfiguration {
     @Bean
     public GetTransactionPort getTransactionUseCase(TransactionRepositoryPort transactionRepositoryPort) {
         return new GetTransactionUsecase(transactionRepositoryPort);
-
     }
     @Bean
     public TransactionImportService transactionImportService(
@@ -206,5 +205,13 @@ public class BeanConfiguration {
     @Bean
     public CreateRecurringTemplatePort createRecurringTemplatePort(RecurringTemplateRepositoryPort repository) {
         return new CreateRecurringTemplateUseCase(repository);
+    }
+    @Bean
+    public ListRecurringTemplatesPort listRecurringTemplatesPort(RecurringTemplateRepositoryPort repository) {
+        return new ListRecurringTemplatesUseCase(repository);
+    }
+    @Bean
+    public DeleteRecurringTemplatePort deleteRecurringTemplatePort(RecurringTemplateRepositoryPort recurringTemplateRepositoryPort, TransactionRepositoryPort transactionRepositoryPort) {
+        return new DeleteRecurringTemplateUseCase(recurringTemplateRepositoryPort, transactionRepositoryPort);
     }
 }

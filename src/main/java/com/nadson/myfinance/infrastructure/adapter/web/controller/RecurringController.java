@@ -1,8 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
-import com.nadson.myfinance.application.port.in.ConfirmRecurringPort;
-import com.nadson.myfinance.application.port.in.CreateRecurringTemplatePort;
-import com.nadson.myfinance.application.port.in.ListPendingRecurringPort;
+import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.application.port.out.BillingPaymentRepositoryPort;
 import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
 import com.nadson.myfinance.domain.entity.RecurringTemplate;
@@ -13,9 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,13 +19,15 @@ import java.util.UUID;
 public class RecurringController {
 
     private final ListPendingRecurringPort listPendingRecurringPort;
-    private final ConfirmRecurringPort confirmRecurringPort;
     private final CreateRecurringTemplatePort createRecurringTemplatePort;
+    private final ListRecurringTemplatesPort listRecurringTemplatesPort;
+    private final DeleteRecurringTemplatePort deleteRecurringTemplatePort;
 
-    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, ConfirmRecurringPort confirmRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort) {
+    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort, ListRecurringTemplatesPort listRecurringTemplatesPort, DeleteRecurringTemplatePort deleteRecurringTemplatePort) {
         this.listPendingRecurringPort = listPendingRecurringPort;
-        this.confirmRecurringPort = confirmRecurringPort;
         this.createRecurringTemplatePort = createRecurringTemplatePort;
+        this.listRecurringTemplatesPort = listRecurringTemplatesPort;
+        this.deleteRecurringTemplatePort = deleteRecurringTemplatePort;
     }
     @PostMapping
     public ResponseEntity<RecurringTemplate> createTemplate(@RequestBody @Valid CreateRecurringTemplateRequest request) {
@@ -73,17 +70,16 @@ public class RecurringController {
 
         return ResponseEntity.ok(response);
     }
-
-    @PostMapping("/{templateId}/confirm")
-    public ResponseEntity<TransactionResponse> confirmTransaction(
-            @PathVariable UUID templateId,
-            @RequestParam BigDecimal actualAmount,
-            @RequestParam(required = false) LocalDateTime actualDate) {
-
+    @GetMapping
+    public ResponseEntity<List<RecurringTemplate>> listTemplates() {
         String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        LocalDateTime dateToSave = actualDate!= null? actualDate : LocalDateTime.now();
-
-        Transaction confirmedTransaction = confirmRecurringPort.execute(UUID.fromString(authenticatedUserId), templateId, actualAmount, dateToSave);
-        return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction));
+        List<RecurringTemplate> templates = listRecurringTemplatesPort.execute(UUID.fromString(authenticatedUserId));
+        return ResponseEntity.ok(templates);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTemplate(@PathVariable UUID id) {
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        deleteRecurringTemplatePort.execute(UUID.fromString(authenticatedUserId), id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringTransactionRepository;
@@ -39,6 +40,7 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         entity.setCategoryId(transaction.getCategoryId());
         entity.setTransfer(transaction.isTransfer());
         entity.setStatus(transaction.getStatus());
+        entity.setTemplateId(transaction.getTemplateId());
 
         return repository.save(entity).toDomain();
     }
@@ -195,5 +197,9 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         return repository.findAllPendingByUserIdAndMonth(userId, start, end).stream()
                 .map(TransactionJpaEntity::toDomain)
                 .toList();
+    }
+    @Override
+    public void deletePendingByTemplateId(UUID templateId) {
+        repository.deleteByTemplateIdAndStatus(templateId, TransactionStatus.PENDING);
     }
 }

@@ -1,275 +1,275 @@
-    import { cookies } from 'next/headers';
+'use server';
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { cookies } from 'next/headers';
 
-    export interface Account {
-      accountId: string;
-      name: string;
-      balance: number;
-      type: string;
+const API_BASE_URL =
+  process.env.API_URL || 'http://localhost:8080';
+
+export interface Account {
+  accountId: string;
+  name: string;
+  balance: number;
+  type: string;
+}
+
+export interface Category {
+  categoryId: string;
+  name: string;
+}
+
+export interface Transaction {
+  transactionId: string;
+  id?: string;
+  description: string;
+  amount: number;
+  date: string;
+  type: 'INCOME' | 'EXPENSE';
+  accountId: string;
+  categoryId: string;
+  accountBalanceAfter: number;
+  isTransfer?: boolean;
+  transferID?: string;
+}
+
+export interface PaginatedTransactions {
+  content: Transaction[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  accountId: string;
+}
+
+function getUserIdFromToken(token: string): string {
+  try {
+    const payload = token.split('.')[1];
+
+    const decoded = JSON.parse(
+      Buffer.from(payload, 'base64').toString('utf-8')
+    );
+
+    return decoded.sub || '';
+  } catch {
+    throw new Error('UNAUTHORIZED');
+  }
+}
+
+async function getAuthToken() {
+  const cookieStore = await cookies();
+
+  const token = cookieStore.get('accessToken')?.value;
+
+  if (!token) {
+    throw new Error('UNAUTHORIZED');
+  }
+
+  return token;
+}
+
+async function apiFetch(
+  endpoint: string,
+  options: RequestInit = {}
+) {
+  const token = await getAuthToken();
+
+  const response = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      cache: 'no-store',
     }
+  );
 
-    export interface Category {
-      categoryId: string;
-      name: string;
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
 
-    export interface Transaction {
-      transactionId: string;
-      id?: string;
-      description: string;
-      amount: number;
-      date: string;
-      type: 'INCOME' | 'EXPENSE';
-      accountId: string;
-      categoryId: string;
-      accountBalanceAfter: number;
-      isTransfer?: boolean;
-      transferID?: string;
-    }
+    console.error('API ERROR:', errorText);
 
-    export interface PaginatedTransactions {
-      content: Transaction[];
-      totalPages: number;
-      totalElements: number;
-      size: number;
-      number: number;
-    }
+    throw new Error(
+      `HTTP_ERROR_${response.status}: ${errorText}`
+    );
+  }
 
-    export interface CreditCard {
-        id: string;
-        name: string;
-        limit: number;
-        closingDay: number;
-        dueDay: number;
-        accountId: string;
-      }
+  return response;
+}
 
-    function getUserIdFromToken(token: string): string {
-      try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
-        return decoded.sub || '';
-      } catch {
-        throw new Error('UNAUTHORIZED');
-      }
-    }
+/* =========================
+   ACCOUNTS
+========================= */
 
-    export async function getAccounts(): Promise<Account[]> {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('accessToken')?.value;
+export async function getAccounts(): Promise<Account[]> {
+  const token = await getAuthToken();
 
-      if (!token) {
-        throw new Error('UNAUTHORIZED');
-      }
+  const userId = getUserIdFromToken(token);
 
-      const userId = getUserIdFromToken(token);
-      const targetUrl = `${API_BASE_URL}/users/${userId}/accounts`;
+  const response = await apiFetch(
+    `/users/${userId}/accounts`
+  );
 
-      const response = await fetch(targetUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      });
+  return response.json();
+}
 
-      if (!response.ok) {
-        throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
-      }
+/* =========================
+   CATEGORIES
+========================= */
 
-      return response.json();
-    }
+export async function getCategories(): Promise<Category[]> {
+  const token = await getAuthToken();
 
-    export async function getCategories(): Promise<Category[]> {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('accessToken')?.value;
+  const userId = getUserIdFromToken(token);
 
-      if (!token) {
-        throw new Error('UNAUTHORIZED');
-      }
+  const response = await apiFetch(
+    `/users/${userId}/categories`
+  );
 
-      const userId = getUserIdFromToken(token);
-      const targetUrl = `${API_BASE_URL}/users/${userId}/categories`;
+  return response.json();
+}
 
-      const response = await fetch(targetUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      });
+/* =========================
+   TRANSACTIONS
+========================= */
 
-      if (!response.ok) {
-        throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
-      }
+export async function getTransactions(
+  accountId: string,
+  filters: {
+    month?: number;
+    year?: number;
+    desc?: string;
+    page?: number;
+    size?: number;
+  } = {}
+): Promise<PaginatedTransactions> {
+  const url = new URL(
+    `${API_BASE_URL}/accounts/${accountId}/transactions`
+  );
 
-      return response.json();
-    }
+  if (filters.month !== undefined) {
+    url.searchParams.append(
+      'month',
+      String(filters.month)
+    );
+  }
 
-    export async function getTransactions(
-      accountId: string,
-      filters: { month?: number; year?: number; desc?: string; page?: number; size?: number } = {}
-    ): Promise<PaginatedTransactions> {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('accessToken')?.value;
+  if (filters.year !== undefined) {
+    url.searchParams.append(
+      'year',
+      String(filters.year)
+    );
+  }
 
-      if (!token) {
-        throw new Error('UNAUTHORIZED');
-      }
+  if (filters.desc) {
+    url.searchParams.append('desc', filters.desc);
+  }
 
-      const url = new URL(`${API_BASE_URL}/accounts/${accountId}/transactions`);
+  if (filters.page !== undefined) {
+    url.searchParams.append(
+      'page',
+      String(filters.page)
+    );
+  }
 
-      if (filters.month !== undefined) url.searchParams.append('month', String(filters.month));
-      if (filters.year !== undefined) url.searchParams.append('year', String(filters.year));
-      if (filters.desc) url.searchParams.append('desc', filters.desc);
-      if (filters.page !== undefined) url.searchParams.append('page', String(filters.page));
-      if (filters.size !== undefined) url.searchParams.append('size', String(filters.size));
+  if (filters.size !== undefined) {
+    url.searchParams.append(
+      'size',
+      String(filters.size)
+    );
+  }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      });
+  const token = await getAuthToken();
 
-      if (!response.ok) {
-        throw new Error(`HTTP_ERROR_${response.status} na URL: ${url.toString()}`);
-      }
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
 
-      return response.json();
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
 
-    export async function createTransfer(payload: {
-      fromId: string;
-      toId: string;
-      amount: number;
-      date: string;
-    }): Promise<void> {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('accessToken')?.value;
+    throw new Error(errorText);
+  }
 
-      if (!token) {
-        throw new Error('UNAUTHORIZED');
-      }
+  return response.json();
+}
 
-      const response = await fetch(`${API_BASE_URL}/transactions/transfer`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+/* =========================
+   REPORTS
+========================= */
 
-      if (!response.ok) {
-        throw new Error(`HTTP_ERROR_${response.status}`);
-      }
-    }export async function getExpensesReport(
-       accountId: string,
-       month: number,
-       year: number
-     ): Promise<Record<string, number>> {
-       const cookieStore = await cookies();
-       const token = cookieStore.get('accessToken')?.value;
+export async function getExpensesReport(
+  accountId: string,
+  month: number,
+  year: number
+): Promise<Record<string, number>> {
+  const response = await apiFetch(
+    `/transactions/reports/expenses-by-category/${accountId}?month=${month}&year=${year}`
+  );
 
-       if (!token) {
-         throw new Error('UNAUTHORIZED');
-       }
+  return response.json();
+}
 
-       const targetUrl = `${API_BASE_URL}/transactions/reports/expenses-by-category/${accountId}?month=${month}&year=${year}`;
+export async function getIncomesReport(
+  accountId: string,
+  month: number,
+  year: number
+): Promise<Record<string, number>> {
+  const response = await apiFetch(
+    `/transactions/reports/incomes-by-category/${accountId}?month=${month}&year=${year}`
+  );
 
-       const response = await fetch(targetUrl, {
-         method: 'GET',
-         headers: {
-           'Authorization': `Bearer ${token}`,
-           'Content-Type': 'application/json',
-         },
-         cache: 'no-store',
-       });
+  return response.json();
+}
 
-       if (!response.ok) {
-         throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
-       }
+/* =========================
+   CREDIT CARDS
+========================= */
 
-       return response.json();
-     }
+export async function getCreditCards(): Promise<
+  CreditCard[]
+> {
+  const token = await getAuthToken();
 
-     export async function getIncomesReport(
-       accountId: string,
-       month: number,
-       year: number
-     ): Promise<Record<string, number>> {
-       const cookieStore = await cookies();
-       const token = cookieStore.get('accessToken')?.value;
+  const userId = getUserIdFromToken(token);
 
-       if (!token) {
-         throw new Error('UNAUTHORIZED');
-       }
+  const response = await apiFetch(
+    `/users/${userId}/credit-cards`
+  );
 
-       const targetUrl = `${API_BASE_URL}/transactions/reports/incomes-by-category/${accountId}?month=${month}&year=${year}`;
+  return response.json();
+}
 
-       const response = await fetch(targetUrl, {
-         method: 'GET',
-         headers: {
-           'Authorization': `Bearer ${token}`,
-           'Content-Type': 'application/json',
-         },
-         cache: 'no-store',
-       });
+/* =========================
+   RECURRING
+========================= */
 
-       if (!response.ok) {
-         throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
-       }
+export async function getRecurringTemplates() {
+  const response = await apiFetch('/recurring');
 
-       return response.json();
-     }
+  return response.json();
+}
 
-     export async function getCreditCards(): Promise<CreditCard[]> {
-       const cookieStore = await cookies();
-       const token = cookieStore.get('accessToken')?.value;
+export async function getPendingTransactions(
+  month: number,
+  year: number
+) {
+  const response = await apiFetch(
+    `/recurring/pending?month=${month}&year=${year}`
+  );
 
-       if (!token) {
-         throw new Error('UNAUTHORIZED');
-       }
-
-       const userId = getUserIdFromToken(token);
-       const targetUrl = `${API_BASE_URL}/users/${userId}/credit-cards`;
-
-       const response = await fetch(targetUrl, {
-         method: 'GET',
-         headers: {
-           'Authorization': `Bearer ${token}`,
-           'Content-Type': 'application/json',
-         },
-         cache: 'no-store',
-       });
-
-       if (!response.ok) {
-         throw new Error(`HTTP_ERROR_${response.status} na URL: ${targetUrl}`);
-       }
-
-       return response.json();
-     }
- export async function getPendingTransactions(month: number, year: number) {
-   const cookieStore = await cookies();
-   const token = cookieStore.get('accessToken')?.value;
-
-   if (!token) throw new Error('UNAUTHORIZED');
-
-   const targetUrl = `${API_BASE_URL}/recurring/pending?month=${month}&year=${year}`;
-   const response = await fetch(targetUrl, {
-     method: 'GET',
-     headers: { 'Authorization': `Bearer ${token}` },
-     cache: 'no-store',
-   });
-
-   if (!response.ok) throw new Error('Falha ao buscar faturas pendentes');
-   return response.json();
- }
-
+  return response.json();
+}

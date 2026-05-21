@@ -8,6 +8,7 @@ import com.nadson.myfinance.domain.entity.RecurringTemplate;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
+import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;
@@ -64,6 +65,7 @@ public class ListPendingRecurringUseCase implements ListPendingRecurringPort {
         while (!current.isAfter(target)) {
             int maxDaysInMonth = YearMonth.of(current.getYear(), current.getMonthValue()).lengthOfMonth();
             int safeDay = Math.min(template.getFrequencyDay(), maxDaysInMonth);
+            System.out.println("DEBUG - Criando transação com templateId: " + template.getId());
 
             Transaction pendingTransaction = new Transaction(
                     UUID.randomUUID(),
@@ -76,13 +78,21 @@ public class ListPendingRecurringUseCase implements ListPendingRecurringPort {
                     false,
                     null,
                     null,
-                    TransactionStatus.PENDING
+                    TransactionStatus.PENDING,
+                    template.getId()
             );
 
+// --- FORÇANDO A PERSISTÊNCIA ---
+// Em vez de passar apenas o objeto, vamos garantir que o repository
+// saiba que o templateId existe. Se o seu RepositoryPort for baseado em Jpa,
+// tente criar a entidade manualmente para ter certeza do envio:
+
+            TransactionJpaEntity entity = new TransactionJpaEntity(pendingTransaction);
+            entity.setTemplateId(template.getId()); // <-- FORÇADO AQUI
             transactionRepositoryPort.save(pendingTransaction);
+// -------------------------------
 
             template.setLastExecution(current.getMonthValue(), current.getYear());
-
             current = current.plusMonths(1);
         }
     }
