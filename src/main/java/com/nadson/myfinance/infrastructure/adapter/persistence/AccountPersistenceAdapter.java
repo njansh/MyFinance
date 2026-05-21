@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.exception.ResourceNotFoundException;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.AccountJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringAccountRepository;
 import org.springframework.stereotype.Component;
@@ -59,5 +60,11 @@ public class AccountPersistenceAdapter implements AccountRepositoryPort {
     @Override
     public void deleteById(UUID accountId) {
         springAccountRepository.deleteById(accountId);
+    }
+    @Override
+    public UUID findUserIdByAccountId(UUID accountId) {
+        return springAccountRepository.findById(accountId)
+                .map(AccountJpaEntity::getUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with ID"));
     }
 }

@@ -5,7 +5,6 @@ import com.nadson.myfinance.application.port.out.BudgetRepositoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.UserRepositoryPort;
 import com.nadson.myfinance.domain.entity.Budget;
-import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 
 import java.math.BigDecimal;
@@ -30,7 +29,10 @@ public class CreateBudgetUseCase implements CreateBudgetPort {
         if (categoryRepository.findById(categoryId) == null) {
             throw new BusinessRuleException("Category not found");
         }
+
+
         Budget budget = new Budget(null, userId, categoryId, month, year, limitAmount);
-        return repository.save(budget);
+
+            return repository.save(budget);
     }
 }

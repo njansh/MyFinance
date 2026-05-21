@@ -15,15 +15,26 @@ public class Budget {
     private BigDecimal limitAmount;
     private BigDecimal spentAmount;
 
-    public Budget(UUID id, UUID userId, UUID categoryId, int month, int year, BigDecimal limitAmount) {
+    private boolean alertedEightyPercent;
+    private boolean alertedOneHundredPercent;
+
+    public Budget(UUID id, UUID userId, UUID categoryId, int month, int year,
+                  BigDecimal limitAmount, BigDecimal spentAmount,
+                  boolean alertedEightyPercent, boolean alertedOneHundredPercent) {
         validate(userId, categoryId, month, year, limitAmount);
-        this.id = id == null? UUID.randomUUID() : id;
+        this.id = id == null ? UUID.randomUUID() : id;
         this.userId = userId;
         this.categoryId = categoryId;
         this.month = month;
         this.year = year;
         this.limitAmount = limitAmount;
-        this.spentAmount = BigDecimal.ZERO;
+        this.spentAmount = spentAmount == null ? BigDecimal.ZERO : spentAmount;
+        this.alertedEightyPercent = alertedEightyPercent;
+        this.alertedOneHundredPercent = alertedOneHundredPercent;
+    }
+
+    public Budget(UUID id, UUID userId, UUID categoryId, int month, int year, BigDecimal limitAmount) {
+        this(id, userId, categoryId, month, year, limitAmount, BigDecimal.ZERO, false, false);
     }
 
     private void validate(UUID userId, UUID categoryId, int month, int year, BigDecimal limitAmount) {
@@ -37,28 +48,75 @@ public class Budget {
     }
 
     public void addExpense(BigDecimal amount) {
-        if (amount!= null && amount.compareTo(BigDecimal.ZERO) > 0) {
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
             this.spentAmount = this.spentAmount.add(amount);
         }
     }
 
-    // Calcula se o alerta de 80% ou 100% deve ser disparado
-    public boolean isNearingLimit() {
-        if (limitAmount.compareTo(BigDecimal.ZERO) == 0) return false;
-        BigDecimal percentage = spentAmount.divide(limitAmount, 2, RoundingMode.HALF_UP);
-        return percentage.compareTo(new BigDecimal("0.80")) >= 0;
+    public BigDecimal getUsagePercentage() {
+        if (limitAmount.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        return spentAmount.divide(limitAmount, 4, RoundingMode.HALF_UP);
+    }
+
+    public boolean shouldAlertEightyPercent() {
+        if (alertedEightyPercent) return false;
+
+        BigDecimal eightyPercent = new BigDecimal("0.80");
+        if (getUsagePercentage().compareTo(eightyPercent) >= 0 && getUsagePercentage().compareTo(BigDecimal.ONE) < 0) {
+            this.alertedEightyPercent = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean shouldAlertOneHundredPercent() {
+        if (alertedOneHundredPercent) return false;
+
+        if (getUsagePercentage().compareTo(BigDecimal.ONE) >= 0) {
+            this.alertedOneHundredPercent = true;
+            this.alertedEightyPercent = true;
+            return true;
+        }
+        return false;
     }
 
     public boolean isExceeded() {
         return spentAmount.compareTo(limitAmount) > 0;
     }
 
-    // Getters
-    public UUID getId() { return id; }
-    public UUID getUserId() { return userId; }
-    public UUID getCategoryId() { return categoryId; }
-    public int getMonth() { return month; }
-    public int getYear() { return year; }
-    public BigDecimal getLimitAmount() { return limitAmount; }
-    public BigDecimal getSpentAmount() { return spentAmount; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public BigDecimal getLimitAmount() {
+        return limitAmount;
+    }
+
+    public BigDecimal getSpentAmount() {
+        return spentAmount;
+    }
+
+    public boolean isAlertedEightyPercent() {
+        return alertedEightyPercent;
+    }
+
+    public boolean isAlertedOneHundredPercent() {
+        return alertedOneHundredPercent;
+    }
 }

@@ -68,6 +68,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Erro Interno do Servidor");
         return problemDetail;
     }
+    
 
     // 6. FALHAS DE CONCORRÊNCIA E TRANSAÇÃO (409)
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
@@ -77,6 +78,18 @@ public class GlobalExceptionHandler {
                 "A conta ou transação foi modificada por outra operação simultânea. Por favor, tente novamente."
         );
         problemDetail.setTitle("Conflito de Concorrência");
+        return problemDetail;
+    }
+
+    // 7. ALERTAS DE ORÇAMENTO (409)
+    @ExceptionHandler(BudgetAlertException.class)
+    public ProblemDetail handleBudgetAlert(BudgetAlertException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, // 409 indica que a operação ocorreu, mas há um conflito com a meta
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Alerta de Orçamento");
+        problemDetail.setProperty("alert_type", ex.getAlertType());
         return problemDetail;
     }
 }
