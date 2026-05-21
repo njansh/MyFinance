@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { CreditCardForm } from '../../components/credit-cards/credit-card-form';
-import { BillingCycleViewer } from '../../components/credit-cards/billing-cycle-viewer';
-import { CreditCardPurchaseForm } from '../../components/credit-cards/credit-card-purchase-form';
+// CORREÇÃO DOS PATHS: Subindo 3 níveis para alcançar a pasta components na raiz
+import { CreditCardForm } from '../../../components/credit-cards/credit-card-form';
+import { BillingCycleViewer } from '../../../components/credit-cards/billing-cycle-viewer';
+import { CreditCardPurchaseForm } from '../../../components/credit-cards/credit-card-purchase-form';
 
 export function CreditCardsPageContent({ cards, accounts, categories }: any) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +67,7 @@ export function CreditCardsPageContent({ cards, accounts, categories }: any) {
         <BillingCycleViewer
           cardId={selectedCard.id}
           cardName={selectedCard.name}
-          accounts={accounts} // <--- AQUI ESTÁ A ATUALIZAÇÃO!
+          accounts={accounts}
           onClose={() => setSelectedCard(null)}
         />
       )}

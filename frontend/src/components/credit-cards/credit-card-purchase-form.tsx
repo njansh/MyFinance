@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { createCreditCardTransactionAction } from '../../app/actions/credit-card-actions';
+import { createCreditCardTransactionAction } from '../../app/(private)/actions/credit-card-actions';
 
 interface PurchaseFormProps {
   cardId: string;

@@ -39,6 +39,9 @@ public class RecurringTemplateJpaEntity {
 
     private Integer lastExecutedMonth;
     private Integer lastExecutedYear;
+    public RecurringTemplateJpaEntity() {
+    }
+
 
 
 

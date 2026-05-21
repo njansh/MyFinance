@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
-import { getTransactions, getAccounts } from '../../lib/api/api-server';
-import { TransactionsTable } from '../../components/transactions-table';
-import { TransactionsFilter } from '../../components/transactions-filter';
-
+// CORREÇÃO DOS PATHS: Subindo exatamente 3 níveis para encontrar a lib e os components
+import { getTransactions, getAccounts } from '../../../lib/api/api-server';
+import { TransactionsTable } from '../../../components/transactions/transactions-table';
+import { TransactionsFilter } from '../../../components/transactions/transactions-filter';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -42,15 +42,15 @@ export default async function ExtratoPage({ searchParams }: PageProps) {
   };
 
   return (
-    <div className="container mx-auto p-8 max-w-7xl space-y-8 antialiased text-slate-900">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 antialiased text-slate-900">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Extrato Consolidado</h1>
-        <p className="text-sm text-slate-500 font-medium">Gestão e auditoria de lançamentos e fluxos de caixa.</p>
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">Extrato Consolidado</h1>
+        <p className="text-sm text-slate-500 font-medium mt-1">Gestão e auditoria de lançamentos e fluxos de caixa.</p>
       </div>
 
       <TransactionsFilter accounts={accounts} />
 
-      <Suspense fallback={<div className="h-96 w-full bg-slate-50 border border-slate-100 animate-pulse rounded-2xl" />}>
+      <Suspense fallback={<div className="h-96 w-full bg-slate-50 border border-slate-200 rounded-2xl animate-pulse" />}>
         <TransactionsDataWrapper accountId={accountId} filters={filters} accounts={accounts} />
       </Suspense>
     </div>

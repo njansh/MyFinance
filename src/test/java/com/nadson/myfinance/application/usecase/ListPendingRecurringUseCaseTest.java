@@ -48,7 +48,7 @@ class ListPendingRecurringUseCaseTest {
 
         when(userRepositoryPort.findById(userId)).thenReturn(mock(User.class));
         when(recurringTemplateRepositoryPort.findPendingTemplates(
-                eq(userId), eq(now.getDayOfMonth()), eq(now.getMonthValue()), eq(now.getYear())))
+                eq(userId), eq(now.getMonthValue()), eq(now.getYear())))
                 .thenReturn(List.of(template));
 
         List<RecurringTemplate> result = useCase.execute(userId);
@@ -56,7 +56,7 @@ class ListPendingRecurringUseCaseTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Assinatura Streaming", result.get(0).getDescription());
-        verify(recurringTemplateRepositoryPort).findPendingTemplates(any(), anyInt(), anyInt(), anyInt());
+        verify(recurringTemplateRepositoryPort).findPendingTemplates(any(), anyInt(), anyInt());
     }
 
     @Test

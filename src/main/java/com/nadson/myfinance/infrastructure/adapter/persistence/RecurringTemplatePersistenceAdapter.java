@@ -28,8 +28,8 @@ public class RecurringTemplatePersistenceAdapter implements RecurringTemplateRep
     }
 
     @Override
-    public List<RecurringTemplate> findPendingTemplates(UUID userId, int currentDay, int currentMonth, int currentYear) {
-        return springRecurringTemplateRepository.findPendingTemplates(userId, currentDay, currentMonth, currentYear)
+    public List<RecurringTemplate> findPendingTemplates(UUID userId, int currentMonth, int currentYear) {
+        return springRecurringTemplateRepository.findPendingTemplates(userId, currentMonth, currentYear)
                 .stream()
                 .map(RecurringTemplateJpaEntity::toDomain)
                 .toList();
@@ -42,6 +42,14 @@ public class RecurringTemplatePersistenceAdapter implements RecurringTemplateRep
 
     @Override
     public void deleteAllByAccountId(UUID accountId) {
-springRecurringTemplateRepository.deleteAllByAccountId(accountId);
+        springRecurringTemplateRepository.deleteAllByAccountId(accountId);
+    }
+
+    @Override
+    public List<RecurringTemplate> findActiveByUserId(UUID userId) {
+        return springRecurringTemplateRepository.findByUserIdAndActiveTrue(userId)
+                .stream()
+                .map(RecurringTemplateJpaEntity::toDomain)
+                .toList();
     }
 }

@@ -38,6 +38,7 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
         entity.setAccountId(transaction.getAccountId());
         entity.setCategoryId(transaction.getCategoryId());
         entity.setTransfer(transaction.isTransfer());
+        entity.setStatus(transaction.getStatus());
 
         return repository.save(entity).toDomain();
     }
@@ -184,5 +185,15 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
             map.put(categoryName, sum);
         }
         return map;
+    }
+    @Override
+    public BigDecimal sumBalanceBeforeDate(List<UUID> allAccountIds, LocalDateTime date, TransactionType transactionType) {
+        return repository.sumTransactionsBeforeDate(allAccountIds, date, transactionType);
+    }
+    @Override
+    public List<Transaction> findAllPendingByUserIdUpToDate(UUID userId, LocalDateTime start, LocalDateTime end) {
+        return repository.findAllPendingByUserIdAndMonth(userId, start, end).stream()
+                .map(TransactionJpaEntity::toDomain)
+                .toList();
     }
 }

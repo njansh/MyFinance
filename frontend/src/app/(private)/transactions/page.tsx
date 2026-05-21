@@ -1,4 +1,4 @@
-import { getAccounts, getCategories, createTransfer } from '../../lib/api/api-server';
+import { getAccounts, getCategories, createTransfer } from '../../../lib/api/api-server';
 import { TransactionForm } from './form';
 
 export const dynamic = 'force-dynamic';

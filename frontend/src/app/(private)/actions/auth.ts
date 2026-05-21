@@ -7,7 +7,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  if (!email ||!password) {
+  if (!email || !password) {
     return { error: 'Preencha todos os campos.' }
   }
 
@@ -24,7 +24,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     // Extrair os cookies emitidos pelo Spring Boot e persistir no frontend
     const setCookieHeader = res.headers.getSetCookie()
-    const cookieStore = await cookies() 
+    const cookieStore = await cookies()
 
     setCookieHeader.forEach((cookieString) => {
       const parts = cookieString.split(';').map(part => part.trim())
@@ -54,7 +54,7 @@ export async function signupAction(prevState: any, formData: FormData) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  if (!name ||!email ||!password) {
+  if (!name || !email || !password) {
     return { error: 'Preencha todos os campos para criar a conta.' }
   }
 
@@ -77,4 +77,12 @@ export async function signupAction(prevState: any, formData: FormData) {
 
   // Se a conta foi criada com sucesso no backend, faz o login automaticamente no frontend
   return loginAction(prevState, formData)
+}
+
+// Nova action para destruir a sessão e redirecionar
+export async function logoutAction() {
+  const cookieStore = await cookies()
+  cookieStore.delete('accessToken')
+
+  redirect('/login')
 }

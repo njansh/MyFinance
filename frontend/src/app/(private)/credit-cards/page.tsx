@@ -1,4 +1,4 @@
-import { getCreditCards, getAccounts, getCategories } from '../../lib/api/api-server';
+import { getCreditCards, getAccounts, getCategories } from '../../../lib/api/api-server';
 import { CreditCardsPageContent } from './CreditCardsPageContent';
 
 export default async function CreditCardsPage() {

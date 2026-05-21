@@ -1,10 +1,12 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.ConfirmRecurringPort;
-import com.nadson.myfinance.application.port.in.CreateTransactionPort;
-import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
-import com.nadson.myfinance.domain.entity.RecurringTemplate;
+import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
+import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
+import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
+import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import com.nadson.myfinance.domain.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
@@ -14,44 +16,50 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ConfirmRecurringUseCase implements ConfirmRecurringPort {
-    private final RecurringTemplateRepositoryPort repository;
-    private final CreateTransactionPort createTransactionPort;
+    private final TransactionRepositoryPort transactionRepositoryPort;
+    private final AccountRepositoryPort accountRepositoryPort;
 
-    public ConfirmRecurringUseCase(RecurringTemplateRepositoryPort repository, CreateTransactionPort createTransactionPort) {
-        this.repository = repository;
-        this.createTransactionPort = createTransactionPort;
+    public ConfirmRecurringUseCase(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort) {
+        this.transactionRepositoryPort = transactionRepositoryPort;
+        this.accountRepositoryPort = accountRepositoryPort;
     }
 
     @Transactional
     @Override
-    public Transaction execute(UUID userId, UUID templateId, BigDecimal actualAmount, LocalDateTime actualDate) {
-        RecurringTemplate template = repository.findById(templateId);
-        if (template == null) throw new ResourceNotFoundException("Modelo não encontrado");
-
-        // Regra de Isolamento: Verifica se o template pertence ao usuário logado
-        if (!template.getUserId().equals(userId)) {
-            throw new BusinessRuleException("Acesso negado: Você não tem permissão para alterar este recurso.");
+    public Transaction execute(UUID userId, UUID transactionId, BigDecimal actualAmount, LocalDateTime actualDate) {
+        Transaction pendingTransaction = transactionRepositoryPort.findById(transactionId);
+        if (pendingTransaction == null) {
+            throw new ResourceNotFoundException("Transaction not found.");
         }
 
-        // 1. Cria a transação REAL
-        Transaction realTransaction = new Transaction(
-                UUID.randomUUID(),
-                template.getDescription(),
+        if (pendingTransaction.getStatus() == TransactionStatus.COMPLETED) {
+            throw new BusinessRuleException("This transaction has already been paid.");
+        }
+
+        Account account = accountRepositoryPort.findById(pendingTransaction.getAccountId());
+        if (account == null || !account.getUserId().equals(userId)) {
+            throw new BusinessRuleException("Access denied: Transaction belongs to another account.");
+        }
+
+        pendingTransaction.updateDetails(
+                pendingTransaction.getDescription(),
                 actualAmount,
                 actualDate,
-                template.getType(),
-                template.getAccountId(),
-                template.getCategoryId(),
-                false, null, null
+                pendingTransaction.getType(),
+                pendingTransaction.getAccountId(),
+                pendingTransaction.getCategoryId()
         );
 
-        // 2. Chama a porta de criação de transação (que já atualiza saldo atomicamente)
-        createTransactionPort.execute(realTransaction);
+        pendingTransaction.markAsCompleted();
 
-        // 3. Atualiza o modelo para saber que este mês já foi processado
-        template.setLastExecution(actualDate.getMonthValue(), actualDate.getYear());
-        repository.save(template);
+        if (pendingTransaction.getType() == TransactionType.INCOME) {
+            account.deposit(actualAmount);
+        } else {
+            account.withdraw(actualAmount);
+        }
 
-        return realTransaction;
+        accountRepositoryPort.save(account);
+
+        return transactionRepositoryPort.save(pendingTransaction);
     }
 }

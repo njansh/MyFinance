@@ -50,6 +50,7 @@ public class RecurringTemplate {
     public UUID getCategoryId() { return categoryId; }
     public String getDescription() { return description; }
     public BigDecimal getExpectedAmount() { return expectedAmount; }
+    public BigDecimal getAmount() { return expectedAmount; }
     public TransactionType getType() { return type; }
     public int getFrequencyDay() { return frequencyDay; }
     public boolean isActive() { return active; }

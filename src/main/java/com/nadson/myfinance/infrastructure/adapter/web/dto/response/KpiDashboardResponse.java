@@ -6,6 +6,6 @@ public record KpiDashboardResponse(
         BigDecimal netWorth,
         BigDecimal monthlyIncome,
         BigDecimal monthlyExpense,
-        BigDecimal cashFlow,
-        BigDecimal savingsRatio
+        BigDecimal lastMonthBalance,
+        BigDecimal nextMonthForecast
 ) {}

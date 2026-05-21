@@ -3,13 +3,13 @@ package com.nadson.myfinance.application.usecase;
 import com.nadson.myfinance.application.port.in.GetFinancialDashboardKpisPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
+import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
-import com.nadson.myfinance.domain.enums.AccountType;
+import com.nadson.myfinance.domain.entity.RecurringTemplate;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.KpiDashboardResponse;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -19,10 +19,15 @@ public class GetFinancialDashboardKpisUseCase implements GetFinancialDashboardKp
 
     private final AccountRepositoryPort accountRepository;
     private final TransactionRepositoryPort transactionRepository;
+    private final RecurringTemplateRepositoryPort recurringTemplateRepository;
 
-    public GetFinancialDashboardKpisUseCase(AccountRepositoryPort accountRepository, TransactionRepositoryPort transactionRepository) {
+    public GetFinancialDashboardKpisUseCase(
+            AccountRepositoryPort accountRepository,
+            TransactionRepositoryPort transactionRepository,
+            RecurringTemplateRepositoryPort recurringTemplateRepository) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.recurringTemplateRepository = recurringTemplateRepository;
     }
 
     @Override
@@ -32,45 +37,43 @@ public class GetFinancialDashboardKpisUseCase implements GetFinancialDashboardKp
             return new KpiDashboardResponse(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
         }
 
-        // Patrimônio Líquido (Soma simples de saldos atuais - essa lista é sempre pequena)
-        BigDecimal netWorth = accounts.stream()
-                .map(Account::getBalance)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Definição do período
-        YearMonth targetMonth = (month!= null && year!= null)? YearMonth.of(year, month) : YearMonth.now();
+        YearMonth targetMonth = (month != null && year != null) ? YearMonth.of(year, month) : YearMonth.now();
         LocalDateTime startDate = targetMonth.atDay(1).atStartOfDay();
         LocalDateTime endDate = targetMonth.atEndOfMonth().atTime(23, 59, 59);
 
         List<UUID> allAccountIds = accounts.stream().map(Account::getAccountId).toList();
 
-        // CÁLCULOS DELEGADOS AO BANCO (Performance Máxima)
+        BigDecimal historicalIncome = transactionRepository.sumBalanceBeforeDate(allAccountIds, startDate, TransactionType.INCOME);
+        BigDecimal historicalExpense = transactionRepository.sumBalanceBeforeDate(allAccountIds, startDate, TransactionType.EXPENSE);
+
+        historicalIncome = (historicalIncome == null) ? BigDecimal.ZERO : historicalIncome;
+        historicalExpense = (historicalExpense == null) ? BigDecimal.ZERO : historicalExpense;
+
+        BigDecimal lastMonthBalance = historicalIncome.subtract(historicalExpense);
+
         BigDecimal monthlyIncome = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.INCOME);
         BigDecimal monthlyExpense = transactionRepository.sumTransactionsByAccountsAndPeriod(allAccountIds, startDate, endDate, TransactionType.EXPENSE);
 
-        monthlyIncome = (monthlyIncome == null)? BigDecimal.ZERO : monthlyIncome;
-        monthlyExpense = (monthlyExpense == null)? BigDecimal.ZERO : monthlyExpense;
+        monthlyIncome = (monthlyIncome == null) ? BigDecimal.ZERO : monthlyIncome;
+        monthlyExpense = (monthlyExpense == null) ? BigDecimal.ZERO : monthlyExpense;
 
-        BigDecimal cashFlow = monthlyIncome.subtract(monthlyExpense);
+        BigDecimal currentPeriodNetWorth = accounts.stream()
+                .map(acc -> acc.getBalance() != null ? acc.getBalance() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Taxa de Poupança (Apenas transferências para contas tipo INVESTMENT)
-        List<UUID> investmentAccountIds = accounts.stream()
-                .filter(acc -> acc.getType() == AccountType.INVESTMENT)
-                .map(Account::getAccountId)
-                .toList();
+        BigDecimal nextMonthForecast = currentPeriodNetWorth;
 
-        BigDecimal savingsAmount = BigDecimal.ZERO;
-        if (!investmentAccountIds.isEmpty()) {
-            savingsAmount = transactionRepository.sumSavingsByAccountsAndPeriod(investmentAccountIds, startDate, endDate);
-            savingsAmount = (savingsAmount == null)? BigDecimal.ZERO : savingsAmount;
+        List<RecurringTemplate> activeRecurrences = recurringTemplateRepository.findActiveByUserId(userId);
+        if (activeRecurrences != null && !activeRecurrences.isEmpty()) {
+            for (RecurringTemplate template : activeRecurrences) {
+                if (template.getType() == TransactionType.INCOME) {
+                    nextMonthForecast = nextMonthForecast.add(template.getExpectedAmount());
+                } else if (template.getType() == TransactionType.EXPENSE) {
+                    nextMonthForecast = nextMonthForecast.subtract(template.getExpectedAmount());
+                }
+            }
         }
 
-        BigDecimal savingsRatio = BigDecimal.ZERO;
-        if (monthlyIncome.compareTo(BigDecimal.ZERO) > 0) {
-            savingsRatio = savingsAmount.divide(monthlyIncome, 4, RoundingMode.HALF_EVEN)
-                    .multiply(new BigDecimal("100"));
-        }
-
-        return new KpiDashboardResponse(netWorth, monthlyIncome, monthlyExpense, cashFlow, savingsRatio);
+        return new KpiDashboardResponse(currentPeriodNetWorth, monthlyIncome, monthlyExpense, lastMonthBalance, nextMonthForecast);
     }
 }

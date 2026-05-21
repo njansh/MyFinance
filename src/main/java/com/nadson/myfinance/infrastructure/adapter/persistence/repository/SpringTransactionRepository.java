@@ -57,7 +57,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("date") LocalDateTime date,
             @Param("amount") BigDecimal amount
     );
-    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type GROUP BY c.name")
+    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.status = 'COMPLETED' GROUP BY c.name")
     List<Object> sumAmountByCategoryAndType(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type);
     @Query("SELECT t FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
@@ -71,7 +71,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("amount") java.math.BigDecimal amount,
             @Param("type") com.nadson.myfinance.domain.enums.TransactionType type
     );
-    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate GROUP BY c.name")
+    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate AND t.status = 'COMPLETED' GROUP BY c.name")
     List<Object> sumAmountByCategoryAndTypeAndDateBetween(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
     List<TransactionJpaEntity> findByTransferID(UUID transferID);
     Page<TransactionJpaEntity> findByAccountIdAndDescriptionContainingIgnoreCase(UUID accountId, String description, Pageable pageable);
@@ -80,7 +80,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t " +
             "WHERE t.accountId IN :accountIds " +
             "AND t.date BETWEEN :start AND :end " +
-            "AND t.type = :type AND t.isTransfer = false")
+            "AND t.type = :type AND t.isTransfer = false AND t.status = 'COMPLETED'")
     BigDecimal sumTransactionsByAccountsAndPeriod(
             @Param("accountIds") List<UUID> accountIds,
             @Param("start") LocalDateTime start,
@@ -98,4 +98,19 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     @Modifying
     @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
+
+    @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t WHERE t.accountId IN :accountIds AND t.date < :date AND t.type = :type AND t.status = 'COMPLETED'")
+    BigDecimal sumTransactionsBeforeDate(
+            @Param("accountIds") List<UUID> accountIds,
+            @Param("date") LocalDateTime date,
+            @Param("type") TransactionType type
+    );
+    @Query("SELECT t FROM TransactionJpaEntity t JOIN AccountJpaEntity a ON t.accountId = a.id " +
+            "WHERE a.userId = :userId AND t.status = 'PENDING' " +
+            "AND t.date >= :startDate AND t.date <= :endDate")
+    List<TransactionJpaEntity> findAllPendingByUserIdAndMonth(
+            @Param("userId") UUID userId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

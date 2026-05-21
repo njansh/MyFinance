@@ -5,6 +5,7 @@ import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
@@ -54,12 +55,14 @@ public class TransferUseCase implements TransferPort {
 
         Transaction debit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.EXPENSE,
-                senderAccountId, null, true, transferID, senderBalanceAfter
+                senderAccountId, null, true, transferID, senderBalanceAfter,
+                TransactionStatus.COMPLETED
         );
 
         Transaction credit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.INCOME,
-                receiverAccountId, null, true, transferID, receiverBalanceAfter
+                receiverAccountId, null, true, transferID, receiverBalanceAfter,
+                TransactionStatus.COMPLETED
         );
 
         transactionRepositoryPort.save(debit);

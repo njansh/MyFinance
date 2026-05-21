@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { fetchBillingCycleAction } from '../../app/actions/credit-card-actions';
+import { fetchBillingCycleAction } from '../../app/(private)/actions/credit-card-actions';
 import { CreditCardPaymentForm } from './credit-card-payment-form';
 
 interface ViewerProps {
