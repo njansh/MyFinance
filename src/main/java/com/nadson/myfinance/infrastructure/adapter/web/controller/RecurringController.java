@@ -13,9 +13,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,12 +21,9 @@ import java.util.UUID;
 public class RecurringController {
 
     private final ListPendingRecurringPort listPendingRecurringPort;
-    private final ConfirmRecurringPort confirmRecurringPort;
     private final CreateRecurringTemplatePort createRecurringTemplatePort;
-
-    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, ConfirmRecurringPort confirmRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort) {
+    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort) {
         this.listPendingRecurringPort = listPendingRecurringPort;
-        this.confirmRecurringPort = confirmRecurringPort;
         this.createRecurringTemplatePort = createRecurringTemplatePort;
     }
     @PostMapping
@@ -74,16 +68,4 @@ public class RecurringController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{templateId}/confirm")
-    public ResponseEntity<TransactionResponse> confirmTransaction(
-            @PathVariable UUID templateId,
-            @RequestParam BigDecimal actualAmount,
-            @RequestParam(required = false) LocalDateTime actualDate) {
-
-        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        LocalDateTime dateToSave = actualDate!= null? actualDate : LocalDateTime.now();
-
-        Transaction confirmedTransaction = confirmRecurringPort.execute(UUID.fromString(authenticatedUserId), templateId, actualAmount, dateToSave);
-        return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction));
-    }
 }
