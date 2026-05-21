@@ -4,43 +4,35 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:8080';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export async function createRecurringTemplateAction(
-  data: any
-) {
+async function getAuthToken() {
   const cookieStore = await cookies();
 
-  const token =
-    cookieStore.get('accessToken')?.value;
+  const token = cookieStore.get('accessToken')?.value;
 
   if (!token) {
-    throw new Error('Usuário não autenticado');
+    throw new Error('UNAUTHORIZED');
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/recurring`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        accountId: data.accountId,
-        categoryId: data.categoryId,
-        description: data.description,
-        expectedAmount: Number(
-          data.expectedAmount
-        ),
-        type: data.type,
-        frequencyDay: Number(
-          data.frequencyDay
-        ),
-      }),
-    }
-  );
+  return token;
+}
+
+/* =========================
+   CREATE
+========================= */
+
+export async function createRecurringTemplateAction(data: any) {
+  const token = await getAuthToken();
+
+  const response = await fetch(`${API_BASE_URL}/recurring`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     const err = await response.text();
@@ -55,23 +47,50 @@ export async function createRecurringTemplateAction(
   return response.json();
 }
 
+/* =========================
+   CONFIRM
+========================= */
+
 export async function confirmRecurringTransactionAction(
-  transactionId: string,
+  id: string,
   amount: number
 ) {
-  const cookieStore = await cookies();
-
-  const token =
-    cookieStore.get('accessToken')?.value;
-
-  if (!token) {
-    throw new Error('Usuário não autenticado');
-  }
+  const token = await getAuthToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/transactions/${transactionId}/confirm?actualAmount=${amount}`,
+    `${API_BASE_URL}/recurring/${id}/confirm`,
     {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount }),
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+
+    throw new Error(err);
+  }
+
+  revalidatePath('/dashboard');
+
+  return response.json();
+}
+
+/* =========================
+   DELETE
+========================= */
+
+export async function deleteRecurringTemplateAction(id: string) {
+  const token = await getAuthToken();
+
+  const response = await fetch(
+    `${API_BASE_URL}/recurring/${id}`,
+    {
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -83,12 +102,11 @@ export async function confirmRecurringTransactionAction(
     const err = await response.text();
 
     throw new Error(
-      `Falha ao confirmar (${response.status}): ${err}`
+      `Erro ao deletar template (${response.status}): ${err}`
     );
   }
 
-  revalidatePath('/dashboard');
   revalidatePath('/recurring');
 
-  return response.json();
+  return { success: true };
 }

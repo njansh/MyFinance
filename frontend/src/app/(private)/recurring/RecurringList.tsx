@@ -1,52 +1,48 @@
 'use client';
 
-interface Props {
-  initialTemplates: any[];
-}
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { deleteRecurringTemplateAction } from '../actions/recurring-actions';
 
-export function RecurringList({
-  initialTemplates,
-}: Props) {
-  if (!initialTemplates?.length) {
-    return (
-      <div className="bg-white p-6 rounded-2xl border border-slate-200">
-        Nenhum template recorrente encontrado.
-      </div>
-    );
+export function RecurringList({ initialTemplates }: any) {
+  const router = useRouter();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    setLoadingId(id);
+
+    try {
+      await deleteRecurringTemplateAction(id);
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao deletar template');
+    } finally {
+      setLoadingId(null);
+    }
   }
 
   return (
-    <div className="space-y-4">
-      {initialTemplates.map((template, index) => (
+    <div className="space-y-3">
+      {initialTemplates.map((t: any) => (
         <div
-          key={
-            template.id ||
-            template.templateId ||
-            index
-          }
-          className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"
+          key={t.id}
+          className="flex justify-between p-4 bg-white border rounded-xl"
         >
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-slate-900">
-                {template.description}
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Dia {template.frequencyDay}
-              </p>
-            </div>
-
-            <div className="text-right">
-              <p className="font-bold text-emerald-600">
-                R$ {template.expectedAmount}
-              </p>
-
-              <p className="text-xs text-slate-400">
-                {template.type}
-              </p>
-            </div>
+          <div>
+            <p className="font-semibold">{t.description}</p>
+            <p className="text-sm text-slate-500">
+              R$ {t.expectedAmount}
+            </p>
           </div>
+
+          <button
+            onClick={() => handleDelete(t.id)}
+            disabled={loadingId === t.id}
+            className="text-red-600 text-sm font-bold"
+          >
+            {loadingId === t.id ? 'Excluindo...' : 'Excluir'}
+          </button>
         </div>
       ))}
     </div>
