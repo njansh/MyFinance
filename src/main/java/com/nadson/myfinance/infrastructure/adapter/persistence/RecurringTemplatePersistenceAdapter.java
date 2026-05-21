@@ -52,4 +52,12 @@ public class RecurringTemplatePersistenceAdapter implements RecurringTemplateRep
                 .map(RecurringTemplateJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<RecurringTemplate> findAllByUserId(UUID userId) {
+        return springRecurringTemplateRepository.findAllByUserId(userId)
+                .stream()
+                .map(RecurringTemplateJpaEntity::toDomain)
+                .toList();
+    }
 }

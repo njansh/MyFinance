@@ -9,7 +9,7 @@ public interface RecurringTemplateRepositoryPort {
     RecurringTemplate save(RecurringTemplate recurringTemplate);
     RecurringTemplate findById(UUID id);
     List<RecurringTemplate> findPendingTemplates(UUID userId, int currentMonth, int currentYear);
-
+    List<RecurringTemplate> findAllByUserId(UUID userId);
     List<RecurringTemplate> findActiveByUserId(UUID userId);
 
     void deleteAllByUserId(UUID userId);

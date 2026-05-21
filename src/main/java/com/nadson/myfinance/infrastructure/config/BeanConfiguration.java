@@ -207,4 +207,8 @@ public class BeanConfiguration {
     public CreateRecurringTemplatePort createRecurringTemplatePort(RecurringTemplateRepositoryPort repository) {
         return new CreateRecurringTemplateUseCase(repository);
     }
+    @Bean
+    public ListRecurringTemplatesPort listRecurringTemplatesPort(RecurringTemplateRepositoryPort repository) {
+        return new ListRecurringTemplatesUseCase(repository);
+    }
 }

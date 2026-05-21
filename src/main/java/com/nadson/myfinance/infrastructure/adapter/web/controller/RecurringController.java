@@ -3,6 +3,7 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 import com.nadson.myfinance.application.port.in.ConfirmRecurringPort;
 import com.nadson.myfinance.application.port.in.CreateRecurringTemplatePort;
 import com.nadson.myfinance.application.port.in.ListPendingRecurringPort;
+import com.nadson.myfinance.application.port.in.ListRecurringTemplatesPort;
 import com.nadson.myfinance.application.port.out.BillingPaymentRepositoryPort;
 import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
 import com.nadson.myfinance.domain.entity.RecurringTemplate;
@@ -22,9 +23,11 @@ public class RecurringController {
 
     private final ListPendingRecurringPort listPendingRecurringPort;
     private final CreateRecurringTemplatePort createRecurringTemplatePort;
-    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort) {
+    private final ListRecurringTemplatesPort listRecurringTemplatesPort;
+    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort, ListRecurringTemplatesPort listRecurringTemplatesPort) {
         this.listPendingRecurringPort = listPendingRecurringPort;
         this.createRecurringTemplatePort = createRecurringTemplatePort;
+        this.listRecurringTemplatesPort = listRecurringTemplatesPort;
     }
     @PostMapping
     public ResponseEntity<RecurringTemplate> createTemplate(@RequestBody @Valid CreateRecurringTemplateRequest request) {
@@ -66,6 +69,12 @@ public class RecurringController {
                 .toList();
 
         return ResponseEntity.ok(response);
+    }
+    @GetMapping
+    public ResponseEntity<List<RecurringTemplate>> listTemplates() {
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<RecurringTemplate> templates = listRecurringTemplatesPort.execute(UUID.fromString(authenticatedUserId));
+        return ResponseEntity.ok(templates);
     }
 
 }

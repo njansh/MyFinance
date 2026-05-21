@@ -28,4 +28,5 @@ public interface SpringRecurringTemplateRepository extends JpaRepository<Recurri
     @Query("DELETE FROM RecurringTemplateJpaEntity r WHERE r.accountId = :accountId")
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
     List<RecurringTemplateJpaEntity> findByUserIdAndActiveTrue(UUID userId);
+    List<RecurringTemplateJpaEntity> findAllByUserId(UUID userId);
 }
