@@ -1,9 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
-import com.nadson.myfinance.application.port.in.ConfirmRecurringPort;
-import com.nadson.myfinance.application.port.in.CreateRecurringTemplatePort;
-import com.nadson.myfinance.application.port.in.ListPendingRecurringPort;
-import com.nadson.myfinance.application.port.in.ListRecurringTemplatesPort;
+import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.application.port.out.BillingPaymentRepositoryPort;
 import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
 import com.nadson.myfinance.domain.entity.RecurringTemplate;
@@ -24,10 +21,13 @@ public class RecurringController {
     private final ListPendingRecurringPort listPendingRecurringPort;
     private final CreateRecurringTemplatePort createRecurringTemplatePort;
     private final ListRecurringTemplatesPort listRecurringTemplatesPort;
-    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort, ListRecurringTemplatesPort listRecurringTemplatesPort) {
+    private final DeleteRecurringTemplatePort deleteRecurringTemplatePort;
+
+    public RecurringController(ListPendingRecurringPort listPendingRecurringPort, CreateRecurringTemplatePort createRecurringTemplatePort, ListRecurringTemplatesPort listRecurringTemplatesPort, DeleteRecurringTemplatePort deleteRecurringTemplatePort) {
         this.listPendingRecurringPort = listPendingRecurringPort;
         this.createRecurringTemplatePort = createRecurringTemplatePort;
         this.listRecurringTemplatesPort = listRecurringTemplatesPort;
+        this.deleteRecurringTemplatePort = deleteRecurringTemplatePort;
     }
     @PostMapping
     public ResponseEntity<RecurringTemplate> createTemplate(@RequestBody @Valid CreateRecurringTemplateRequest request) {
@@ -76,5 +76,10 @@ public class RecurringController {
         List<RecurringTemplate> templates = listRecurringTemplatesPort.execute(UUID.fromString(authenticatedUserId));
         return ResponseEntity.ok(templates);
     }
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTemplate(@PathVariable UUID id) {
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        deleteRecurringTemplatePort.execute(UUID.fromString(authenticatedUserId), id);
+        return ResponseEntity.noContent().build();
+    }
 }

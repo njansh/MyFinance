@@ -59,7 +59,7 @@ public class TransactionController {
                 UUID.randomUUID(), request.description(), request.amount(), request.date(),
                 request.type(), request.accountId(), request.categoryId(),
                 request.isTransfer(), request.transferID(), request.accountBalanceAfter(),
-                TransactionStatus.COMPLETED
+                TransactionStatus.COMPLETED, null
         );
 
         Transaction createdTransaction = createTransactionPort.execute(transaction);

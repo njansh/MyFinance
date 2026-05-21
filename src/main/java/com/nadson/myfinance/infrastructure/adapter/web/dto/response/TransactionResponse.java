@@ -1,6 +1,7 @@
 package com.nadson.myfinance.infrastructure.adapter.web.dto.response;
 
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 
 import java.math.BigDecimal;
@@ -16,7 +17,9 @@ public record TransactionResponse(
         UUID categoryId,
         LocalDateTime date,
         boolean isTransfer,
-        UUID transferID
+        UUID transferID,
+        TransactionStatus status,
+        UUID templateId
     ) {
     public static TransactionResponse fromDomain(Transaction t) {
         return new TransactionResponse(
@@ -28,7 +31,9 @@ public record TransactionResponse(
                 t.getCategoryId(),
                 t.getDate(),
                 t.isTransfer(),
-                t.getTransferID()
+                t.getTransferID(),
+                t.getStatus(),
+                t.getTemplateId()
             );
     }
 }

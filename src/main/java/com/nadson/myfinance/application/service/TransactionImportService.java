@@ -151,7 +151,7 @@ public class TransactionImportService {
             Transaction unmatched = transactionRepositoryPort.findFirstUnmatchedTransaction(currentAccountId, row.date(), absAmount, type, destinationId);
 
             if (unmatched != null) {
-                Transaction updatedUnmatched = new Transaction(unmatched.getTransactionId(), row.description(), unmatched.getAmount(), unmatched.getDate(), unmatched.getType(), unmatched.getAccountId(), unmatched.getCategoryId(), unmatched.isTransfer(), unmatched.getTransferID(), row.balanceAfter(), unmatched.getStatus());
+                Transaction updatedUnmatched = new Transaction(unmatched.getTransactionId(), row.description(), unmatched.getAmount(), unmatched.getDate(), unmatched.getType(), unmatched.getAccountId(), unmatched.getCategoryId(), unmatched.isTransfer(), unmatched.getTransferID(), row.balanceAfter(), unmatched.getStatus(), unmatched.getTemplateId());
                 transactionRepositoryPort.save(updatedUnmatched);
             } else {
                 if (row.amount().compareTo(BigDecimal.ZERO) < 0) {
@@ -177,7 +177,7 @@ public class TransactionImportService {
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(), row.description(), absAmount, row.date(), type, currentAccountId,
-                predictedCategoryId, false, null, row.balanceAfter(), TransactionStatus.COMPLETED
+                predictedCategoryId, false, null, row.balanceAfter(), TransactionStatus.COMPLETED, null
         );
         createTransactionPort.execute(transaction);
     }

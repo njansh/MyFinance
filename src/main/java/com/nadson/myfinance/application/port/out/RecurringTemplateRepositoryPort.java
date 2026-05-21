@@ -11,8 +11,7 @@ public interface RecurringTemplateRepositoryPort {
     List<RecurringTemplate> findPendingTemplates(UUID userId, int currentMonth, int currentYear);
     List<RecurringTemplate> findAllByUserId(UUID userId);
     List<RecurringTemplate> findActiveByUserId(UUID userId);
-
+    void deleteById(UUID id);
     void deleteAllByUserId(UUID userId);
-
     void deleteAllByAccountId(UUID accountId);
 }

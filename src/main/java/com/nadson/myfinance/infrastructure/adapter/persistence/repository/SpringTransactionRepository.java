@@ -1,5 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.persistence.repository;
 
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.TransactionJpaEntity;
 import org.springframework.data.domain.Page;
@@ -113,4 +114,8 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Modifying
+    @Query("DELETE FROM TransactionJpaEntity t WHERE t.templateId = :templateId AND t.status = :status")
+    void deleteByTemplateIdAndStatus(@Param("templateId") UUID templateId, @Param("status") TransactionStatus status);
 }

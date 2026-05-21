@@ -21,10 +21,8 @@ public class TransactionJpaEntity {
     @Column
     private UUID transferID;
 
-
     @Column(nullable = false)
     private String description;
-
 
     @Column(name = "account_balance_after", precision = 19, scale = 4)
     private BigDecimal accountBalanceAfter;
@@ -54,6 +52,9 @@ public class TransactionJpaEntity {
     @Column(nullable = false)
     private TransactionStatus status;
 
+    @Column(name = "template_id", columnDefinition = "uuid")
+    private UUID templateId;
+
     public TransactionJpaEntity() {
     }
 
@@ -69,9 +70,18 @@ public class TransactionJpaEntity {
         this.categoryId = transaction.getCategoryId();
         this.isTransfer = transaction.isTransfer();
         this.status = transaction.getStatus();
+
+        // Log adicionado para depuração
+        this.templateId = transaction.getTemplateId();
+        System.out.println("DEBUG PERSISTÊNCIA: Mapeando Transaction " + this.description
+                + " para JPA Entity. TemplateID: " + this.templateId);
     }
 
     public Transaction toDomain() {
+        // Log adicionado para depuração
+        System.out.println("DEBUG JPA: Convertendo para Domínio. TransactionID: " + this.transactionId
+                + ", TemplateID banco: " + this.templateId);
+
         return new Transaction(
                 this.transactionId,
                 this.description,
@@ -83,104 +93,36 @@ public class TransactionJpaEntity {
                 this.isTransfer,
                 this.transferID,
                 this.accountBalanceAfter,
-                this.status
+                this.status,
+                this.templateId
         );
     }
 
-    public UUID getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(UUID transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
-    public TransactionType getType() {
-        return type;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
-    public UUID getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(UUID accountId) {
-        this.accountId = accountId;
-    }
-
-    public UUID getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(UUID categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public boolean isTransfer() {
-        return isTransfer;
-    }
-
-    public void setTransfer(boolean transfer) {
-        isTransfer = transfer;
-    }
-
-    public UUID getTransferID() {
-        return transferID;
-    }
-
-    public void setTransferID(UUID transferID) {
-        this.transferID = transferID;
-    }
-
-    public BigDecimal getAccountBalanceAfter() {
-        return accountBalanceAfter;
-    }
-
-    public void setAccountBalanceAfter(BigDecimal accountBalanceAfter) {
-        this.accountBalanceAfter = accountBalanceAfter;
-    }
-
-    public TransactionStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TransactionStatus status) {
-        this.status = status;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
+    // ... (restante dos getters e setters permanecem iguais)
+    public UUID getTransactionId() { return transactionId; }
+    public void setTransactionId(UUID transactionId) { this.transactionId = transactionId; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public LocalDateTime getDate() { return date; }
+    public void setDate(LocalDateTime date) { this.date = date; }
+    public TransactionType getType() { return type; }
+    public void setType(TransactionType type) { this.type = type; }
+    public UUID getAccountId() { return accountId; }
+    public void setAccountId(UUID accountId) { this.accountId = accountId; }
+    public UUID getCategoryId() { return categoryId; }
+    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+    public boolean isTransfer() { return isTransfer; }
+    public void setTransfer(boolean transfer) { isTransfer = transfer; }
+    public UUID getTransferID() { return transferID; }
+    public void setTransferID(UUID transferID) { this.transferID = transferID; }
+    public BigDecimal getAccountBalanceAfter() { return accountBalanceAfter; }
+    public void setAccountBalanceAfter(BigDecimal accountBalanceAfter) { this.accountBalanceAfter = accountBalanceAfter; }
+    public TransactionStatus getStatus() { return status; }
+    public void setStatus(TransactionStatus status) { this.status = status; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+    public UUID getTemplateId() { return templateId; }
+    public void setTemplateId(UUID templateId) { this.templateId = templateId; }
 }

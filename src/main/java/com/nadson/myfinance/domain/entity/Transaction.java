@@ -21,11 +21,15 @@ public class Transaction {
     private UUID categoryId;
     private boolean isTransfer;
     private TransactionStatus status;
+    private UUID templateId;
+
+
 
     public Transaction(UUID transactionId, String description, BigDecimal amount,
                        LocalDateTime date, TransactionType type, UUID accountId,
                        UUID categoryId, boolean isTransfer, UUID transferID,
-                       BigDecimal accountBalanceAfter, TransactionStatus status) {
+                       BigDecimal accountBalanceAfter, TransactionStatus status,
+                       UUID templateId) {
         validate(description, amount, date, type, accountId);
         this.transactionId = transactionId;
         this.description = description;
@@ -38,9 +42,10 @@ public class Transaction {
         this.transferID = transferID;
         this.accountBalanceAfter = accountBalanceAfter;
         this.status = status;
+        this.templateId = templateId;
     }
 
-    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID, LocalDateTime date) {
+    public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID, LocalDateTime date, UUID templateId) {
         LocalDateTime dateToUse = date != null ? date : LocalDateTime.now();
         validate(description, amount, dateToUse, type, accountId);
         this.transactionId = UUID.randomUUID();
@@ -53,6 +58,7 @@ public class Transaction {
         this.categoryId = null;
         this.transferID = transferID;
         this.status = TransactionStatus.COMPLETED;
+        this.templateId = templateId;
     }
 
     public void updateCategory(UUID categoryId) {
@@ -84,6 +90,7 @@ public class Transaction {
     }
 
     // Getters
+    public UUID getTemplateId() { return templateId; }
     public UUID getTransactionId() { return transactionId; }
     public String getDescription() { return description; }
     public BigDecimal getAmount() { return amount; }

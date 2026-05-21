@@ -56,13 +56,13 @@ public class TransferUseCase implements TransferPort {
         Transaction debit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.EXPENSE,
                 senderAccountId, null, true, transferID, senderBalanceAfter,
-                TransactionStatus.COMPLETED
+                TransactionStatus.COMPLETED, null
         );
 
         Transaction credit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.INCOME,
                 receiverAccountId, null, true, transferID, receiverBalanceAfter,
-                TransactionStatus.COMPLETED
+                TransactionStatus.COMPLETED, null
         );
 
         transactionRepositoryPort.save(debit);
