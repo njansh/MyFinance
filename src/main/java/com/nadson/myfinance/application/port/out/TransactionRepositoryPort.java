@@ -21,11 +21,13 @@ public interface TransactionRepositoryPort {
     Page<Transaction> findByAccountId(UUID accountId, Pageable pageable);
 
     Page<Transaction> findByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
     List<Transaction> findAllByAccountId(UUID accountId);
 
     List<Transaction> findAllByAccountIdAndDateBetween(UUID accountId, LocalDateTime startDate, LocalDateTime endDate);
 
     long count(UUID accountId, LocalDateTime date, BigDecimal amount, String description, BigDecimal accountBalanceAfter);
+
     void deleteById(UUID transactionId);
 
     List<Transaction> findPossibleDuplicates(UUID accountId, LocalDateTime date, BigDecimal amount);
@@ -33,19 +35,27 @@ public interface TransactionRepositoryPort {
     void updateBalance(UUID transactionId, BigDecimal balanceAfter);
 
     boolean existsTransferCounterpart(UUID accountId, LocalDateTime date, BigDecimal amount);
+
     Page<Transaction> findByAccountIdAndDescription(UUID accountId, String description, Pageable pageable);
 
     Page<Transaction> findByAccountIdAndDateBetweenAndDescription(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
+
     java.util.Map<String, BigDecimal> getSumByCategoryAndType(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type);
 
     java.util.Map<String, BigDecimal> getSumByCategoryAndTypeAndDateBetween(UUID accountId, com.nadson.myfinance.domain.enums.TransactionType type, LocalDateTime startDate, LocalDateTime endDate);
+
     Transaction findFirstUnmatchedTransaction(UUID accountId, LocalDateTime date, BigDecimal amount, com.nadson.myfinance.domain.enums.TransactionType type, UUID destinationId);
 
     BigDecimal sumSavingsByAccountsAndPeriod(List<UUID> investmentAccountIds, LocalDateTime startDate, LocalDateTime endDate);
 
     BigDecimal sumTransactionsByAccountsAndPeriod(List<UUID> allAccountIds, LocalDateTime startDate, LocalDateTime endDate, TransactionType transactionType);
+
     BigDecimal sumBalanceBeforeDate(List<UUID> allAccountIds, LocalDateTime date, TransactionType transactionType);
+
     void deleteAllByAccountId(UUID accountId);
+
+    List<Transaction> findAllPendingByUserId(UUID userId);
+
 }
 
 

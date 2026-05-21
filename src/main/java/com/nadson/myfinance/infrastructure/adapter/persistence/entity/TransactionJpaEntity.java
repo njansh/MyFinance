@@ -1,6 +1,7 @@
 package com.nadson.myfinance.infrastructure.adapter.persistence.entity;
 
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
@@ -49,6 +50,9 @@ public class TransactionJpaEntity {
 
     @Column(nullable = false)
     private boolean isTransfer;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status;
 
     public TransactionJpaEntity() {
     }
@@ -64,6 +68,7 @@ public class TransactionJpaEntity {
         this.accountId = transaction.getAccountId();
         this.categoryId = transaction.getCategoryId();
         this.isTransfer = transaction.isTransfer();
+        this.status = transaction.getStatus();
     }
 
     public Transaction toDomain() {
@@ -77,7 +82,8 @@ public class TransactionJpaEntity {
                 this.categoryId,
                 this.isTransfer,
                 this.transferID,
-                this.accountBalanceAfter
+                this.accountBalanceAfter,
+                this.status
         );
     }
 
@@ -144,9 +150,11 @@ public class TransactionJpaEntity {
     public void setTransfer(boolean transfer) {
         isTransfer = transfer;
     }
+
     public UUID getTransferID() {
         return transferID;
     }
+
     public void setTransferID(UUID transferID) {
         this.transferID = transferID;
     }
@@ -159,6 +167,14 @@ public class TransactionJpaEntity {
         this.accountBalanceAfter = accountBalanceAfter;
     }
 
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
+    }
+
     public Long getVersion() {
         return version;
     }
@@ -166,4 +182,5 @@ public class TransactionJpaEntity {
     public void setVersion(Long version) {
         this.version = version;
     }
+
 }

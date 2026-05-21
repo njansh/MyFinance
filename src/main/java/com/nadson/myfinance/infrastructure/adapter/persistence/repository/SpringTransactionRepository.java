@@ -105,4 +105,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("startDate") LocalDateTime startDate,
             @Param("type") TransactionType type
     );
+    @Query("SELECT t FROM TransactionJpaEntity t JOIN AccountJpaEntity a ON t.accountId = a.id WHERE a.userId = :userId AND t.status = 'PENDING'")
+    List<TransactionJpaEntity> findAllPendingByUserId(@Param("userId") UUID userId);
+
 }

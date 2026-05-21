@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+// Importe a action. Ajuste a quantidade de "../" dependendo de onde a pasta components está!
+import { logoutAction } from '../app/(private)/actions/auth';
 
 export function Sidebar() {
   const pathname = usePathname() || '';
@@ -43,12 +45,14 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-100">
-        <Link
-          href="/login" // O ideal depois é criar uma função para limpar o cookie de logout aqui
-          className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:text-rose-700 transition-colors"
-        >
-          Sair do Sistema
-        </Link>
+        <form action={logoutAction} className="w-full">
+          <button
+            type="submit"
+            className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:text-rose-700 transition-colors cursor-pointer"
+          >
+            Sair do Sistema
+          </button>
+        </form>
       </div>
     </aside>
   );

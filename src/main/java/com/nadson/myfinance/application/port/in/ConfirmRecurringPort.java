@@ -6,5 +6,5 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface ConfirmRecurringPort {
-    Transaction execute(UUID userId, UUID templateId, BigDecimal actualAmount, LocalDateTime actualDate);
+    Transaction execute(UUID userId, UUID transactionId, BigDecimal actualAmount, LocalDateTime actualDate);
 }

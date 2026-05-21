@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.Transaction;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransactionRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.TransferRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateTransactionRequest;
@@ -9,6 +10,7 @@ import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceRespo
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -29,6 +31,7 @@ public class TransactionController {
     private final GetAccountBalancePort getAccountBalancePort;
     private final GetIncomesByCategoryPort getIncomesByCategoryPort;
     private final TransferPort transferPort;
+    private final ConfirmRecurringPort confirmRecurringPort;
 
     public TransactionController(CreateTransactionPort createTransactionPort,
                                  GetTransactionPort getTransactionPort,
@@ -37,7 +40,8 @@ public class TransactionController {
                                  DeleteTransactionPort deleteTransactionPort,
                                  GetAccountBalancePort getAccountBalancePort,
                                  GetIncomesByCategoryPort getIncomesByCategoryPort,
-                                 TransferPort transferPort) {
+                                 TransferPort transferPort,
+                                 ConfirmRecurringPort confirmRecurringPort) {
         this.createTransactionPort = createTransactionPort;
         this.getTransactionPort = getTransactionPort;
         this.getExpensesByCategoryPort = getExpensesByCategoryPort;
@@ -46,6 +50,7 @@ public class TransactionController {
         this.getAccountBalancePort = getAccountBalancePort;
         this.getIncomesByCategoryPort = getIncomesByCategoryPort;
         this.transferPort = transferPort;
+        this.confirmRecurringPort = confirmRecurringPort;
     }
 
     @PostMapping
@@ -53,7 +58,8 @@ public class TransactionController {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(), request.description(), request.amount(), request.date(),
                 request.type(), request.accountId(), request.categoryId(),
-                request.isTransfer(), request.transferID(), request.accountBalanceAfter()
+                request.isTransfer(), request.transferID(), request.accountBalanceAfter(),
+                TransactionStatus.COMPLETED
         );
 
         Transaction createdTransaction = createTransactionPort.execute(transaction);
@@ -72,6 +78,20 @@ public class TransactionController {
                 null
         );
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping("/{transactionId}/confirm")
+    public ResponseEntity<TransactionResponse> confirmTransaction(
+            @PathVariable UUID transactionId,
+            @RequestParam BigDecimal actualAmount,
+            @RequestParam(required = false) LocalDateTime actualDate) {
+
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LocalDateTime dateToSave = actualDate != null ? actualDate : LocalDateTime.now();
+
+        Transaction confirmedTransaction = confirmRecurringPort.execute(
+                UUID.fromString(authenticatedUserId), transactionId, actualAmount, dateToSave
+        );
+        return ResponseEntity.ok(TransactionResponse.fromDomain(confirmedTransaction));
     }
 
     @PutMapping("/{id}")

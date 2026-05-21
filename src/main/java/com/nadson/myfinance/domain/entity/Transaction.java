@@ -1,5 +1,6 @@
 package com.nadson.myfinance.domain.entity;
 
+import com.nadson.myfinance.domain.enums.TransactionStatus;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import com.nadson.myfinance.domain.exception.InvalidTransactionValueException;
@@ -19,11 +20,12 @@ public class Transaction {
     private UUID accountId;
     private UUID categoryId;
     private boolean isTransfer;
+    private TransactionStatus status;
 
     public Transaction(UUID transactionId, String description, BigDecimal amount,
                        LocalDateTime date, TransactionType type, UUID accountId,
                        UUID categoryId, boolean isTransfer, UUID transferID,
-                       BigDecimal accountBalanceAfter) {
+                       BigDecimal accountBalanceAfter, TransactionStatus status) {
         validate(description, amount, date, type, accountId);
         this.transactionId = transactionId;
         this.description = description;
@@ -35,13 +37,14 @@ public class Transaction {
         this.isTransfer = isTransfer;
         this.transferID = transferID;
         this.accountBalanceAfter = accountBalanceAfter;
+        this.status = status;
     }
 
     public Transaction(UUID accountId, BigDecimal amount, TransactionType type, String description, UUID transferID, LocalDateTime date) {
-        LocalDateTime now = LocalDateTime.now();
-        validate(description, amount, now, type, accountId);
+        LocalDateTime dateToUse = date != null ? date : LocalDateTime.now();
+        validate(description, amount, dateToUse, type, accountId);
         this.transactionId = UUID.randomUUID();
-        this.date = now;
+        this.date = dateToUse;
         this.accountId = accountId;
         this.amount = amount;
         this.type = type;
@@ -49,6 +52,7 @@ public class Transaction {
         this.isTransfer = true;
         this.categoryId = null;
         this.transferID = transferID;
+        this.status = TransactionStatus.COMPLETED;
     }
 
     public void updateCategory(UUID categoryId) {
@@ -90,7 +94,12 @@ public class Transaction {
     public boolean isTransfer() { return isTransfer; }
     public UUID getTransferID() { return transferID; }
     public BigDecimal getAccountBalanceAfter() { return accountBalanceAfter; }
+    public TransactionStatus getStatus() { return status; }
+    public void setStatus(TransactionStatus status) { this.status = status; }
 
+    public void markAsCompleted() {
+        this.status = TransactionStatus.COMPLETED;
+    }
     private void validate(String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId) {
         if (description == null || description.trim().isEmpty()) {
             throw new BusinessRuleException("Description cannot be null or empty");
