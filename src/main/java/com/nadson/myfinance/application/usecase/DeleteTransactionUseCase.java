@@ -2,8 +2,10 @@ package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.DeleteTransactionPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
+import com.nadson.myfinance.application.port.out.BudgetRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.entity.Budget;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.AccountNotFoundException;
@@ -17,10 +19,13 @@ import java.util.UUID;
 public class DeleteTransactionUseCase implements DeleteTransactionPort {
     private final TransactionRepositoryPort transactionRepository;
     private final AccountRepositoryPort accountRepository;
+    private final BudgetRepositoryPort budgetRepository;
 
-    public DeleteTransactionUseCase(TransactionRepositoryPort transactionRepository, AccountRepositoryPort accountRepository) {
+
+    public DeleteTransactionUseCase(TransactionRepositoryPort transactionRepository, AccountRepositoryPort accountRepository, BudgetRepositoryPort budgetRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
+        this.budgetRepository = budgetRepository;
     }
 
     @Override
@@ -45,15 +50,25 @@ public class DeleteTransactionUseCase implements DeleteTransactionPort {
                 
     }
     private void reverseTransaction(Transaction t) {
-    Account acc = accountRepository.findById(t.getAccountId());
-    if (acc == null) {
-        throw new AccountNotFoundException(t.getAccountId());
-    }  
-    if (t.getType() == TransactionType.EXPENSE) {
-        acc.deposit(t.getAmount()); // Devolve o gasto
-    } else {
-        acc.withdraw(t.getAmount()); // Remove o ganho
+        Account acc = accountRepository.findById(t.getAccountId());
+        if (acc == null) {
+            throw new AccountNotFoundException(t.getAccountId());
+        }
+        if (t.getType() == TransactionType.EXPENSE) {
+            acc.deposit(t.getAmount()); // Devolve o gasto
+        } else {
+            acc.withdraw(t.getAmount()); // Remove o ganho
+        }
+        accountRepository.save(acc);
+
+        if (t.getType() == TransactionType.EXPENSE && t.getCategoryId() != null) {
+            UUID userId = accountRepository.findUserIdByAccountId(t.getAccountId());
+            Budget budget = budgetRepository.findByUserIdAndCategoryIdAndMonthAndYear(
+                    userId, t.getCategoryId(), t.getDate().getMonthValue(), t.getDate().getYear());
+            if (budget != null) {
+                budget.removeExpense(t.getAmount()); // Subtrai o valor do orçamento
+                budgetRepository.save(budget);
+            }
+        }
     }
-    accountRepository.save(acc);
-}
 }

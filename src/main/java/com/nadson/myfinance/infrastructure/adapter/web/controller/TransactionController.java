@@ -68,12 +68,15 @@ public class TransactionController {
     }
     @PostMapping("/transfer")
     public ResponseEntity<Void> transfer(@Valid @RequestBody TransferRequest request) {
+        // Adicione este log para ver o que o Spring recebeu
+        System.out.println("Recebido descrição: " + request.description());
+
         transferPort.execute(
                 request.fromId(),
                 request.toId(),
                 request.amount(),
                 request.date(),
-                "Transferência manual",
+                request.description(),
                 null,
                 null
         );

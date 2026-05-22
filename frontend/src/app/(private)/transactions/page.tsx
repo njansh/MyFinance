@@ -36,6 +36,7 @@ async function handleCreateTransaction(formData: any) {
           toId: formData.toId,
           amount: formData.amount,
           date: formData.date,
+          description: formData.description,
         }),
       });
 

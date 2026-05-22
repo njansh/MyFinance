@@ -32,7 +32,6 @@ export function TransactionForm({ accounts, categories, onSuccessAction }: FormP
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [categoryId, setCategoryId] = useState('');
 
-  // Estados para capturar seleções
   const [fromId, setFromId] = useState('');
   const [toId, setToId] = useState('');
   const [accountId, setAccountId] = useState('');
@@ -40,7 +39,6 @@ export function TransactionForm({ accounts, categories, onSuccessAction }: FormP
   const filteredCategories = categories.filter((cat) => cat.type === type);
   const getAccount = (id: string) => accounts.find(a => a.accountId === id);
 
-  // Função para aplicar cor baseada no saldo
   const getBalanceStyle = (balance: number) => {
     return balance < 0 ? "text-rose-600 font-bold" : "text-emerald-600 font-bold";
   };

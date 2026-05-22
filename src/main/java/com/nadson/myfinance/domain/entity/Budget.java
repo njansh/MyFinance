@@ -68,17 +68,15 @@ public class Budget {
         }
     }
 
-    // NOVO MÉTODO: Remove despesa com segurança e reseta alertas se necessário
     public void removeExpense(BigDecimal amount) {
         if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
             this.spentAmount = this.spentAmount.subtract(amount);
 
-            // Garante que não fique negativo
             if (this.spentAmount.compareTo(BigDecimal.ZERO) < 0) {
                 this.spentAmount = BigDecimal.ZERO;
             }
 
-            // Recalcula e reseta as flags caso o estorno abaixe o percentual
+
             BigDecimal usage = getUsagePercentage();
             BigDecimal eightyPercent = new BigDecimal("0.80");
 
