@@ -16,6 +16,7 @@ interface Category {
   categoryId?: string;
   id?: string;
   name: string;
+  type?: string; // Adicionado para permitir o filtro
 }
 
 interface RecurringFormProps {
@@ -30,6 +31,15 @@ export function RecurringForm({
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+
+  // Novos estados para controlar o filtro dinâmico
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const [categoryId, setCategoryId] = useState('');
+
+  // Filtra as categorias com base no tipo selecionado (Receita ou Despesa)
+  const filteredCategories = categories.filter(
+    (cat) => cat.type === type
+  );
 
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
@@ -183,9 +193,13 @@ export function RecurringForm({
 
         <select
           name="type"
+          value={type}
+          onChange={(e) => {
+            setType(e.target.value as 'INCOME' | 'EXPENSE');
+            setCategoryId(''); // Limpa a categoria ao mudar de tipo
+          }}
           className="w-full p-3 border rounded-xl"
           required
-          defaultValue="EXPENSE"
         >
           <option value="EXPENSE">
             Saída (Despesa)
@@ -225,6 +239,7 @@ export function RecurringForm({
           className="w-full p-3 border rounded-xl"
           required
         >
+          <option value="">Selecione uma conta...</option>
           {accounts?.map(
             (account, index) => (
               <option
@@ -249,10 +264,13 @@ export function RecurringForm({
 
         <select
           name="categoryId"
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
           className="w-full p-3 border rounded-xl"
           required
         >
-          {categories?.map(
+          <option value="">Selecione uma categoria...</option>
+          {filteredCategories?.map(
             (category, index) => (
               <option
                 key={

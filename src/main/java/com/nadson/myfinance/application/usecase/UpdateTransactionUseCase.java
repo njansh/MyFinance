@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class UpdateTransactionUseCase implements UpdateTransactionPort {
@@ -35,23 +36,32 @@ public class UpdateTransactionUseCase implements UpdateTransactionPort {
 
     @Override
     @Transactional
-    public TransactionResult execute(UUID transactionId, String description, BigDecimal amount,
-                                     LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
-
+    public TransactionResult execute(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
         Transaction oldTx = transactionRepo.findById(transactionId);
-        if (oldTx == null) {
-            throw new TransactionNotFoundException(transactionId);
+        if (oldTx == null) throw new TransactionNotFoundException(transactionId);
+
+        if (oldTx.isTransfer()) {
+            List<Transaction> transferTransactions = transactionRepo.findAllByTransferID(oldTx.getTransferID());
+
+            for (Transaction tx : transferTransactions) {
+                BigDecimal reversal = tx.getType() == TransactionType.EXPENSE ? tx.getAmount() : tx.getAmount().negate();
+                accountRepo.updateBalanceAtomic(tx.getAccountId(), reversal);
+
+                tx.updateDetails(description, amount, date, tx.getType(), tx.getAccountId(), categoryId);
+                transactionRepo.save(tx);
+
+                BigDecimal adjustment = tx.getType() == TransactionType.EXPENSE ? amount.negate() : amount;
+                accountRepo.updateBalanceAtomic(tx.getAccountId(), adjustment);
+            }
+            return new TransactionResult(oldTx, "Transferência atualizada com sucesso.");
         }
 
-        // 1. Reverte impacto na conta antiga
         BigDecimal reversal = oldTx.getType() == TransactionType.EXPENSE ? oldTx.getAmount() : oldTx.getAmount().negate();
         accountRepo.updateBalanceAtomic(oldTx.getAccountId(), reversal);
 
-        // 2. Aplica impacto na conta nova (ou na mesma com novo valor)
         BigDecimal adjustment = type == TransactionType.EXPENSE ? amount.negate() : amount;
         accountRepo.updateBalanceAtomic(accountId, adjustment);
 
-        // 3. Reverte impacto no orçamento antigo com segurança
         if (oldTx.getType() == TransactionType.EXPENSE && oldTx.getCategoryId() != null) {
             UUID userId = accountRepo.findUserIdByAccountId(oldTx.getAccountId());
             Budget oldBudget = budgetRepo.findByUserIdAndCategoryIdAndMonthAndYear(
@@ -62,11 +72,9 @@ public class UpdateTransactionUseCase implements UpdateTransactionPort {
             }
         }
 
-        // 4. Atualiza e salva a transação
         oldTx.updateDetails(description, amount, date, type, accountId, categoryId);
         Transaction updatedTx = transactionRepo.save(oldTx);
 
-        // 5. Aplica impacto no novo orçamento e pega o alerta
         String alert = null;
         if (updatedTx.getType() == TransactionType.EXPENSE && updatedTx.getCategoryId() != null) {
             alert = processTransactionInBudget.execute(updatedTx);

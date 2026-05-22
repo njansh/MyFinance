@@ -136,3 +136,34 @@ export async function createCreditCard(
 
    return response.json();
  }
+/* =========================
+   BUDGETS (ORÇAMENTOS)
+========================= */
+
+export async function createBudget(payload: {
+  categoryId: string;
+  month: number;
+  year: number;
+  limitAmount: number;
+}) {
+  const response = await clientFetch('/api/budgets', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return response.json();
+}
+
+export async function updateBudgetLimit(id: string, newLimit: number) {
+  const response = await clientFetch(`/api/budgets/${id}/limit`, {
+    method: 'PATCH',
+    body: JSON.stringify(newLimit),
+  });
+  return response.json();
+}
+
+export async function deleteBudget(id: string) {
+  const response = await clientFetch(`/api/budgets/${id}`, {
+    method: 'DELETE',
+  });
+  return response;
+}

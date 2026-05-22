@@ -1,68 +1,53 @@
-'use server'
+'use server';
 
-import { cookies } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
-export async function createTransactionAction(prevState: any, formData: FormData) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('accessToken')?.value
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-  if (!token) {
-    return { error: 'Usuário não autenticado.' }
+async function getAuthToken() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+  if (!token) throw new Error('UNAUTHORIZED');
+  return token;
+}
+
+export async function deleteTransactionAction(transactionId: string) {
+  const token = await getAuthToken();
+
+  const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ao eliminar transação: ${response.status}`);
   }
 
-  const description = formData.get('description')
-  const amount = formData.get('amount')
-  const type = formData.get('type')
-  const accountId = formData.get('accountId')
-  const categoryId = formData.get('categoryId') // Recuperando a categoria
+  revalidatePath('/extrato');
+  revalidatePath('/dashboard');
+  return { success: true };
+}
 
-  const dateStr = formData.get('date') as string
-  let timeStr = formData.get('time') as string
+export async function updateTransactionAction(transactionId: string, data: any) {
+  const token = await getAuthToken();
 
-  // Se o usuário não preencheu o horário, resgatamos a hora atual do sistema
-  if (!timeStr) {
-    const now = new Date()
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    const seconds = String(now.getSeconds()).padStart(2, '0')
-    timeStr = `${hours}:${minutes}:${seconds}`
-  } else if (timeStr.length === 5) {
-    timeStr += ':00' // Adiciona os segundos para garantir que o Spring Boot aceite (HH:mm:ss)
+  // Usa PUT ou PATCH dependendo de como o teu backend Spring Boot foi desenhado
+  const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Erro ao atualizar transação: ${err}`);
   }
 
-  // Combina a data escolhida com a hora para gerar o formato ISO 8601
-  const finalDateTime = new Date(`${dateStr}T${timeStr}`).toISOString()
-
-  try {
-    const res = await fetch('http://localhost:8080/transactions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        description,
-        amount: parseFloat(amount as string),
-        date: finalDateTime,
-        type,
-        accountId,
-        categoryId, // Passando a categoria corretamente para a API
-        isTransfer: false
-      })
-    })
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      return { error: errorData.message || 'Erro ao registrar lançamento.' }
-    }
-
-    // Força o Next.js a limpar o cache do Dashboard para atualizar os saldos
-    revalidatePath('/dashboard')
-    revalidatePath('/transactions')
-
-    return { success: 'Lançamento registrado com sucesso!' }
-  } catch (error) {
-    return { error: 'Erro de rede ao conectar com a API.' }
-  }
+  revalidatePath('/extrato');
+  revalidatePath('/dashboard');
+  return response.json();
 }
