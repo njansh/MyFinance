@@ -60,8 +60,12 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("amount") BigDecimal amount
     );
 
-    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.status = 'COMPLETED' GROUP BY c.name")
-    List<Object> sumAmountByCategoryAndType(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type);
+    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) " +
+            "FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id " +
+            "WHERE t.accountId = :accountId AND t.type = :type AND t.status = 'COMPLETED' " +
+            "AND t.isTransfer = false " +
+            "GROUP BY c.name")
+    List<Object> sumAmountByCategoryAndType(@Param("accountId") UUID accountId, @Param("type") TransactionType type);
 
     @Query("SELECT t FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
@@ -76,8 +80,13 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("type") com.nadson.myfinance.domain.enums.TransactionType type
     );
 
-    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate AND t.status = 'COMPLETED' GROUP BY c.name")
-    List<Object> sumAmountByCategoryAndTypeAndDateBetween(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+    @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) " +
+            "FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id " +
+            "WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.isTransfer = false " +
+            "GROUP BY c.name")
+    List<Object> sumAmountByCategoryAndTypeAndDateBetween(@Param("accountId") UUID accountId, @Param("type") TransactionType type, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<TransactionJpaEntity> findByTransferID(UUID transferID);
 

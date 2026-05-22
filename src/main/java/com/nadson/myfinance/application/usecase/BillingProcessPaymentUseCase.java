@@ -4,6 +4,8 @@ import com.nadson.myfinance.application.port.in.BillingProcessPaymentPort;
 import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.domain.entity.*;
 import com.nadson.myfinance.domain.enums.InstallmentStatus;
+import com.nadson.myfinance.domain.enums.TransactionStatus;
+import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,18 +21,21 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
     private final BillingPaymentRepositoryPort paymentRepository;
     private final AccountRepositoryPort accountRepository;
     private final BillingCycleRepositoryPort billingCycleRepository;
-    private final CreditCardRepositoryPort creditCardRepository; // Re-injetado para segurança
+    private final CreditCardRepositoryPort creditCardRepository;
+    private final TransactionRepositoryPort transactionRepository;
 
     public BillingProcessPaymentUseCase(CreditCardInstallmentRepositoryPort installmentRepository,
                                         BillingPaymentRepositoryPort paymentRepository,
                                         AccountRepositoryPort accountRepository,
                                         BillingCycleRepositoryPort billingCycleRepository,
-                                        CreditCardRepositoryPort creditCardRepository) {
+                                        CreditCardRepositoryPort creditCardRepository,
+                                        TransactionRepositoryPort transactionRepository) {
         this.installmentRepository = installmentRepository;
         this.paymentRepository = paymentRepository;
         this.accountRepository = accountRepository;
         this.billingCycleRepository = billingCycleRepository;
         this.creditCardRepository = creditCardRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Transactional
@@ -68,7 +73,24 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
             remaining = remaining.subtract(paymentForThisOne);
         }
 
-        paymentRepository.save(new BillingPayment(UUID.randomUUID(), cycleId, accountId, amountToPay, LocalDateTime.now()));
+        LocalDateTime now = LocalDateTime.now();
+        paymentRepository.save(new BillingPayment(UUID.randomUUID(), cycleId, accountId, amountToPay, now));
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),           // 1. UUID id
+                "Pagamento de Fatura",       // 2. String description
+                amountToPay,                 // 3. BigDecimal amount
+                now,                         // 4. LocalDateTime date
+                TransactionType.EXPENSE,     // 5. TransactionType type
+                accountId,                   // 6. UUID accountId
+                null,                        // 7. UUID categoryId
+                true,                        // 8. boolean isTransfer (Ajuste conforme seu domínio)
+                null,                        // 9. UUID transferID
+                null,                        // 10. BigDecimal accountBalanceAfter
+                TransactionStatus.COMPLETED, // 11. TransactionStatus status
+                null                         // 12. UUID templateId
+        );
+        transactionRepository.save(transaction);
     }
 
     private void validateOwnership(UUID userId, UUID cardId, UUID cycleId, UUID accountId, BillingCycle cycle) {
