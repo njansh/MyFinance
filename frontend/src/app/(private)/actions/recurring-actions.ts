@@ -58,7 +58,7 @@ export async function confirmRecurringTransactionAction(
   const token = await getAuthToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/recurring/${id}/confirm`,
+`${API_BASE_URL}/transactions/${id}/confirm?actualAmount=${amount}`,
     {
       method: 'POST',
       headers: {
