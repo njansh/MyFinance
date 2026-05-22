@@ -57,6 +57,7 @@ public interface TransactionRepositoryPort {
 
     void deletePendingByTemplateId(UUID templateId);
     List<Transaction> findAllByUserIdAndCategoryIdAndMonthAndYear(UUID userId, UUID categoryId, int month, int year);
+    void deleteTransferCounterpartsByAccountId(UUID accountId);
 }
 
 

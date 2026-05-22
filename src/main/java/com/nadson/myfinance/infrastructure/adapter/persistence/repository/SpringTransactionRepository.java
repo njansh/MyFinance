@@ -113,10 +113,6 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
 
-    @Modifying
-    @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
-    void deleteAllByAccountId(@Param("accountId") UUID accountId);
-
     @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t WHERE t.accountId IN :accountIds AND t.date < :date AND t.type = :type AND t.status = 'COMPLETED'")
     BigDecimal sumTransactionsBeforeDate(
             @Param("accountIds") List<UUID> accountIds,
@@ -149,4 +145,11 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("month") int month,
             @Param("year") int year
     );
+    @Modifying
+    @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
+    void deleteAllByAccountId(@Param("accountId") UUID accountId);
+    @Modifying
+    @Query("DELETE FROM TransactionJpaEntity t WHERE t.transferID IN " +
+            "(SELECT t2.transferID FROM TransactionJpaEntity t2 WHERE t2.accountId = :accountId AND t2.transferID IS NOT NULL)")
+    void deleteTransferCounterpartsByAccountId(@Param("accountId") UUID accountId);
 }

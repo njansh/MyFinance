@@ -209,4 +209,10 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
                 .map(TransactionJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+    public void deleteTransferCounterpartsByAccountId(UUID accountId) {
+        repository.deleteTransferCounterpartsByAccountId(accountId);
+    }
+
+
 }
