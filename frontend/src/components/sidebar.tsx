@@ -8,12 +8,13 @@ export function Sidebar() {
   const pathname = usePathname() || '';
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { name: 'Extrato', href: '/extrato', icon: '📄' },
-    { name: 'Transações', href: '/transactions', icon: '💸' },
-    { name: 'Cartões', href: '/credit-cards', icon: '💳' },
-    { name: 'Recorrências', href: '/recurring', icon: '🔄' },
-  ];
+      { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+      { name: 'Extrato', href: '/extrato', icon: '📄' },
+      { name: 'Transações', href: '/transactions', icon: '💸' },
+      { name: 'Cartões', href: '/credit-cards', icon: '💳' },
+      { name: 'Recorrências', href: '/recurring', icon: '🔄' },
+      { name: 'Orçamentos', href: '/budgets', icon: '🎯' },
+    ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex h-full shadow-sm z-10">

@@ -273,3 +273,27 @@ export async function getPendingTransactions(
 
   return response.json();
 }
+
+/* =========================
+   BUDGETS (ORÇAMENTOS)
+========================= */
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  month: number;
+  year: number;
+  limitAmount: number;
+  spentAmount: number;
+  usagePercentage: number;
+}
+
+export async function getBudgets(month: number, year: number): Promise<Budget[]> {
+  const token = await getAuthToken();
+  // Como a sua rota GET do backend requer month e year:
+  const response = await apiFetch(`/budgets?month=${month}&year=${year}`);
+
+  if (!response.ok) return [];
+
+  return response.json();
+}

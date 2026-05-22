@@ -1,14 +1,17 @@
 import { cookies } from 'next/headers';
 import {
   getAccounts,
+  getCategories,
   getExpensesReport,
   getIncomesReport,
-  getPendingTransactions
-} from '../../../lib/api/api-server';
-import { DashboardCharts } from '../../../components/dashboard/dashboard-charts';
-import { KpiCards } from '../../../components/dashboard/kpi-cards';
-import { DashboardFilter } from '../../../components/dashboard/dashboard-filter';
-import { PendingTransactions } from '../../../components/pending/PendingTransactions';
+  getPendingTransactions,
+  getBudgets
+} from '@/lib/api/api-server';
+import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
+import { KpiCards } from '@/components/dashboard/kpi-cards';
+import { DashboardFilter } from '@/components/dashboard/dashboard-filter';
+import { PendingTransactions } from '@/components/pending/PendingTransactions';
+import { BudgetPanel } from '@/components/dashboard/budget-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -29,6 +32,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   let accounts: any[] = [];
   let pendingTransactions: any[] = [];
+  let categories: any[] = [];
+  let budgets: any[] = [];
 
   let kpis = {
     netWorth: 0,
@@ -42,9 +47,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const incomesReport: Record<string, number> = {};
 
   try {
-    accounts = await getAccounts();
+    // Buscas paralelas para otimizar o tempo de carregamento
+    const [accountsRes, categoriesRes, budgetsRes, pendingRes] = await Promise.allSettled([
+      getAccounts(),
+      getCategories(),
+      getBudgets(currentMonth, currentYear),
+      getPendingTransactions(currentMonth, currentYear)
+    ]);
 
-    pendingTransactions = await getPendingTransactions(currentMonth, currentYear).catch(() => []);
+    if (accountsRes.status === 'fulfilled') accounts = accountsRes.value;
+    if (categoriesRes.status === 'fulfilled') categories = categoriesRes.value;
+    if (budgetsRes.status === 'fulfilled') budgets = budgetsRes.value;
+    if (pendingRes.status === 'fulfilled') pendingTransactions = pendingRes.value;
 
     const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
@@ -82,6 +96,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     console.error("Erro ao conectar com a API do Dashboard:", error);
   }
 
+  const budgetsView = budgets.map((b: any) => {
+    const targetCategoryId = b.categoryId || b.category_id;
+
+    const cat = categories.find((c: any) => c.id === targetCategoryId || c.categoryId === targetCategoryId);
+
+    return {
+      id: b.id,
+      categoryName: cat ? cat.name : 'Categoria Desconhecida',
+      limitAmount: b.limitAmount,
+      spentAmount: b.spentAmount,
+      usagePercentage: b.usagePercentage
+    };
+  });
+
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 text-slate-900 antialiased">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -102,9 +130,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         nextMonthForecast={kpis.nextMonthForecast}
       />
 
+      {/* Painel de Orçamentos renderizado aqui! */}
+      <BudgetPanel budgets={budgetsView} />
+
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
 
-      {/* Listagem de faturas que precisam de ação do usuário */}
       <PendingTransactions transactions={pendingTransactions} />
     </div>
   );
