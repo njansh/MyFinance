@@ -16,4 +16,15 @@ public interface SpringBillingPaymentRepository extends JpaRepository<BillingPay
             "(SELECT c.id FROM BillingCycleJpaEntity c WHERE c.creditCardId IN " +
             "(SELECT cc.id FROM CreditCardJpaEntity cc WHERE cc.accountId = :accountId))")
     void deleteByAccountId(@Param("accountId") UUID accountId);
+
+    @Modifying
+    @Query("DELETE FROM BillingPaymentJpaEntity p WHERE p.billingCycleId IN " +
+            "(SELECT c.id FROM BillingCycleJpaEntity c WHERE c.creditCardId IN " +
+            "(SELECT cc.id FROM CreditCardJpaEntity cc WHERE cc.userId = :userId))")
+    void deleteAllByUserId(@Param("userId") UUID userId);
+
+    @Modifying
+    @Query("DELETE FROM BillingPaymentJpaEntity p WHERE p.billingCycleId IN " +
+            "(SELECT c.id FROM BillingCycleJpaEntity c WHERE c.creditCardId = :creditCardId)")
+    void deleteAllByCreditCardId(@Param("creditCardId") UUID creditCardId);
 }

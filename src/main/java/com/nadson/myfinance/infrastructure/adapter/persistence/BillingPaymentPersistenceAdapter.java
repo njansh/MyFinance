@@ -6,6 +6,8 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.entity.BillingPay
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringBillingPaymentRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class BillingPaymentPersistenceAdapter implements BillingPaymentRepositoryPort {
     private final SpringBillingPaymentRepository repository;
@@ -18,5 +20,15 @@ public class BillingPaymentPersistenceAdapter implements BillingPaymentRepositor
     public BillingPayment save(BillingPayment payment) {
         BillingPaymentJpaEntity entity = BillingPaymentJpaEntity.fromDomain(payment);
         return repository.save(entity).toDomain();
+    }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        repository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByAccountId(UUID accId) {
+        repository.deleteByAccountId(accId);
     }
 }

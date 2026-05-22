@@ -15,4 +15,8 @@ public interface SpringCreditCardRepository extends JpaRepository<CreditCardJpaE
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
 
     List<CreditCardJpaEntity> findByUserId(UUID userId);
+
+    @Modifying
+    @Query("DELETE FROM CreditCardJpaEntity c WHERE c.userId = :userId")
+    void deleteAllByUserId(@Param("userId") UUID userId);
 }

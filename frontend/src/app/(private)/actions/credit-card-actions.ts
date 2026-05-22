@@ -124,3 +124,24 @@ export async function payBillingCycleAction(cardId: string, cycleId: string, dat
 
   return { success: true };
 }
+export async function deleteCreditCardAction(cardId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+  if (!token) throw new Error('Usuário não autenticado');
+
+  const payload = token.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+  const userId = decoded.sub;
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/credit-cards/${cardId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(err || 'Erro ao excluir o cartão');
+  }
+
+  revalidatePath('/credit-cards');
+}

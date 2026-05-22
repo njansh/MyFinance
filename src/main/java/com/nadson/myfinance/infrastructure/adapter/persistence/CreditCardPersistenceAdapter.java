@@ -47,5 +47,19 @@ public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
         springBillingPaymentRepository.deleteByAccountId(accountId);
         springBillingCycleRepository.deleteAllByAccountId(accountId);
         springCreditCardRepository.deleteAllByAccountId(accountId);
+
+    }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        springBillingPaymentRepository.deleteAllByUserId(userId);
+        springBillingCycleRepository.deleteAllByUserId(userId);
+        springCreditCardRepository.deleteAllByUserId(userId);
+    }
+    @Override
+    public void deleteByID(UUID creditCardId) {
+        springBillingPaymentRepository.deleteAllByCreditCardId(creditCardId);
+        springBillingCycleRepository.deleteAllByCreditCardId(creditCardId);
+        springCreditCardRepository.deleteById(creditCardId);
     }
 }

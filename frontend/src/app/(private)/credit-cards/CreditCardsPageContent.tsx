@@ -1,5 +1,9 @@
 'use client';
+
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { deleteCreditCardAction } from '../actions/credit-card-actions';
+
 // CORREÇÃO DOS PATHS: Subindo 3 níveis para alcançar a pasta components na raiz
 import { CreditCardForm } from '../../../components/credit-cards/credit-card-form';
 import { BillingCycleViewer } from '../../../components/credit-cards/billing-cycle-viewer';
@@ -11,6 +15,18 @@ export function CreditCardsPageContent({ cards, accounts, categories }: any) {
   const [purchaseCard, setPurchaseCard] = useState<{ id: string, name: string } | null>(null);
 
   const cardList = Array.isArray(cards) ? cards : (cards?.content || []);
+
+  // FUNÇÃO DE DELETAR CARTÃO
+  async function handleDeleteCard(cardId: string) {
+    if (!confirm('Atenção: Isso apagará o cartão, todas as faturas e compras vinculadas a ele. Deseja continuar?')) return;
+
+    try {
+      await deleteCreditCardAction(cardId);
+    } catch (err) {
+      alert('Erro ao excluir cartão. Verifique o console.');
+      console.error(err);
+    }
+  }
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -53,6 +69,15 @@ export function CreditCardsPageContent({ cards, accounts, categories }: any) {
                   className="w-full py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200 transition"
                 >
                   {selectedCard?.id === c.id ? 'Ocultar Fatura' : 'Ver Faturas'}
+                </button>
+
+                {/* BOTÃO DE LIXEIRA */}
+                <button
+                  onClick={() => handleDeleteCard(c.id)}
+                  className="px-3 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition"
+                  title="Excluir Cartão"
+                >
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>

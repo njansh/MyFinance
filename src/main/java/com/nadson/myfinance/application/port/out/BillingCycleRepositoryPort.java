@@ -13,4 +13,7 @@ public interface BillingCycleRepositoryPort {
     BillingCycle findById(UUID billingCycleId);
     BillingCycle findByCardIdAndMonthYear(UUID creditCardId, int month, int year);
 
+    void deleteAllByUserId(UUID userId);
+
+    void deleteAllByAccountId(UUID accId);
 }

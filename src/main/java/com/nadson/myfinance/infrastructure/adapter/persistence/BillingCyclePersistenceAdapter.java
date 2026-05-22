@@ -65,4 +65,14 @@ public class BillingCyclePersistenceAdapter implements BillingCycleRepositoryPor
                 .map(BillingCycleJpaEntity::toDomain)
                 .orElse(null);
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        springBillingCycleRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByAccountId(UUID accId) {
+        springBillingCycleRepository.deleteAllByAccountId(accId);
+    }
 }

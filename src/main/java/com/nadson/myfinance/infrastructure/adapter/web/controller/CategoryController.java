@@ -2,7 +2,6 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.in.GetCategoriesPort;
-import com.nadson.myfinance.application.usecase.CreateUserUseCase;
 import com.nadson.myfinance.application.usecase.DeleteCategoryUseCase;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CategoryRequest;

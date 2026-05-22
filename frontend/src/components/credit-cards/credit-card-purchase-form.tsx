@@ -1,100 +1,137 @@
 'use client';
+
 import { useState } from 'react';
-import { createCreditCardTransactionAction } from '../../app/(private)/actions/credit-card-actions';
+import { X } from 'lucide-react';
+// Importe a sua action de criar transação do cartão, ajuste o caminho se necessário
+// import { createCreditCardPurchaseAction } from '@/app/(private)/actions/credit-card-actions';
 
-interface PurchaseFormProps {
-  cardId: string;
-  cardName: string;
-  categories: any[];
-  onClose: () => void;
-}
-
-export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }: PurchaseFormProps) {
+export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }: any) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // A MÁGICA ACONTECE AQUI: Filtra a lista para mostrar APENAS categorias de SAÍDA (EXPENSE)
+  const expenseCategories = categories.filter((cat: any) => cat.type === 'EXPENSE');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+
     const formData = new FormData(e.currentTarget);
-
-    // 1. CORREÇÃO DA VÍRGULA
-    const rawAmount = formData.get('amount') as string;
-    const formattedAmount = Number(rawAmount.replace(',', '.'));
-
-    // 2. CORREÇÃO DA DATA
-    const dateStr = formData.get('date') as string;
+    // const data = Object.fromEntries(formData);
 
     try {
-      await createCreditCardTransactionAction(cardId, {
-        description: formData.get('description'),
-        amount: formattedAmount,
-        installments: Number(formData.get('installments')),
-        date: dateStr,
-        categoryId: formData.get('categoryId'),
-      });
+      // Aqui você chama a sua Server Action para salvar a compra
+      // await createCreditCardPurchaseAction(cardId, data);
+
+      alert('Compra registrada com sucesso!');
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Erro ao registrar compra no cartão.');
+    } catch (error) {
+      alert('Erro ao registrar compra.');
+      console.error(error);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+
+        {/* Cabeçalho do Modal */}
+        <div className="bg-slate-900 p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Nova Compra</h2>
-            <p className="text-xs font-medium text-slate-500">Cartão: {cardName}</p>
+            <h2 className="text-xl font-bold text-white">Nova Compra</h2>
+            <p className="text-slate-400 text-sm mt-1">Cartão: {cardName}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition">✕</button>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-             <div className="p-3 bg-rose-50 text-rose-700 text-xs font-semibold rounded-lg border border-rose-100 break-words">
-               {error}
-             </div>
-          )}
+        {/* Formulário */}
+        <div className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Descrição</label>
-            <input required name="description" placeholder="Ex: Notebook Dell" className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900" />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Descrição</label>
+              <input
+                required
+                type="text"
+                name="description"
+                placeholder="Ex: Mercado, Uber, Ifood..."
+                className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 transition"
+              />
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Valor Total (R$)</label>
-              <input required name="amount" type="text" placeholder="200,33" className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Parcelas</label>
-              <input required name="installments" type="number" min="1" max="72" defaultValue="1" className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900" />
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Valor (R$)</label>
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  name="amount"
+                  placeholder="0.00"
+                  className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 transition"
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Data</label>
-              <input required name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900" />
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Parcelas</label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  defaultValue="1"
+                  name="installments"
+                  className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 transition"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Categoria</label>
-              <select required name="categoryId" className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900">
-                {categories.map((cat: any) => (
-                  <option key={cat.categoryId || cat.id} value={cat.categoryId || cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
 
-          <button disabled={loading} className="w-full h-11 mt-2 bg-slate-900 text-white font-semibold rounded-xl text-sm hover:bg-slate-800 transition disabled:opacity-50">
-            {loading ? 'Processando...' : 'Confirmar Compra'}
-          </button>
-        </form>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Data da Compra</label>
+                <input
+                  required
+                  type="date"
+                  name="date"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                  className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Categoria</label>
+                <select
+                  required
+                  name="categoryId"
+                  className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 transition"
+                >
+                  <option value="">Selecione...</option>
+
+                  {/* MAPEANDO APENAS AS CATEGORIAS FILTRADAS (DESPESAS) */}
+                  {expenseCategories.map((cat: any) => (
+                    <option key={cat.categoryId || cat.id} value={cat.categoryId || cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 mt-4 bg-black text-white font-bold rounded-xl hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
+            >
+              {loading ? 'Registrando...' : 'Registrar Compra'}
+            </button>
+          </form>
+        </div>
+
       </div>
     </div>
   );

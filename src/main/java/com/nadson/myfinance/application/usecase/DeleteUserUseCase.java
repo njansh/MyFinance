@@ -14,28 +14,43 @@ public class DeleteUserUseCase implements DeleteUserPort {
     private final BudgetRepositoryPort budgetRepo;
     private final GoalRepositoryPort goalRepo;
     private final RecurringTemplateRepositoryPort recurringRepo;
-    private final DeleteAccountUseCase deleteAccountUseCase;
+    private final TransactionRepositoryPort transactionRepo;
+    private final BillingCycleRepositoryPort billingCycleRepo;
+    private final BillingPaymentRepositoryPort billingPaymentRepo;
+    private final CreditCardRepositoryPort creditCardRepo;
 
     public DeleteUserUseCase(UserRepositoryPort userRepo, AccountRepositoryPort accountRepo,
                              CategoryRepositoryPort categoryRepo, BudgetRepositoryPort budgetRepo,
                              GoalRepositoryPort goalRepo, RecurringTemplateRepositoryPort recurringRepo,
-                             DeleteAccountUseCase deleteAccountUseCase) {
+                             TransactionRepositoryPort transactionRepo, BillingCycleRepositoryPort billingCycleRepo, BillingPaymentRepositoryPort billingPaymentRepo, CreditCardRepositoryPort creditCardRepo) {
         this.userRepo = userRepo;
         this.accountRepo = accountRepo;
         this.categoryRepo = categoryRepo;
         this.budgetRepo = budgetRepo;
         this.goalRepo = goalRepo;
         this.recurringRepo = recurringRepo;
-        this.deleteAccountUseCase = deleteAccountUseCase;
+        this.transactionRepo = transactionRepo;
+        this.billingCycleRepo = billingCycleRepo;
+        this.billingPaymentRepo = billingPaymentRepo;
+        this.creditCardRepo = creditCardRepo;
     }
-
     @Override
     @Transactional
     public void execute(UUID userId) {
+        billingPaymentRepo.deleteAllByUserId(userId);
+        billingCycleRepo.deleteAllByUserId(userId);
+
         List<Account> accounts = accountRepo.findByUserId(userId);
         for (Account acc : accounts) {
-            deleteAccountUseCase.execute(acc.getAccountId(), userId);
+            UUID accId = acc.getAccountId();
+
+            transactionRepo.deleteAllByAccountId(accId);
+            recurringRepo.deleteAllByAccountId(accId);
+            creditCardRepo.deleteAllByAccountId(accId);
+
+            accountRepo.deleteById(accId);
         }
+
 
         recurringRepo.deleteAllByUserId(userId);
         goalRepo.deleteAllByUserId(userId);
