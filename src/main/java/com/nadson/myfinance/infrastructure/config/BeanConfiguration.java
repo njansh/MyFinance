@@ -26,8 +26,10 @@ public class BeanConfiguration {
     @Bean
     public CreateTransactionPort createTransactionUseCase(
             TransactionRepositoryPort transactionRepo,
-            AccountRepositoryPort accountRepo, CategoryRepositoryPort categoryRepo, ApplicationEventPublisher eventPublisher) {
-        return new CreateTransactionUseCase(transactionRepo, accountRepo,categoryRepo, eventPublisher);
+            AccountRepositoryPort accountRepo,
+            CategoryRepositoryPort categoryRepo,
+            ProcessTransactionInBudgetPort processTransactionInBudget) {
+        return new CreateTransactionUseCase(transactionRepo, accountRepo, categoryRepo, processTransactionInBudget);
     }
     @Bean
     public CreateUserPort createUserUseCase(UserRepositoryPort repository, CreateCategoryPort createCategoryPort, PasswordEncoderPort passwordEncoderPort) {
@@ -99,8 +101,17 @@ public class BeanConfiguration {
         return new GetTotalBalanceUserCase(accountRepositoryPort, userRepositoryPort);
     }
     @Bean
-    public UpdateTransactionPort updateTransactionPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort, CategoryRepositoryPort categoryRepositoryPort) {
-        return new UpdateTransactionUseCase(transactionRepositoryPort, categoryRepositoryPort, accountRepositoryPort);
+    public UpdateTransactionPort updateTransactionPort(
+            TransactionRepositoryPort transactionRepositoryPort,
+            AccountRepositoryPort accountRepositoryPort,
+            BudgetRepositoryPort budgetRepositoryPort,
+            ProcessTransactionInBudgetPort processTransactionInBudgetPort) {
+        return new UpdateTransactionUseCase(
+                transactionRepositoryPort,
+                accountRepositoryPort,
+                budgetRepositoryPort,
+                processTransactionInBudgetPort
+        );
     }
     @Bean
     public DeleteTransactionPort deleteTransactionPort(TransactionRepositoryPort transactionRepo, AccountRepositoryPort accountRepo) {
@@ -213,5 +224,28 @@ public class BeanConfiguration {
     @Bean
     public DeleteRecurringTemplatePort deleteRecurringTemplatePort(RecurringTemplateRepositoryPort recurringTemplateRepositoryPort, TransactionRepositoryPort transactionRepositoryPort) {
         return new DeleteRecurringTemplateUseCase(recurringTemplateRepositoryPort, transactionRepositoryPort);
+    }
+
+    @Bean
+    public DeleteBudgetPort deleteBudgetPort(BudgetRepositoryPort repository) {
+        return new DeleteBudgetUseCase(repository);
+    }
+
+    @Bean
+    public UpdateBudgetLimitPort updateBudgetLimitPort(BudgetRepositoryPort repository) {
+        return new UpdateBudgetLimitUseCase(repository);
+    }
+
+    @Bean
+    public ListBudgetsPort listBudgetsPort(BudgetRepositoryPort repository) {
+        return new ListBudgetsUseCase(repository);
+    }
+
+    @Bean
+    public ProcessTransactionInBudgetPort processTransactionInBudgetPort(BudgetRepositoryPort budgetRepository, AccountRepositoryPort accountRepository) {
+        return new ProcessTransactionInBudgetUseCase(budgetRepository, accountRepository);
+    }@Bean
+    public GetBudgetPort getBudgetPort(BudgetRepositoryPort repository) {
+        return new GetBudgetUseCase(repository);
     }
 }

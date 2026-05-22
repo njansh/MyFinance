@@ -1,9 +1,12 @@
 package com.nadson.myfinance.application.usecase;
 
+import com.nadson.myfinance.application.port.in.ProcessTransactionInBudgetPort;
 import com.nadson.myfinance.application.port.in.UpdateTransactionPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
+import com.nadson.myfinance.application.port.out.BudgetRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
-import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
+import com.nadson.myfinance.application.usecase.CreateTransactionUseCase.TransactionResult;
+import com.nadson.myfinance.domain.entity.Budget;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.TransactionNotFoundException;
@@ -16,32 +19,59 @@ import java.util.UUID;
 public class UpdateTransactionUseCase implements UpdateTransactionPort {
 
     private final TransactionRepositoryPort transactionRepo;
-    private final CategoryRepositoryPort categoryRepo;
     private final AccountRepositoryPort accountRepo;
+    private final BudgetRepositoryPort budgetRepo;
+    private final ProcessTransactionInBudgetPort processTransactionInBudget;
 
     public UpdateTransactionUseCase(TransactionRepositoryPort transactionRepo,
-                                    CategoryRepositoryPort categoryRepo,
-                                    AccountRepositoryPort accountRepo) {
+                                    AccountRepositoryPort accountRepo,
+                                    BudgetRepositoryPort budgetRepo,
+                                    ProcessTransactionInBudgetPort processTransactionInBudget) {
         this.transactionRepo = transactionRepo;
-        this.categoryRepo = categoryRepo;
         this.accountRepo = accountRepo;
+        this.budgetRepo = budgetRepo;
+        this.processTransactionInBudget = processTransactionInBudget;
     }
 
     @Override
     @Transactional
-    public void execute(UUID transactionId, String description, BigDecimal amount, LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
+    public TransactionResult execute(UUID transactionId, String description, BigDecimal amount,
+                                     LocalDateTime date, TransactionType type, UUID accountId, UUID categoryId) {
+
         Transaction oldTx = transactionRepo.findById(transactionId);
         if (oldTx == null) {
             throw new TransactionNotFoundException(transactionId);
         }
 
-        BigDecimal reversal = oldTx.getType() == TransactionType.EXPENSE? oldTx.getAmount() : oldTx.getAmount().negate();
+        // 1. Reverte impacto na conta antiga
+        BigDecimal reversal = oldTx.getType() == TransactionType.EXPENSE ? oldTx.getAmount() : oldTx.getAmount().negate();
         accountRepo.updateBalanceAtomic(oldTx.getAccountId(), reversal);
 
-        BigDecimal adjustment = type == TransactionType.EXPENSE? amount.negate() : amount;
+        // 2. Aplica impacto na conta nova (ou na mesma com novo valor)
+        BigDecimal adjustment = type == TransactionType.EXPENSE ? amount.negate() : amount;
         accountRepo.updateBalanceAtomic(accountId, adjustment);
 
+        // 3. Reverte impacto no orçamento antigo com segurança
+        if (oldTx.getType() == TransactionType.EXPENSE && oldTx.getCategoryId() != null) {
+            UUID userId = accountRepo.findUserIdByAccountId(oldTx.getAccountId());
+            Budget oldBudget = budgetRepo.findByUserIdAndCategoryIdAndMonthAndYear(
+                    userId, oldTx.getCategoryId(), oldTx.getDate().getMonthValue(), oldTx.getDate().getYear());
+            if (oldBudget != null) {
+                oldBudget.removeExpense(oldTx.getAmount());
+                budgetRepo.save(oldBudget);
+            }
+        }
+
+        // 4. Atualiza e salva a transação
         oldTx.updateDetails(description, amount, date, type, accountId, categoryId);
-        transactionRepo.save(oldTx);
+        Transaction updatedTx = transactionRepo.save(oldTx);
+
+        // 5. Aplica impacto no novo orçamento e pega o alerta
+        String alert = null;
+        if (updatedTx.getType() == TransactionType.EXPENSE && updatedTx.getCategoryId() != null) {
+            alert = processTransactionInBudget.execute(updatedTx);
+        }
+
+        return new TransactionResult(updatedTx, alert);
     }
 }

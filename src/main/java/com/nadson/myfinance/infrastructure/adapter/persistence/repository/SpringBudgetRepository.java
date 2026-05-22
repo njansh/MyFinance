@@ -6,12 +6,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringBudgetRepository extends JpaRepository<BudgetJpaEntity, UUID> {
     Optional<BudgetJpaEntity> findByUserIdAndCategoryIdAndMonthAndYear(UUID userId, UUID categoryId, int month, int year);
-    @Modifying
+    List<BudgetJpaEntity> findByUserIdAndMonthAndYear(UUID userId, int month, int year);
+    List<BudgetJpaEntity> findByUserId(UUID userId);    @Modifying
     @Query("DELETE FROM BudgetJpaEntity b WHERE b.userId = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
 }

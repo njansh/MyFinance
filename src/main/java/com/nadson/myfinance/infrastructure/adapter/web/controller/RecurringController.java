@@ -1,8 +1,6 @@
 package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.*;
-import com.nadson.myfinance.application.port.out.BillingPaymentRepositoryPort;
-import com.nadson.myfinance.application.port.out.RecurringTemplateRepositoryPort;
 import com.nadson.myfinance.domain.entity.RecurringTemplate;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreateRecurringTemplateRequest;
@@ -65,7 +63,7 @@ public class RecurringController {
         );
 
         List<TransactionResponse> response = pendingTransactions.stream()
-                .map(TransactionResponse::fromDomain)
+                .map(t -> TransactionResponse.fromDomain(t, null))
                 .toList();
 
         return ResponseEntity.ok(response);

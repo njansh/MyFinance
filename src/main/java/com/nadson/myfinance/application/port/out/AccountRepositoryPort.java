@@ -13,7 +13,7 @@ public interface AccountRepositoryPort {
     List<Account>findByUserId(UUID userId);
 
     void updateBalanceAtomic(UUID accountId, BigDecimal amount);
-
+    UUID findUserIdByAccountId(UUID accountId);
     void deleteById(UUID accountId);
     void debit(UUID accountId, BigDecimal amount);
 }
