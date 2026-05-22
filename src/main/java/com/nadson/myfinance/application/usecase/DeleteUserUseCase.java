@@ -1,6 +1,5 @@
 package com.nadson.myfinance.application.usecase;
 
-import com.nadson.myfinance.application.port.in.DeleteAccountPort;
 import com.nadson.myfinance.application.port.in.DeleteUserPort;
 import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.domain.entity.Account;
@@ -15,19 +14,19 @@ public class DeleteUserUseCase implements DeleteUserPort {
     private final BudgetRepositoryPort budgetRepo;
     private final GoalRepositoryPort goalRepo;
     private final RecurringTemplateRepositoryPort recurringRepo;
-    private final DeleteAccountPort deleteAccountPort;
+    private final DeleteAccountUseCase deleteAccountUseCase;
 
     public DeleteUserUseCase(UserRepositoryPort userRepo, AccountRepositoryPort accountRepo,
                              CategoryRepositoryPort categoryRepo, BudgetRepositoryPort budgetRepo,
                              GoalRepositoryPort goalRepo, RecurringTemplateRepositoryPort recurringRepo,
-                             DeleteAccountPort deleteAccountPort) {
+                             DeleteAccountUseCase deleteAccountUseCase) {
         this.userRepo = userRepo;
         this.accountRepo = accountRepo;
         this.categoryRepo = categoryRepo;
         this.budgetRepo = budgetRepo;
         this.goalRepo = goalRepo;
         this.recurringRepo = recurringRepo;
-        this.deleteAccountPort = deleteAccountPort;
+        this.deleteAccountUseCase = deleteAccountUseCase;
     }
 
     @Override
@@ -35,7 +34,7 @@ public class DeleteUserUseCase implements DeleteUserPort {
     public void execute(UUID userId) {
         List<Account> accounts = accountRepo.findByUserId(userId);
         for (Account acc : accounts) {
-            deleteAccountPort.execute(acc.getAccountId(), userId);
+            deleteAccountUseCase.execute(acc.getAccountId(), userId);
         }
 
         recurringRepo.deleteAllByUserId(userId);
@@ -43,7 +42,6 @@ public class DeleteUserUseCase implements DeleteUserPort {
         budgetRepo.deleteAllByUserId(userId);
         categoryRepo.deleteAllByUserId(userId);
 
-        // 3. Por fim, deleta o próprio usuário
         userRepo.deleteById(userId);
     }
 }

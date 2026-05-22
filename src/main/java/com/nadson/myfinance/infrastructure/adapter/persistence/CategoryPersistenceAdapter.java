@@ -47,4 +47,8 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
     public void deleteAllByUserId(UUID userId) {
         springCategoryRepository.deleteAllByUserId(userId);
     }
+    @Override
+    public void deleteById(UUID id) {
+        springCategoryRepository.deleteById(id);
+    }
 }

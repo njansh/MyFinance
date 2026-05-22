@@ -23,19 +23,21 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
     private final BillingCycleRepositoryPort billingCycleRepository;
     private final CreditCardRepositoryPort creditCardRepository;
     private final TransactionRepositoryPort transactionRepository;
+    private final CategoryRepositoryPort categoryRepository;
 
     public BillingProcessPaymentUseCase(CreditCardInstallmentRepositoryPort installmentRepository,
                                         BillingPaymentRepositoryPort paymentRepository,
                                         AccountRepositoryPort accountRepository,
                                         BillingCycleRepositoryPort billingCycleRepository,
                                         CreditCardRepositoryPort creditCardRepository,
-                                        TransactionRepositoryPort transactionRepository) {
+                                        TransactionRepositoryPort transactionRepository, CategoryRepositoryPort categoryRepository) {
         this.installmentRepository = installmentRepository;
         this.paymentRepository = paymentRepository;
         this.accountRepository = accountRepository;
         this.billingCycleRepository = billingCycleRepository;
         this.creditCardRepository = creditCardRepository;
         this.transactionRepository = transactionRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Transactional
@@ -75,20 +77,29 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
 
         LocalDateTime now = LocalDateTime.now();
         paymentRepository.save(new BillingPayment(UUID.randomUUID(), cycleId, accountId, amountToPay, now));
-
+        Category categoriaFatura = categoryRepository.findByNameAndUserId("Fatura Paga", userId);
+        if (categoriaFatura == null) {
+            categoriaFatura = categoryRepository.save(new Category(
+                    UUID.randomUUID(),
+                    userId,
+                    "Fatura Paga",
+                    "#9C27B0",
+                    TransactionType.EXPENSE
+            ));
+        }
         Transaction transaction = new Transaction(
-                UUID.randomUUID(),           // 1. UUID id
-                "Pagamento de Fatura",       // 2. String description
-                amountToPay,                 // 3. BigDecimal amount
-                now,                         // 4. LocalDateTime date
-                TransactionType.EXPENSE,     // 5. TransactionType type
-                accountId,                   // 6. UUID accountId
-                null,                        // 7. UUID categoryId
-                true,                        // 8. boolean isTransfer (Ajuste conforme seu domínio)
-                null,                        // 9. UUID transferID
-                null,                        // 10. BigDecimal accountBalanceAfter
-                TransactionStatus.COMPLETED, // 11. TransactionStatus status
-                null                         // 12. UUID templateId
+                UUID.randomUUID(),
+                "Pagamento de Fatura",
+                amountToPay,
+                now,
+                TransactionType.EXPENSE,
+                accountId,
+                categoriaFatura.getCategoryId(),
+                true,
+                null,
+                null,
+                TransactionStatus.COMPLETED,
+                null
         );
         transactionRepository.save(transaction);
     }

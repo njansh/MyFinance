@@ -75,14 +75,18 @@ export async function signupAction(prevState: any, formData: FormData) {
     return { error: 'Erro de rede ao tentar comunicar com o servidor.' }
   }
 
-  // Se a conta foi criada com sucesso no backend, faz o login automaticamente no frontend
   return loginAction(prevState, formData)
 }
 
-// Nova action para destruir a sessão e redirecionar
+export async function getAuthToken() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('accessToken')
+  if (!token) throw new Error('UNAUTHORIZED')
+  return token.value
+}
+
 export async function logoutAction() {
   const cookieStore = await cookies()
   cookieStore.delete('accessToken')
-
   redirect('/login')
 }

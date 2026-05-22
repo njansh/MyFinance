@@ -239,14 +239,16 @@ public class BeanConfiguration {
             AccountRepositoryPort accountRepository,
             BillingCycleRepositoryPort billingCycleRepository,
             CreditCardRepositoryPort creditCardRepository,
-            TransactionRepositoryPort transactionRepositoryPort) {
+            TransactionRepositoryPort transactionRepositoryPort,
+            CategoryRepositoryPort categoryRepositoryPort) {
         return new BillingProcessPaymentUseCase(
                 installmentRepository,
                 paymentRepository,
                 accountRepository,
                 billingCycleRepository,
                 creditCardRepository,
-                transactionRepositoryPort
+                transactionRepositoryPort,
+                categoryRepositoryPort
         );
     }
 
@@ -291,9 +293,9 @@ public class BeanConfiguration {
     public DeleteUserPort deleteUserPort(UserRepositoryPort userRepo, AccountRepositoryPort accountRepo,
                                          CategoryRepositoryPort categoryRepo, BudgetRepositoryPort budgetRepo,
                                          GoalRepositoryPort goalRepo, RecurringTemplateRepositoryPort recurringRepo,
-                                         DeleteAccountPort deleteAccountPort) {
+                                         DeleteAccountUseCase deleteAccountUseCase) {
         return new DeleteUserUseCase(
-                userRepo, accountRepo, categoryRepo, budgetRepo, goalRepo, recurringRepo, deleteAccountPort
+                userRepo, accountRepo, categoryRepo, budgetRepo, goalRepo, recurringRepo, deleteAccountUseCase
         );
     }
 
@@ -305,5 +307,15 @@ public class BeanConfiguration {
     @Bean
     public DeleteBudgetPort deleteBudgetPort(BudgetRepositoryPort repository) {
         return new DeleteBudgetUseCase(repository);
+    }
+
+    @Bean
+    public DeleteCategoryUseCase deleteCategoryUseCase(CategoryRepositoryPort repository) {
+        return new DeleteCategoryUseCase(repository);
+    }
+
+    @Bean
+    public DeleteCategoryPort deleteCategoryPort(DeleteCategoryUseCase deleteCategoryUseCase) {
+        return deleteCategoryUseCase;
     }
 }
