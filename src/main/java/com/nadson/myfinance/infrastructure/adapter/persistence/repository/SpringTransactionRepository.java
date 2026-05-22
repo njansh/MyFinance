@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringTransactionRepository extends JpaRepository<TransactionJpaEntity, UUID> {
@@ -39,7 +40,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("balanceAfter") java.math.BigDecimal balanceAfter
     );
 
-     @Query("SELECT COUNT(t) > 0 FROM TransactionJpaEntity t WHERE " +
+    @Query("SELECT COUNT(t) > 0 FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
             "t.date = :date AND " +
             "t.amount = :amount")
@@ -58,8 +59,10 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("date") LocalDateTime date,
             @Param("amount") BigDecimal amount
     );
+
     @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.status = 'COMPLETED' GROUP BY c.name")
     List<Object> sumAmountByCategoryAndType(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type);
+
     @Query("SELECT t FROM TransactionJpaEntity t WHERE " +
             "t.accountId = :accountId AND " +
             "t.date = :date AND " +
@@ -72,12 +75,16 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("amount") java.math.BigDecimal amount,
             @Param("type") com.nadson.myfinance.domain.enums.TransactionType type
     );
+
     @Query("SELECT COALESCE(c.name, 'Sem Categoria'), SUM(t.amount) FROM TransactionJpaEntity t LEFT JOIN CategoryJpaEntity c ON t.categoryId = c.id WHERE t.accountId = :accountId AND t.type = :type AND t.date BETWEEN :startDate AND :endDate AND t.status = 'COMPLETED' GROUP BY c.name")
     List<Object> sumAmountByCategoryAndTypeAndDateBetween(@Param("accountId") java.util.UUID accountId, @Param("type") com.nadson.myfinance.domain.enums.TransactionType type, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
     List<TransactionJpaEntity> findByTransferID(UUID transferID);
+
     Page<TransactionJpaEntity> findByAccountIdAndDescriptionContainingIgnoreCase(UUID accountId, String description, Pageable pageable);
 
     Page<TransactionJpaEntity> findByAccountIdAndDateBetweenAndDescriptionContainingIgnoreCase(UUID accountId, LocalDateTime startDate, LocalDateTime endDate, String description, Pageable pageable);
+
     @Query("SELECT SUM(t.amount) FROM TransactionJpaEntity t " +
             "WHERE t.accountId IN :accountIds " +
             "AND t.date BETWEEN :start AND :end " +
@@ -96,6 +103,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("investmentAccountIds") List<UUID> investmentAccountIds,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
     @Modifying
     @Query("DELETE FROM TransactionJpaEntity t WHERE t.accountId = :accountId")
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
@@ -106,6 +114,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
             @Param("date") LocalDateTime date,
             @Param("type") TransactionType type
     );
+
     @Query("SELECT t FROM TransactionJpaEntity t JOIN AccountJpaEntity a ON t.accountId = a.id " +
             "WHERE a.userId = :userId AND t.status = 'PENDING' " +
             "AND t.date >= :startDate AND t.date <= :endDate")
@@ -118,4 +127,17 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionJp
     @Modifying
     @Query("DELETE FROM TransactionJpaEntity t WHERE t.templateId = :templateId AND t.status = :status")
     void deleteByTemplateIdAndStatus(@Param("templateId") UUID templateId, @Param("status") TransactionStatus status);
+
+    @Query("SELECT t FROM TransactionJpaEntity t " +
+            "JOIN AccountJpaEntity a ON t.accountId = a.id " +
+            "WHERE a.userId = :userId " +
+            "AND t.categoryId = :categoryId " +
+            "AND EXTRACT(MONTH FROM t.date) = :month " +
+            "AND EXTRACT(YEAR FROM t.date) = :year")
+    List<TransactionJpaEntity> findByUserIdAndCategoryIdAndMonthAndYear(
+            @Param("userId") UUID userId,
+            @Param("categoryId") UUID categoryId,
+            @Param("month") int month,
+            @Param("year") int year
+    );
 }

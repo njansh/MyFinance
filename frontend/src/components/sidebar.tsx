@@ -3,18 +3,29 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { logoutAction } from '../app/(private)/actions/auth';
+import { 
+  Landmark, 
+  LayoutDashboard, 
+  FileText, 
+  Receipt, 
+  CreditCard, 
+  Repeat, 
+  Target,
+  LogOut
+} from 'lucide-react'; 
 
 export function Sidebar() {
   const pathname = usePathname() || '';
 
   const navItems = [
-      { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-      { name: 'Extrato', href: '/extrato', icon: '📄' },
-      { name: 'Transações', href: '/transactions', icon: '💸' },
-      { name: 'Cartões', href: '/credit-cards', icon: '💳' },
-      { name: 'Recorrências', href: '/recurring', icon: '🔄' },
-      { name: 'Orçamentos', href: '/budgets', icon: '🎯' },
-    ];
+    { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Extrato', href: '/extrato', icon: <FileText size={20} /> },
+    { name: 'Contas', href: '/accounts', icon: <Landmark size={20} /> },
+    { name: 'Transações', href: '/transactions', icon: <Receipt size={20} /> },
+    { name: 'Cartões', href: '/credit-cards', icon: <CreditCard size={20} /> },
+    { name: 'Recorrências', href: '/recurring', icon: <Repeat size={20} /> },
+    { name: 'Orçamentos', href: '/budgets', icon: <Target size={20} /> },
+  ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex h-full shadow-sm z-10">
@@ -28,7 +39,6 @@ export function Sidebar() {
         <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Menu Principal</p>
 
         {navItems.map((item) => {
-          // A lógica isActive garante que o item fique selecionado mesmo em subrotas
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
@@ -40,7 +50,9 @@ export function Sidebar() {
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span>{item.icon}</span>
+              <span className={isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-900'}>
+                {item.icon}
+              </span>
               {item.name}
             </Link>
           );
@@ -51,8 +63,9 @@ export function Sidebar() {
         <form action={logoutAction} className="w-full">
           <button
             type="submit"
-            className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:text-rose-700 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:text-rose-700 transition-colors cursor-pointer"
           >
+            <LogOut size={18} />
             Sair do Sistema
           </button>
         </form>

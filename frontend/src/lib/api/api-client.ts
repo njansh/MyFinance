@@ -120,10 +120,12 @@ export async function createCreditCard(
   );
 
   return response.json();
-}export async function confirmTransaction(
-   transactionId: string,
-   actualAmount: number
- ) {
+}
+
+export async function confirmTransaction(
+  transactionId: string,
+  actualAmount: number
+) {
    const response = await clientFetch(
      `/api/transactions/${transactionId}/confirm`,
      {
@@ -166,4 +168,15 @@ export async function deleteBudget(id: string) {
     method: 'DELETE',
   });
   return response;
+}
+export async function createAccount(payload: {
+  name: string;
+  type: string;
+}) {
+  const response = await clientFetch('/api/accounts', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  return response.json();
 }

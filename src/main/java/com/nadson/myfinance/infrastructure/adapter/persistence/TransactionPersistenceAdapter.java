@@ -202,4 +202,11 @@ public class TransactionPersistenceAdapter implements TransactionRepositoryPort 
     public void deletePendingByTemplateId(UUID templateId) {
         repository.deleteByTemplateIdAndStatus(templateId, TransactionStatus.PENDING);
     }
+    @Override
+    public List<Transaction> findAllByUserIdAndCategoryIdAndMonthAndYear(UUID userId, UUID categoryId, int month, int year) {
+        return repository.findByUserIdAndCategoryIdAndMonthAndYear(userId, categoryId, month, year)
+                .stream()
+                .map(TransactionJpaEntity::toDomain)
+                .toList();
+    }
 }

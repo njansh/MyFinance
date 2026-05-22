@@ -22,7 +22,8 @@ public interface SpringAccountRepository extends JpaRepository<AccountJpaEntity,
     @Modifying
     @Query("DELETE FROM AccountJpaEntity a WHERE a.userId = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
-    @Query("DELETE FROM AccountJpaEntity a WHERE a.userId = :userId")
-    void deleteById(@Param("userId") UUID userId);
+    @Modifying
+    @Query("DELETE FROM AccountJpaEntity a WHERE a.id = :accountId")
+    void deleteById(@Param("accountId") UUID accountId);
     
 }
