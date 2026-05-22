@@ -5,5 +5,5 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface UpdateBudgetLimitPort {
-    Budget execute(UUID budgetId, BigDecimal newLimit);
+    Budget execute(UUID userId, UUID budgetId, BigDecimal newLimit);
 }

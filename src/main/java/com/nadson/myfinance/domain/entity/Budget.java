@@ -37,6 +37,21 @@ public class Budget {
         this(id, userId, categoryId, month, year, limitAmount, BigDecimal.ZERO, false, false);
     }
 
+    public void updateLimit(BigDecimal newLimit) {
+        validate(this.userId, this.categoryId, this.month, this.year, newLimit);
+        this.limitAmount = newLimit;
+        this.alertedEightyPercent = false;
+        this.alertedOneHundredPercent = false;
+
+        BigDecimal usage = getUsagePercentage();
+        if (usage.compareTo(BigDecimal.ONE) >= 0) {
+            this.alertedOneHundredPercent = true;
+            this.alertedEightyPercent = true;
+        } else if (usage.compareTo(new BigDecimal("0.80")) >= 0) {
+            this.alertedEightyPercent = true;
+        }
+    }
+
     private void validate(UUID userId, UUID categoryId, int month, int year, BigDecimal limitAmount) {
         if (userId == null) throw new BusinessRuleException("User ID is required");
         if (categoryId == null) throw new BusinessRuleException("Category ID is required");
@@ -50,6 +65,29 @@ public class Budget {
     public void addExpense(BigDecimal amount) {
         if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
             this.spentAmount = this.spentAmount.add(amount);
+        }
+    }
+
+    // NOVO MÉTODO: Remove despesa com segurança e reseta alertas se necessário
+    public void removeExpense(BigDecimal amount) {
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+            this.spentAmount = this.spentAmount.subtract(amount);
+
+            // Garante que não fique negativo
+            if (this.spentAmount.compareTo(BigDecimal.ZERO) < 0) {
+                this.spentAmount = BigDecimal.ZERO;
+            }
+
+            // Recalcula e reseta as flags caso o estorno abaixe o percentual
+            BigDecimal usage = getUsagePercentage();
+            BigDecimal eightyPercent = new BigDecimal("0.80");
+
+            if (usage.compareTo(BigDecimal.ONE) < 0) {
+                this.alertedOneHundredPercent = false;
+            }
+            if (usage.compareTo(eightyPercent) < 0) {
+                this.alertedEightyPercent = false;
+            }
         }
     }
 
@@ -84,39 +122,13 @@ public class Budget {
         return spentAmount.compareTo(limitAmount) > 0;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public UUID getCategoryId() {
-        return categoryId;
-    }
-
-    public int getMonth() {
-        return month;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public BigDecimal getLimitAmount() {
-        return limitAmount;
-    }
-
-    public BigDecimal getSpentAmount() {
-        return spentAmount;
-    }
-
-    public boolean isAlertedEightyPercent() {
-        return alertedEightyPercent;
-    }
-
-    public boolean isAlertedOneHundredPercent() {
-        return alertedOneHundredPercent;
-    }
+    public UUID getId() { return id; }
+    public UUID getUserId() { return userId; }
+    public UUID getCategoryId() { return categoryId; }
+    public int getMonth() { return month; }
+    public int getYear() { return year; }
+    public BigDecimal getLimitAmount() { return limitAmount; }
+    public BigDecimal getSpentAmount() { return spentAmount; }
+    public boolean isAlertedEightyPercent() { return alertedEightyPercent; }
+    public boolean isAlertedOneHundredPercent() { return alertedOneHundredPercent; }
 }

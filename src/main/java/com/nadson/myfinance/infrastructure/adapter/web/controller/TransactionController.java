@@ -95,12 +95,13 @@ public class TransactionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody UpdateTransactionRequest request) {
-        updateTransactionPort.execute(
+    public ResponseEntity<TransactionResponse> update(@PathVariable UUID id, @Valid @RequestBody UpdateTransactionRequest request) {
+        var result = updateTransactionPort.execute(
                 id, request.description(), request.amount(), request.date(),
                 request.type(), request.accountId(), request.categoryId()
         );
-        return ResponseEntity.ok().build();
+
+       return ResponseEntity.ok(TransactionResponse.fromDomain(result.transaction(), result.alert()));
     }
 
     @GetMapping("/{id}")

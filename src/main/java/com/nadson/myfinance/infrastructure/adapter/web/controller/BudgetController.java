@@ -56,13 +56,17 @@ public class BudgetController {
 
     @PatchMapping("/{id}/limit")
     public ResponseEntity<BudgetResponse> updateLimit(@PathVariable UUID id, @RequestBody BigDecimal newLimit) {
-        Budget budget = updateBudgetLimitPort.execute(id, newLimit);
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Budget budget = updateBudgetLimitPort.execute(UUID.fromString(authenticatedUserId), id, newLimit);
         return ResponseEntity.ok(new BudgetResponse(budget));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        deleteBudgetPort.execute(id);
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        deleteBudgetPort.execute(UUID.fromString(authenticatedUserId), id);
         return ResponseEntity.noContent().build();
     }
     @GetMapping("/{id}")

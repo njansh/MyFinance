@@ -101,8 +101,17 @@ public class BeanConfiguration {
         return new GetTotalBalanceUserCase(accountRepositoryPort, userRepositoryPort);
     }
     @Bean
-    public UpdateTransactionPort updateTransactionPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort, CategoryRepositoryPort categoryRepositoryPort) {
-        return new UpdateTransactionUseCase(transactionRepositoryPort, categoryRepositoryPort, accountRepositoryPort);
+    public UpdateTransactionPort updateTransactionPort(
+            TransactionRepositoryPort transactionRepositoryPort,
+            AccountRepositoryPort accountRepositoryPort,
+            BudgetRepositoryPort budgetRepositoryPort,
+            ProcessTransactionInBudgetPort processTransactionInBudgetPort) {
+        return new UpdateTransactionUseCase(
+                transactionRepositoryPort,
+                accountRepositoryPort,
+                budgetRepositoryPort,
+                processTransactionInBudgetPort
+        );
     }
     @Bean
     public DeleteTransactionPort deleteTransactionPort(TransactionRepositoryPort transactionRepo, AccountRepositoryPort accountRepo) {
