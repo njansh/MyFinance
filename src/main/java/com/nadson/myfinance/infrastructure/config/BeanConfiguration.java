@@ -197,6 +197,11 @@ public class BeanConfiguration {
         );
     }
     @Bean
+    public UpdateAccountPort updateAccountPort(AccountRepositoryPort repository) {
+        return new UpdateAccountUseCase(repository);
+    }
+
+    @Bean
     public UpdateCategoryPort updateCategoryPort(CategoryRepositoryPort categoryRepositoryPort) {
         return new UpdateCategoryUseCase(categoryRepositoryPort);
     }

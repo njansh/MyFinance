@@ -1,6 +1,7 @@
     package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
     import com.nadson.myfinance.application.port.in.CreateAccountPort;
+    import com.nadson.myfinance.application.port.in.UpdateAccountPort;
     import com.nadson.myfinance.application.port.in.DeleteAccountPort;
     import com.nadson.myfinance.application.port.in.GetAccountport;
     import com.nadson.myfinance.application.port.in.ListTransactionsPort;
@@ -9,6 +10,7 @@
     import com.nadson.myfinance.domain.enums.AccountType;
     import com.nadson.myfinance.infrastructure.adapter.web.dto.response.AccountResponse;
     import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreateAccountRequest;
+    import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateAccountRequest;
     import com.nadson.myfinance.infrastructure.adapter.web.dto.response.TransactionResponse;
     import org.springframework.data.domain.Sort;
     import org.springframework.data.web.PageableDefault;
@@ -31,21 +33,22 @@
         private final ListTransactionsPort listTransactionsPort;
         private final GetAccountport getAccountport;
         private final CreateAccountPort createAccountPort;
+        private final UpdateAccountPort updateAccountPort;
         private final DeleteAccountPort deleteAccountPort;
 
-        public AccountController(ListTransactionsPort listTransactionsPort, GetAccountport getAccountport, CreateAccountPort createAccountPort, DeleteAccountPort deleteAccountPort) {
+        public AccountController(ListTransactionsPort listTransactionsPort, GetAccountport getAccountport, CreateAccountPort createAccountPort, UpdateAccountPort updateAccountPort, DeleteAccountPort deleteAccountPort) {
             this.listTransactionsPort = listTransactionsPort;
             this.getAccountport = getAccountport;
             this.createAccountPort = createAccountPort;
-
+            this.updateAccountPort = updateAccountPort;
             this.deleteAccountPort = deleteAccountPort;
         }
         @GetMapping("/{id}")
         public ResponseEntity<AccountResponse> getById(@PathVariable UUID id) {
             Account account = getAccountport.execute(id);
-
             return ResponseEntity.ok(AccountResponse.fromDomain(account));
         }
+
         @PostMapping
         public ResponseEntity<AccountResponse> create(@RequestBody CreateAccountRequest request) {
             Account account = createAccountPort.execute(
@@ -55,7 +58,22 @@
             );
 
             return ResponseEntity.status(201).body(AccountResponse.fromDomain(account));
-        }@GetMapping("/{id}/transactions")
+        }
+        @PutMapping("/{id}")
+        public ResponseEntity<AccountResponse> update(@PathVariable UUID id, @RequestBody UpdateAccountRequest request) {
+            String userIdString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UUID userId = UUID.fromString(userIdString);
+
+            Account account = updateAccountPort.execute(
+                    id,
+                    userId,
+                    request.name(),
+                    request.balance(),
+                    request.type()
+            );
+            return ResponseEntity.ok(AccountResponse.fromDomain(account));
+        }
+        @GetMapping("/{id}/transactions")
         public ResponseEntity<Page<TransactionResponse>> listTransactions(
                 @PathVariable UUID id,
                 @RequestParam(required = false) Integer month,
@@ -80,8 +98,9 @@
         }
         @DeleteMapping("/{id}")
         public ResponseEntity<Void> deleteAccount(@PathVariable UUID id) {
-            String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            deleteAccountPort.execute(id, UUID.fromString(userId));
+            String userIdString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UUID userId = UUID.fromString(userIdString);
+            deleteAccountPort.execute(id, userId);
             return ResponseEntity.noContent().build();
         }
     }
