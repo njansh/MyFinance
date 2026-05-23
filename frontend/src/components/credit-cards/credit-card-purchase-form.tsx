@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-// Importe a sua action de criar transação do cartão, ajuste o caminho se necessário
-// import { createCreditCardPurchaseAction } from '@/app/(private)/actions/credit-card-actions';
+import { createCreditCardTransactionAction } from '@/app/(private)/actions/credit-card-actions';
 
 export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }: any) {
   const [loading, setLoading] = useState(false);
 
-  // A MÁGICA ACONTECE AQUI: Filtra a lista para mostrar APENAS categorias de SAÍDA (EXPENSE)
   const expenseCategories = categories.filter((cat: any) => cat.type === 'EXPENSE');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -16,11 +14,11 @@ export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    // const data = Object.fromEntries(formData);
+    const data = Object.fromEntries(formData);
 
     try {
-      // Aqui você chama a sua Server Action para salvar a compra
-      // await createCreditCardPurchaseAction(cardId, data);
+        await createCreditCardTransactionAction(cardId, data);
+
 
       alert('Compra registrada com sucesso!');
       onClose();
@@ -36,7 +34,6 @@ export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
 
-        {/* Cabeçalho do Modal */}
         <div className="bg-slate-900 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-white">Nova Compra</h2>
@@ -50,7 +47,6 @@ export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }
           </button>
         </div>
 
-        {/* Formulário */}
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -112,7 +108,6 @@ export function CreditCardPurchaseForm({ cardId, cardName, categories, onClose }
                 >
                   <option value="">Selecione...</option>
 
-                  {/* MAPEANDO APENAS AS CATEGORIAS FILTRADAS (DESPESAS) */}
                   {expenseCategories.map((cat: any) => (
                     <option key={cat.categoryId || cat.id} value={cat.categoryId || cat.id}>
                       {cat.name}

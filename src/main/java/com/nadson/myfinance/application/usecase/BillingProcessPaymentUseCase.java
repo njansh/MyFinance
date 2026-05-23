@@ -95,7 +95,7 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
                 TransactionType.EXPENSE,
                 accountId,
                 categoriaFatura.getCategoryId(),
-                true,
+                false,
                 null,
                 null,
                 TransactionStatus.COMPLETED,

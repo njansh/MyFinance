@@ -223,7 +223,7 @@ public class UserController {
             return ResponseEntity.status(403).build();
         }
 
-        deleteCreditCardPort.execute(cardId);
+        deleteCreditCardPort.execute(cardId, userId);
         return ResponseEntity.noContent().build();
     }
 }

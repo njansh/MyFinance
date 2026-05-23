@@ -21,15 +21,17 @@ public class DeleteCreditCardUseCase implements DeleteCreditCardPort {
 
     @Override
     @Transactional
-    public void execute(UUID creditCardId) {
+    public void execute(UUID creditCardId, UUID userId) {
         CreditCard creditCard = creditCardRepositoryPort.findById(creditCardId);
         if (creditCard == null) {
             throw new BusinessRuleException("Credit card not found.");
         }
-
-        User user = userRepositoryPort.findById(creditCard.getUserId());
+        User user = userRepositoryPort.findById(userId);
         if (user == null) {
             throw new BusinessRuleException("User not found.");
+        }
+        if (!creditCard.getUserId().equals(userId)) {
+            throw new BusinessRuleException("Access denied. This credit card does not belong to the user.");
         }
 
         creditCardRepositoryPort.deleteByID(creditCardId);
