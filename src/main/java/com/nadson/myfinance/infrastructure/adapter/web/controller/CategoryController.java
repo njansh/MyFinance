@@ -2,7 +2,6 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.in.GetCategoriesPort;
-import com.nadson.myfinance.application.usecase.DeleteCategoryUseCase;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CategoryRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.CategoryResponse;
@@ -13,20 +12,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
     private final CreateCategoryPort createCategoryPort;
     private final GetCategoriesPort getCategoriesPort;
-    private final DeleteCategoryUseCase deleteCategoryUseCase;
 
-    public CategoryController(
-            CreateCategoryPort createCategoryPort,
-            GetCategoriesPort getCategoriesPort,
-            DeleteCategoryUseCase deleteCategoryUseCase) {
+    public CategoryController(CreateCategoryPort createCategoryPort, GetCategoriesPort getCategoriesPort) {
         this.createCategoryPort = createCategoryPort;
         this.getCategoriesPort = getCategoriesPort;
-        this.deleteCategoryUseCase = deleteCategoryUseCase;
     }
 
     @PostMapping
@@ -39,17 +34,12 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAll() {
         String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         List<Category> categories = getCategoriesPort.execute(UUID.fromString(authenticatedUserId));
+
         List<CategoryResponse> response = categories.stream()
                 .map(CategoryResponse::fromDomain)
                 .toList();
         return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        deleteCategoryUseCase.execute(UUID.fromString(userId), id);
-        return ResponseEntity.noContent().build();
     }
 }

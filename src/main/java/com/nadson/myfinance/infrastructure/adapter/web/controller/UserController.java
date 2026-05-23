@@ -35,7 +35,6 @@ public class UserController {
     private final GetCreditCardPort getCreditCardPort;
     private final GetBillingCycleByDatePort getBillingCycleByDatePort;
     private final BillingProcessPaymentPort billingProcessPaymentPort;
-    private final DeleteCreditCardPort deleteCreditCardPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -49,9 +48,7 @@ public class UserController {
                           GetBillingCycleDetailsPort getBillingCycleDetailsPort,
                           CreateCreditCardPort createCreditCardPort,
                           GetCreditCardPort getCreditCardPort,
-                          GetBillingCycleByDatePort getBillingCycleByDatePort,
-                          BillingProcessPaymentPort billingProcessPaymentPort,
-                          DeleteCreditCardPort deleteCreditCardPort) {
+                          GetBillingCycleByDatePort getBillingCycleByDatePort, BillingProcessPaymentPort billingProcessPaymentPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -66,7 +63,6 @@ public class UserController {
         this.getCreditCardPort = getCreditCardPort;
         this.getBillingCycleByDatePort = getBillingCycleByDatePort;
         this.billingProcessPaymentPort = billingProcessPaymentPort;
-        this.deleteCreditCardPort = deleteCreditCardPort;
     }
 
     // --- User Management ---
@@ -212,18 +208,5 @@ public class UserController {
         );
 
         return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{userId}/credit-cards/{cardId}")
-    public ResponseEntity<Void> deleteCreditCard(
-            @PathVariable UUID userId,
-            @PathVariable UUID cardId) {
-        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!userId.equals(UUID.fromString(authenticatedUserId))) {
-            return ResponseEntity.status(403).build();
-        }
-
-        deleteCreditCardPort.execute(cardId, userId);
-        return ResponseEntity.noContent().build();
     }
 }

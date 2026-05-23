@@ -10,6 +10,6 @@ public interface CategoryRepositoryPort {
     Category findById(UUID categoryId);
     List<Category> findAllByUserId(UUID userId);
     Category findByNameAndUserId(String name, UUID userId);
+
     void deleteAllByUserId(UUID userId);
-    void deleteById(UUID id);
 }

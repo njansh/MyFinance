@@ -238,17 +238,13 @@ public class BeanConfiguration {
             BillingPaymentRepositoryPort paymentRepository,
             AccountRepositoryPort accountRepository,
             BillingCycleRepositoryPort billingCycleRepository,
-            CreditCardRepositoryPort creditCardRepository,
-            TransactionRepositoryPort transactionRepositoryPort,
-            CategoryRepositoryPort categoryRepositoryPort) {
+            CreditCardRepositoryPort creditCardRepository) {
         return new BillingProcessPaymentUseCase(
                 installmentRepository,
                 paymentRepository,
                 accountRepository,
                 billingCycleRepository,
-                creditCardRepository,
-                transactionRepositoryPort,
-                categoryRepositoryPort
+                creditCardRepository
         );
     }
 
@@ -293,11 +289,9 @@ public class BeanConfiguration {
     public DeleteUserPort deleteUserPort(UserRepositoryPort userRepo, AccountRepositoryPort accountRepo,
                                          CategoryRepositoryPort categoryRepo, BudgetRepositoryPort budgetRepo,
                                          GoalRepositoryPort goalRepo, RecurringTemplateRepositoryPort recurringRepo,
-                                         TransactionRepositoryPort transactionRepo, BillingCycleRepositoryPort billingCycleRepo,
-                                         BillingPaymentRepositoryPort billingPaymentRepo, CreditCardRepositoryPort creditCardRepo) {
+                                         DeleteAccountPort deleteAccountPort) {
         return new DeleteUserUseCase(
-                userRepo, accountRepo, categoryRepo, budgetRepo, goalRepo, recurringRepo,
-                transactionRepo, billingCycleRepo, billingPaymentRepo, creditCardRepo
+                userRepo, accountRepo, categoryRepo, budgetRepo, goalRepo, recurringRepo, deleteAccountPort
         );
     }
 
@@ -309,19 +303,5 @@ public class BeanConfiguration {
     @Bean
     public DeleteBudgetPort deleteBudgetPort(BudgetRepositoryPort repository) {
         return new DeleteBudgetUseCase(repository);
-    }
-
-    @Bean
-    public DeleteCategoryUseCase deleteCategoryUseCase(CategoryRepositoryPort repository) {
-        return new DeleteCategoryUseCase(repository);
-    }
-
-    @Bean
-    public DeleteCategoryPort deleteCategoryPort(DeleteCategoryUseCase deleteCategoryUseCase) {
-        return deleteCategoryUseCase;
-    }
-    @Bean
-    public DeleteCreditCardPort deleteCreditCardPort(CreditCardRepositoryPort creditCardRepository, UserRepositoryPort userRepository) {
-        return new DeleteCreditCardUseCase(creditCardRepository, userRepository);
     }
 }

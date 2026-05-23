@@ -11,26 +11,21 @@ import {
   CreditCard, 
   Repeat, 
   Target,
-  LogOut,
-  Tags,
-  UserCog
+  LogOut
 } from 'lucide-react'; 
 
 export function Sidebar() {
   const pathname = usePathname() || '';
 
-
- const navItems = [
-   { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
-   { name: 'Extrato', href: '/extrato', icon: <FileText size={20} /> },
-   { name: 'Contas', href: '/accounts', icon: <Landmark size={20} /> },
-   { name: 'Transações', href: '/transactions', icon: <Receipt size={20} /> },
-   { name: 'Cartões', href: '/credit-cards', icon: <CreditCard size={20} /> },
-   { name: 'Recorrências', href: '/recurring', icon: <Repeat size={20} /> },
-   { name: 'Orçamentos', href: '/budgets', icon: <Target size={20} /> },
-   { name: 'Categorias', href: '/categories', icon: <Tags size={20} /> },
-   { name: 'Perfil', href: '/profile', icon: <UserCog size={20} /> },
- ];
+  const navItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Extrato', href: '/extrato', icon: <FileText size={20} /> },
+    { name: 'Contas', href: '/accounts', icon: <Landmark size={20} /> },
+    { name: 'Transações', href: '/transactions', icon: <Receipt size={20} /> },
+    { name: 'Cartões', href: '/credit-cards', icon: <CreditCard size={20} /> },
+    { name: 'Recorrências', href: '/recurring', icon: <Repeat size={20} /> },
+    { name: 'Orçamentos', href: '/budgets', icon: <Target size={20} /> },
+  ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex h-full shadow-sm z-10">

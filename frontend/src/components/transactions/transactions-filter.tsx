@@ -1,7 +1,6 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
 
 interface Account {
   accountId: string;
@@ -21,25 +20,11 @@ export function TransactionsFilter({ accounts }: FilterProps) {
   const currentYear = searchParams.get('year') || String(now.getFullYear());
   const currentDesc = searchParams.get('desc') || '';
 
-  // 1. Estado local para o input de texto (para não travar a digitação)
-  const [searchTerm, setSearchTerm] = useState(currentDesc);
-
-  // Anos dinâmicos
-  const years = Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i);
-
   function handleChange(name: string, value: string) {
     const params = new URLSearchParams(window.location.search);
+    params.set(name, value);
+    params.set('page', '0');
 
-    // Se o valor estiver vazio (ex: apagou o texto), removemos o parâmetro da URL
-    if (value.trim() === '') {
-      params.delete(name);
-    } else {
-      params.set(name, value);
-    }
-
-    params.set('page', '0'); // Sempre volta para a primeira página ao filtrar
-
-    // Mantém os outros filtros obrigatórios se não estiverem no params ainda
     if (!params.get('accountId') && currentAccountId) {
       params.set('accountId', currentAccountId);
     }
@@ -49,23 +34,8 @@ export function TransactionsFilter({ accounts }: FilterProps) {
     window.location.href = `?${params.toString()}`;
   }
 
-  // 2. O "Debounce": Espera o usuário parar de digitar por 600ms para disparar a busca
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      // Só recarrega se o termo digitado for diferente do que já está na URL
-      if (searchTerm !== currentDesc) {
-        handleChange('desc', searchTerm);
-      }
-    }, 600);
-
-    // Limpa o tempo se o usuário voltar a digitar antes dos 600ms
-    return () => clearTimeout(handler);
-  }, [searchTerm, currentDesc]);
-
   return (
     <div className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end">
-
-      {/* Select Conta */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conta Alvo</label>
         <select name="accountId" value={currentAccountId} onChange={(e) => handleChange('accountId', e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 h-10 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_0.75rem_center] bg-no-repeat pr-8">
@@ -77,8 +47,6 @@ export function TransactionsFilter({ accounts }: FilterProps) {
           ))}
         </select>
       </div>
-
-      {/* Select Mês */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mês de Referência</label>
         <select name="month" value={currentMonth} onChange={(e) => handleChange('month', e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 h-10 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_0.75rem_center] bg-no-repeat pr-8">
@@ -89,29 +57,19 @@ export function TransactionsFilter({ accounts }: FilterProps) {
           ))}
         </select>
       </div>
-
-      {/* Select Ano */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ano</label>
         <select name="year" value={currentYear} onChange={(e) => handleChange('year', e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 h-10 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_0.75rem_center] bg-no-repeat pr-8">
-          {years.map((y) => (
+          {[2025, 2026, 2027].map((y) => (
             <option key={y} value={y}>
               {y}
             </option>
           ))}
         </select>
       </div>
-
-      {/* Input de Busca */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtro por Termo</label>
-        <input
-          name="desc"
-          placeholder="Filtrar lançamento..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 placeholder-slate-400 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all h-10"
-        />
+        <input name="desc" placeholder="Filtrar lançamento..." value={currentDesc} onChange={(e) => handleChange('desc', e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 placeholder-slate-400 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all h-10" />
       </div>
     </div>
   );

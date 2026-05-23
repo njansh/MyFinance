@@ -25,8 +25,8 @@ export function DashboardFilter() {
     { value: '12', label: 'Dezembro' },
   ];
 
-  // Gera um array dinâmico com 11 anos (5 anos no passado + ano atual + 5 anos no futuro)
-  const years = Array.from({ length: 11 }, (_, i) => String(now.getFullYear() - 5 + i));
+  // Gera uma faixa de anos (ex: 2 anos para trás e 2 para frente)
+  const years = Array.from({ length: 5 }, (_, i) => String(now.getFullYear() - 2 + i));
 
   function handleFilterChange(key: 'month' | 'year', value: string) {
     const params = new URLSearchParams(searchParams.toString());

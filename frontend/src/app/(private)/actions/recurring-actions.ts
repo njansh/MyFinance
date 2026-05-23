@@ -8,6 +8,7 @@ const API_BASE_URL =
 
 async function getAuthToken() {
   const cookieStore = await cookies();
+
   const token = cookieStore.get('accessToken')?.value;
 
   if (!token) {
@@ -35,10 +36,14 @@ export async function createRecurringTemplateAction(data: any) {
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Erro ao salvar template (${response.status}): ${err}`);
+
+    throw new Error(
+      `Erro ao salvar template (${response.status}): ${err}`
+    );
   }
 
   revalidatePath('/recurring');
+
   return response.json();
 }
 
@@ -52,24 +57,26 @@ export async function confirmRecurringTransactionAction(
 ) {
   const token = await getAuthToken();
 
-  // Rota corrigida para apontar para /transactions conforme o Controller
   const response = await fetch(
-    `${API_BASE_URL}/transactions/${id}/confirm?actualAmount=${amount}`,
+    `${API_BASE_URL}/recurring/${id}/confirm`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ amount }),
     }
   );
 
   if (!response.ok) {
     const err = await response.text();
+
     throw new Error(err);
   }
 
   revalidatePath('/dashboard');
+
   return response.json();
 }
 
@@ -80,19 +87,26 @@ export async function confirmRecurringTransactionAction(
 export async function deleteRecurringTemplateAction(id: string) {
   const token = await getAuthToken();
 
-  const response = await fetch(`${API_BASE_URL}/recurring/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/recurring/${id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Erro ao deletar template (${response.status}): ${err}`);
+
+    throw new Error(
+      `Erro ao deletar template (${response.status}): ${err}`
+    );
   }
 
   revalidatePath('/recurring');
+
   return { success: true };
 }

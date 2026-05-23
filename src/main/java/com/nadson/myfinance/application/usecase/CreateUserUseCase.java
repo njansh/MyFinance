@@ -44,6 +44,5 @@ public class CreateUserUseCase implements CreateUserPort {
         createCategoryPort.execute(userId, "Lazer", "#E91E63", TransactionType.EXPENSE);
         createCategoryPort.execute(userId, "Educação", "#3F51B5", TransactionType.EXPENSE);
         createCategoryPort.execute(userId, "Outros", "#9E9E9E", TransactionType.EXPENSE);
-        createCategoryPort.execute(userId, "Fatura Paga", "#9C27B0", TransactionType.EXPENSE);
     }
 }

@@ -10,6 +10,4 @@ public interface CreditCardRepositoryPort {
     List<CreditCard> findByUserId(UUID userId);
 
     void deleteAllByAccountId(UUID accountId);
-    void deleteAllByUserId(UUID userId);
-    void deleteByID(UUID creditCardId);
 }
