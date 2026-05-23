@@ -170,7 +170,7 @@ public class TransactionImportService {
             predictedCategoryId = categoryCache.get(extractedName.toLowerCase());
         } else {
             String randomColor = String.format("#%06x", (extractedName.hashCode() & 0xffffff));
-            Category newCategory = createCategoryPort.execute(userId, extractedName, randomColor, type);
+            Category newCategory = createCategoryPort.execute(userId, extractedName, randomColor, "Circle", type);
             predictedCategoryId = newCategory.getCategoryId();
             categoryCache.put(extractedName.toLowerCase(), predictedCategoryId);
         }

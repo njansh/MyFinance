@@ -5,6 +5,6 @@ import com.nadson.myfinance.domain.enums.TransactionType;
 
 import java.util.UUID;
 
-public interface CreateCategoryPort {
-    Category execute(UUID userId, String categoryName, String colorhex, String icon, TransactionType type);
+public interface UpdateCategoryPort {
+    Category execute(UUID userId, UUID categoryId, String name, String colorHex, String icon, TransactionType type);
 }

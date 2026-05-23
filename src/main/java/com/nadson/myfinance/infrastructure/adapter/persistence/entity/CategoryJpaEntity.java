@@ -20,19 +20,21 @@ public class CategoryJpaEntity {
     private UUID userId;
     @Column(nullable = false)
     private String color;
+    @Column(nullable = false)
+    private String icon;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
-    public CategoryJpaEntity() {
-    }
+    public CategoryJpaEntity() {}
 
-    public CategoryJpaEntity(UUID id, UUID userId, String name, String color, TransactionType type) {
+    public CategoryJpaEntity(UUID id, UUID userId, String name, String color, String icon, TransactionType type) {
         this.id = id;
         this.userId = userId;
         this.name = name;
         this.color = color;
+        this.icon = icon;
         this.type = type;
     }
 
@@ -41,50 +43,24 @@ public class CategoryJpaEntity {
         this.userId = category.getUserId();
         this.name = category.getName();
         this.color = category.getColorHex();
+        this.icon = category.getIcon();
         this.type = category.getType();
     }
 
     public Category toDomain() {
-        return new Category(this.id, this.userId, this.name, this.color, this.type);
+        return new Category(this.id, this.userId, this.name, this.color, this.icon, this.type);
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public TransactionType getType() {
-        return type;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+    public String getIcon() { return icon; }
+    public void setIcon(String icon) { this.icon = icon; }
+    public TransactionType getType() { return type; }
+    public void setType(TransactionType type) { this.type = type; }
 }

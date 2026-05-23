@@ -196,6 +196,10 @@ public class BeanConfiguration {
                 processTransactionInBudgetPort
         );
     }
+    @Bean
+    public UpdateCategoryPort updateCategoryPort(CategoryRepositoryPort categoryRepositoryPort) {
+        return new UpdateCategoryUseCase(categoryRepositoryPort);
+    }
 
     @Bean
     public ConfirmRecurringPort confirmRecurringPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort) {
