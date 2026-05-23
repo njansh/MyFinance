@@ -2,6 +2,7 @@ package com.nadson.myfinance.infrastructure.adapter.web.controller;
 
 import com.nadson.myfinance.application.port.in.CreateCategoryPort;
 import com.nadson.myfinance.application.port.in.GetCategoriesPort;
+import com.nadson.myfinance.application.port.in.UpdateCategoryPort;
 import com.nadson.myfinance.application.usecase.DeleteCategoryUseCase;
 import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CategoryRequest;
@@ -13,27 +14,38 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
     private final CreateCategoryPort createCategoryPort;
     private final GetCategoriesPort getCategoriesPort;
+    private final UpdateCategoryPort updateCategoryPort;
     private final DeleteCategoryUseCase deleteCategoryUseCase;
 
     public CategoryController(
             CreateCategoryPort createCategoryPort,
             GetCategoriesPort getCategoriesPort,
+            UpdateCategoryPort updateCategoryPort,
             DeleteCategoryUseCase deleteCategoryUseCase) {
         this.createCategoryPort = createCategoryPort;
         this.getCategoriesPort = getCategoriesPort;
+        this.updateCategoryPort = updateCategoryPort;
         this.deleteCategoryUseCase = deleteCategoryUseCase;
     }
 
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
         String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Category category = createCategoryPort.execute(UUID.fromString(authenticatedUserId), request.name(), request.colorHex(), request.type());
+        Category category = createCategoryPort.execute(UUID.fromString(authenticatedUserId), request.name(), request.colorHex(), request.icon(), request.type());
         return ResponseEntity.status(201).body(CategoryResponse.fromDomain(category));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponse> update(@PathVariable UUID id, @Valid @RequestBody CategoryRequest request) {
+        String authenticatedUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Category category = updateCategoryPort.execute(UUID.fromString(authenticatedUserId), id, request.name(), request.colorHex(), request.icon(), request.type());
+        return ResponseEntity.ok(CategoryResponse.fromDomain(category));
     }
 
     @GetMapping

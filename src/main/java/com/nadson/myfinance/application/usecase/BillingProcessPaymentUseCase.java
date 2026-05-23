@@ -84,6 +84,7 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
                     userId,
                     "Fatura Paga",
                     "#9C27B0",
+                    "CreditCard",
                     TransactionType.EXPENSE
             ));
         }

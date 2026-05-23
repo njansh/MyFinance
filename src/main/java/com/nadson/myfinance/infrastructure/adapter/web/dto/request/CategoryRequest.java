@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Pattern;
 import java.util.UUID;
 
 public record CategoryRequest(
-        UUID userId,
         @NotBlank String name,
         @Pattern(regexp = "#[0-9a-fA-F]{6}") String colorHex,
+        @NotBlank String icon,
         @NotNull TransactionType type
 ) {}

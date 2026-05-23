@@ -16,8 +16,8 @@ public class CreateCategoryUseCase implements CreateCategoryPort {
     }
 
     @Override
-    public Category execute(UUID userId, String categoryName, String colorhex, TransactionType type) {
-        Category category = new Category(null, userId, categoryName, colorhex, type);
+    public Category execute(UUID userId, String categoryName, String colorhex, String icon, TransactionType type) {
+        Category category = new Category(null, userId, categoryName, colorhex, icon, type);
         return categoryRepositoryPort.save(category);
     }
-    }
+}
