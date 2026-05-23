@@ -4,6 +4,7 @@ import com.nadson.myfinance.application.port.out.CreditCardRepositoryPort;
 import com.nadson.myfinance.domain.entity.CreditCard;
 import com.nadson.myfinance.infrastructure.adapter.persistence.entity.CreditCardJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringBillingCycleRepository;
+import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringBillingPaymentRepository;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringCreditCardRepository;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +14,12 @@ import java.util.UUID;
 public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
     private final SpringCreditCardRepository springCreditCardRepository;
     private final SpringBillingCycleRepository springBillingCycleRepository;
+    private final SpringBillingPaymentRepository springBillingPaymentRepository;
 
-    public CreditCardPersistenceAdapter(SpringCreditCardRepository springCreditCardRepository, SpringBillingCycleRepository springBillingCycleRepository) {
+    public CreditCardPersistenceAdapter(SpringCreditCardRepository springCreditCardRepository, SpringBillingCycleRepository springBillingCycleRepository, SpringBillingPaymentRepository springBillingPaymentRepository) {
         this.springCreditCardRepository = springCreditCardRepository;
         this.springBillingCycleRepository = springBillingCycleRepository;
+        this.springBillingPaymentRepository = springBillingPaymentRepository;
     }
     @Override
     public CreditCard save(CreditCard creditCard) {
@@ -41,7 +44,22 @@ public class CreditCardPersistenceAdapter implements CreditCardRepositoryPort {
 
     @Override
     public void deleteAllByAccountId(UUID accountId) {
+        springBillingPaymentRepository.deleteByAccountId(accountId);
         springBillingCycleRepository.deleteAllByAccountId(accountId);
         springCreditCardRepository.deleteAllByAccountId(accountId);
+
+    }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        springBillingPaymentRepository.deleteAllByUserId(userId);
+        springBillingCycleRepository.deleteAllByUserId(userId);
+        springCreditCardRepository.deleteAllByUserId(userId);
+    }
+    @Override
+    public void deleteByID(UUID creditCardId) {
+        springBillingPaymentRepository.deleteAllByCreditCardId(creditCardId);
+        springBillingCycleRepository.deleteAllByCreditCardId(creditCardId);
+        springCreditCardRepository.deleteById(creditCardId);
     }
 }

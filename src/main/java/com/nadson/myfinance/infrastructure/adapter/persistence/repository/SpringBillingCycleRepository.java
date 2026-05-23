@@ -19,4 +19,12 @@ public interface SpringBillingCycleRepository extends JpaRepository<BillingCycle
     @Query("DELETE FROM BillingCycleJpaEntity b WHERE b.creditCardId IN (SELECT c.id FROM CreditCardJpaEntity c WHERE c.accountId = :accountId)")
     void deleteAllByAccountId(@Param("accountId") UUID accountId);
     List<BillingCycleJpaEntity> findByCreditCardIdAndDueDateBetween(UUID creditCardId, LocalDate start, LocalDate end);
+
+    @Modifying
+    @Query("DELETE FROM BillingCycleJpaEntity b WHERE b.creditCardId IN (SELECT c.id FROM CreditCardJpaEntity c WHERE c.userId = :userId)")
+    void deleteAllByUserId(@Param("userId") UUID userId);
+
+    @Modifying
+    @Query("DELETE FROM BillingCycleJpaEntity b WHERE b.creditCardId = :creditCardId")
+    void deleteAllByCreditCardId(@Param("creditCardId") UUID creditCardId);
 }

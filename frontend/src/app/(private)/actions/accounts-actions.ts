@@ -60,9 +60,16 @@ export async function getAccountsAction() {
 
 export async function deleteAccountAction(accountId: string) {
   const token = await getAuthToken();
-  await fetch(`${API_BASE_URL}/accounts/${accountId}`, {
+
+  const response = await fetch(`${API_BASE_URL}/accounts/${accountId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${token}` }
   });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Erro ao deletar conta (${response.status}): ${err}`);
+  }
+
   revalidatePath('/contas');
 }

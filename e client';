@@ -1,0 +1,2138 @@
+[33mcommit 09965e52fd42abefe63b62c3670257369584060f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfix/transaction-consistency-and-recurring-404[m[33m, [m[1;31morigin/fix/transaction-consistency-and-recurring-404[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 18:33:04 2026 -0300
+
+    feat: implement credit card deletion, category lock, and fix user deletion flow
+    
+    Backend:
+    - Refactored DeleteUserUseCase to respect Foreign Key hierarchy (deleting payments, cycles, installments, and transactions before accounts and user).
+    - Added new endpoint in UserController for Credit Card deletion with security validation (SecurityContext).
+    
+    Frontend:
+    - Fixed NEXT_REDIRECT error when deleting an account (moved redirect outside the try/catch block).
+    - Cleared 'accessToken' cookie for forced logout after account deletion.
+    - Added 'deleteCreditCardAction' server action and a delete button in the credit cards UI.
+    - Implemented category lock in CreditCardPurchaseForm to display only EXPENSE categories.
+
+[33mcommit 347198436a1ebda8d97d89c32bae40f4016ce3bf[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 16:46:57 2026 -0300
+
+    feat: complete category management (CRUD)
+    
+    Implemented category deletion, updated UI with icons, and ensured correct server action handling.
+
+[33mcommit 7675522e4882a761743002d080cb693b964f2ad2[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 16:01:18 2026 -0300
+
+    feat: implement category management and fix dashboard summary queries
+    
+    Added full CRUD structure for categories and updated transaction repository queries to use 'transferID IS NULL' for correct dashboard financial summary filtering.
+
+[33mcommit 96c4384a07bb8840b8e84da3086eb0e341520dc6[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 15:26:59 2026 -0300
+
+    refactor: implement cascaded account deletion and integrity logic
+    
+    Centralized account deletion logic using TransactionUseCase to ensure correct balance/budget reversal, added bulk deletion of transfer counterparts to prevent orphaned records, and fixed foreign key constraint violations.
+
+[33mcommit 4b744f59b1859a178dde14bc3fed510c60110efb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 14:50:24 2026 -0300
+
+    feat: record card bill payment as a transfer transaction
+    
+    Added persistence of the payment transaction in the BillingProcessPaymentUseCase, setting isTransfer=true to prevent duplication in category charts.
+
+[33mcommit 18495074f08f0ffbd2f3f89cce7c8e9cc007a251[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 14:24:16 2026 -0300
+
+    fix: update recurring confirmation route to point to transactions endpoint
+    
+    Adjusted API URL in recurring-actions.ts to match the TransactionController mapping (/transactions/{id}/confirm) instead of the invalid /recurring path.
+
+[33mcommit 49e0b09c4d44b7807c93ae32e669f548ca8a5c76[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m
+Merge: f043584 6babe41
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 10:28:32 2026 -0300
+
+    Merge pull request #57 from njansh/feature/account-management-and-ui-refinement
+    
+    Feature/account management and UI refinement
+
+[33mcommit f0435841d53a6857356a1c0ab85d35fa27763092[m
+Merge: 8a0a521 0ddec9a
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 10:28:13 2026 -0300
+
+    Merge pull request #56 from njansh/feat/frontend-budget-dashboard
+    
+    feat: finaliza fluxo de transferencias com integridade de saldo e imp…
+
+[33mcommit 6babe4199b8b61e0e946d320e520d238d7b4e393[m[33m ([m[1;31morigin/feature/account-management-and-ui-refinement[m[33m, [m[1;32mfeature/account-management-and-ui-refinement[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 10:24:31 2026 -0300
+
+    feat: enhance budget reconciliation and transfer descriptive capabilities
+    
+    Improvements implemented:
+    - Added automatic budget reconciliation: new budgets now correctly account for historical expenses within the current period.
+    - Optimized database queries using EXTRACT for PostgreSQL compatibility.
+    - Enabled dynamic description field in manual transfers, allowing users to provide custom labels.
+    - Ensured consistent state management between transaction history and budget tracking.
+
+[33mcommit 755025d5af75f8b471d60cfd9e70b57b42a0e93a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 08:13:48 2026 -0300
+
+    refactor: aprimora fluxo de transações e transferências
+    
+    Melhorias implementadas:
+    - Ajuste na lógica de atomicidade (Backend) para garantir consistência em transferências (Update/Delete).
+    - Refinamento visual do TransactionForm com saldo em tempo real.
+    - Correção de erro de referência (handleSubmit) e estilização condicional (cores de saldo).
+    - Adição de saldo visível nas seleções de contas para melhor UX.
+
+[33mcommit 0ddec9a0c28221a797df37691a58fa6b511c52f2[m[33m ([m[1;31morigin/feat/frontend-budget-dashboard[m[33m, [m[1;32mfeat/frontend-budget-dashboard[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 07:55:30 2026 -0300
+
+    feat: finaliza fluxo de transferencias com integridade de saldo e implementa CRUD de orçamentos
+    
+    Correções aplicadas:
+    - Ajuste na atomicidade de transferencias (Update/Delete) no backend Java.
+    - Implementação de filtro dinâmico de categorias no formulário de transações.
+    - Correção de erro de sintaxe (Unterminated string constant) em formulários.
+    - Adição de botões de editar/excluir no extrato com modal.
+    - Refinamento do Budget Manager e ajuste do tema CSS global.
+
+[33mcommit 8a0a52186f2d55c75307c58bad41b2f3485a5111[m
+Merge: 6b41521 33b2d48
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 06:29:24 2026 -0300
+
+    Merge pull request #55 from njansh/feat/budget-logic-refinement
+    
+    Feat/budget logic refinement
+
+[33mcommit 33b2d486dbc11c2ad1abcc73f2fef2c9fcf6b877[m[33m ([m[1;31morigin/feat/budget-logic-refinement[m[33m, [m[1;32mfeat/budget-logic-refinement[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 22 06:27:54 2026 -0300
+
+    fix(budget): address Codex review feedback and secure endpoints
+    
+    - Add Flyway migration V17 for budget alert columns to fix schema validation.
+    - Update ProcessTransactionInBudgetUseCase to persist alert flags correctly.
+    - Secure BudgetController and UseCases against IDOR by validating budget ownership with the authenticated userId.
+    - Refactor UpdateTransactionUseCase to correctly revert old budget impacts and apply new ones without generating negative amounts.
+    - Add removeExpense method to Budget entity to handle reversals and safely reset alert states.
+
+[33mcommit bbdae1d0dad1906844f507bd80c7a21e0bf87019[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 19:14:51 2026 -0300
+
+    feat: implement budget management system with non-blocking alerts
+    - Add BudgetController and CRUD operations
+    - Implement Budget limit logic and usage percentage calculation
+    - Update CreateTransactionUseCase to integrate budget processing non-blockingly
+    - Add budgetAlert field to TransactionResponse for frontend feedback
+    - Refactor transaction response to support alert messages
+
+[33mcommit 9d651fdf7dda468c5ac363e761ac264993cf3000[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 18:18:11 2026 -0300
+
+    feat(budget): implement complete budget management system
+    
+    - Create 'Budget' domain entity with alert logic (80% and 100%) and spam prevention for notifications.
+    - Implement persistence layer with 'BudgetJpaEntity' and 'SpringBudgetRepository' (UUID support and custom queries).
+    - Create repository ports ('BudgetRepositoryPort') and persistence adapter ('BudgetPersistenceAdapter').
+    - Implement budget lifecycle use cases: Create, List, Update, and Delete.
+    - Implement 'ProcessTransactionInBudgetUseCase' for automatic expense tracking.
+    - Update 'CreateTransactionUseCase' to trigger budget validation transactionally.
+    - Define 'AlertType' (Enum) and 'BudgetAlertException' for standardized error handling.
+    - Update 'GlobalExceptionHandler' using 'ProblemDetail' for efficient frontend integration.
+    - Configure all new beans in 'BeanConfiguration'.
+
+[33mcommit 6b415212b549f5aedec0865e0bde8156e9d74461[m
+Merge: b7d4f37 18aa29b
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 16:49:16 2026 -0300
+
+    Merge pull request #54 from njansh/feature/recurring-management
+    
+    Feature/recurring management
+
+[33mcommit 18aa29b653a74259566cf247c3db467c97d00cd6[m[33m ([m[1;31morigin/feature/recurring-management[m[33m, [m[1;32mfeature/recurring-management[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 15:30:56 2026 -0300
+
+    fix(dashboard): stabilize data loading and restore reliable KPIs and pending transactions
+    
+    - Fixed inconsistent dashboard data rendering by stabilizing async data flow
+    - Restored correct KPI fetch using authenticated request with proper headers
+    - Ensured pending transactions are always safely resolved with fallback empty array
+    - Unified accounts, reports, and KPI aggregation logic for consistent dashboard state
+    - Prevented runtime failures from API calls breaking entire dashboard rendering
+    - Improved error isolation using safe try/catch and per-request fallback handling
+    - Kept force-dynamic rendering to ensure real-time financial data updates
+
+[33mcommit 2f1f9ceee3bebfeca889e90e76b1aa1b9f4a8e05[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 15:22:36 2026 -0300
+
+    Add recurring template deletion feature
+    
+    - Implemented deleteRecurringTemplateAction server action
+    - Added authenticated DELETE request to recurring endpoint
+    - Integrated revalidatePath to refresh recurring list after deletion
+    - Connected RecurringList UI with delete action handler
+    - Fixed import paths using Next.js alias for actions
+    - Ensured proper error handling for delete requests
+
+[33mcommit a2912c9a76c4891b50096033717e0c2529c1f41a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 15:11:55 2026 -0300
+
+    feat(recurring): implement recurring transactions flow with server actions
+    
+    - migrate recurring template creation to Next.js Server Actions
+    - fix 403 authentication issue by moving protected requests to server side
+    - implement recurring-actions.ts for recurring operations
+    - integrate authenticated token handling with cookies()
+    - add recurring template creation flow
+    - add recurring transaction confirmation flow
+    - refactor PendingTransactions to use server actions
+    - fix categoryId mapping to send UUID instead of category name
+    - support both categoryId and id fields in category selects
+    - improve recurring form validation and payload handling
+    - standardize recurring API integration with existing transaction architecture
+    - improve error handling and debugging logs
+    - keep recurring pages fully dynamic with no-store fetching
+
+[33mcommit 17f4470dc6270b599b04838c1bab1c64c793b555[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 12:56:26 2026 -0300
+
+    feat: implement recurring templates management (create, list, delete)
+    
+    - Added GET /recurring/pending to list pending transactions based on active templates.
+    - Added DELETE /recurring/{id} to remove templates and associated pending transactions.
+    - Fixed persistence mapping issue where 'template_id' was not being persisted due to
+      a missing setter in the persistence adapter and Hibernate/Envers sync conflicts.
+
+[33mcommit 6f140436ee6251a79c6110c8d2984efc52662168[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 10:47:09 2026 -0300
+
+    feat(api): implement list recurring templates endpoint
+    
+    Add ListRecurringTemplatesPort, ListRecurringTemplatesUseCase and expose GET /recurring in RecurringController.
+
+[33mcommit 4054b9cb884c8de52415e75a4ce8c807810be15f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 10:29:19 2026 -0300
+
+    refactor(api): remove duplicidade de confirmacao de transacao do RecurringController
+
+[33mcommit b7d4f37f52cfd8a26323f19e2a85a9c6f42f0c9c[m
+Merge: 9a7414f 24bc46a
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 09:53:47 2026 -0300
+
+    Merge pull request #53 from njansh/feature/refactor-dashboard
+    
+    feature/refactor-dashboard
+
+[33mcommit 24bc46a8a5e3d3559b0b53a4c898a04dbf2368f9[m[33m ([m[1;31morigin/feature/refactor-dashboard[m[33m, [m[1;32mfeature/refactor-dashboard[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 09:29:36 2026 -0300
+
+    feat(dashboard): implement accumulated pending transactions and filter by date
+    
+    Update pending transaction query to fetch records up to the target date, fix month-end generation bug (day 31), and integrate PendingTransactions component into Dashboard with reactive filtering.
+
+[33mcommit 89ca6cdbd9b6adc146a778c5f7266f0ef4a00faa[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu May 21 09:02:46 2026 -0300
+
+    feat: implementa lazy generation para recorrencias e refatora confirmacao de faturas
+    
+    Adiciona migrations V14 e V15 para status. Refatora ListPendingRecurringUseCase para gerar faturas reais. Move confirmacao para TransactionController e aplica delegacao de saldo para a entidade Account (DDD).
+
+[33mcommit 58df08f667506ac802a5fcd70758a58b8305d06f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 11:07:22 2026 -0300
+
+    feat(dashboard): render monthly comparative and predictive KPI cards
+    
+    Integrate lastMonthBalance and nextMonthForecast sub-grids inside the core UI view. Clear template caching to allow seamless data reflection across the dashboard layout.
+
+[33mcommit f4dff22d8f1c6836e5bba12354c64e96deb645c2[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 10:54:36 2026 -0300
+
+    fix(dashboard): resolve named component export context for charts view
+    
+    Align DashboardCharts wrapper module definitions and relative directory path parameters across the server page context to clear Webpack runtime injection faults.
+
+[33mcommit de1247b2d5c0c061844361bc0ae6318c5b346dcb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 10:47:48 2026 -0300
+
+    feat(dashboard): align forecast calculations with mobile UI baseline
+    
+    Update usecase calculation logic to accurately reflect initial, current, and forecasted balances relative to selected month contexts using target RecurringTemplateJpaEntity references.
+
+[33mcommit a069d7fed7bf56b5f246a9d478df5b32a66485d5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 10:42:53 2026 -0300
+
+    feat(backend): add sumBalanceBeforeDate to transaction repository port and adapter
+    
+    Implement infrastructure query to aggregate historical transaction values before a given target date, enabling accurate opening balance calculations for the dashboard.
+
+[33mcommit d9ca826a7642891c666028d0c15fa132709927ad[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 08:32:09 2026 -0300
+
+    style(dashboard): improve pie charts layout and add animations
+    
+    Enable smooth entrance animations using Recharts attributes on DashboardCharts. Refine color palettes for both expense and income records to match the system theme layout guidelines.
+
+[33mcommit 190d7b9732e90ee3e59a60e43b5512d2a3f6d832[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 08:31:02 2026 -0300
+
+    refactor(dashboard): isolate financial metrics into KpiCards component
+    
+    Extract net worth, income, and expense card markup from dashboard page into a dedicated and reusable KpiCards component, improving page readability and modularity.
+
+[33mcommit 70685105d6fa8e2591434b89b5c8ae152910936b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 08:29:23 2026 -0300
+
+    feat(dashboard): add native dynamic skeleton loading screen
+    
+    Create DashboardSkeleton components using Tailwind CSS animate-pulse effect. Implement structural loading.tsx inside the private dashboard route folder to handle asynchronous server-side data fetching seamlessly.
+
+[33mcommit 37a8914ae4539a4080c3d6b8b38046f86388e90a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 08:27:04 2026 -0300
+
+    refactor(frontend): resolve absolute component paths for transactions
+    
+    Adjust relative import path for transactions-table inside the extrato page to match its true physical folder location, resolving the final Webpack compilation block.
+
+[33mcommit 31903002cad5b7f5475c6a5cd99d9f606ef8dbdc[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 08:22:43 2026 -0300
+
+    refactor(frontend): fix relative paths for credit cards page content
+    
+    Update relative path imports from '../../' to '../../../' inside CreditCardsPageContent component to resolve module compilation errors after code relocation under the (private) group routing folder.
+
+[33mcommit 9a7414fef24378ad1978a188850e4205bb6a1b63[m
+Merge: a32cda8 c754a96
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 07:57:27 2026 -0300
+
+    Merge pull request #52 from njansh/feature/frontend-credit-cards
+    
+    Feature/frontend credit cards
+
+[33mcommit c754a96f9158135ab63a1577efa4f399a2f86f0c[m[33m ([m[1;31morigin/feature/frontend-credit-cards[m[33m, [m[1;32mfeature/frontend-credit-cards[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 07:50:28 2026 -0300
+
+    feat(frontend): implement credit card billing cycle payment flow
+    
+    Add payBillingCycleAction to securely process payments. Create CreditCardPaymentForm modal for account selection and payment amount. Update BillingCycleViewer to display the payment button and handle the transaction. Pass accounts prop in CreditCardsPageContent to enable payment source selection.
+
+[33mcommit cca79767f7fcf4c6d1da36f9136c6331b316f674[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 07:25:31 2026 -0300
+
+    feat(frontend): implement dynamic billing cycle viewer
+    
+    Add BillingCycleViewer component with dynamic year range generation and arrow-based month navigation. Create fetchBillingCycleAction to securely retrieve invoice data. Integrate viewer into CreditCardsPageContent to toggle billing details per credit card.
+
+[33mcommit 0188dfeaaccac501e56de32a648261785428f5d1[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 07:15:26 2026 -0300
+
+    feat(frontend): integrate secure credit card routing and form actions
+    
+    Update API calls to use user-scoped routes, fix form payload to map 'limit' to 'creditLimit', migrate form submission to secure Server Actions, and refine Credit Cards UI to display dynamic limits.
+
+[33mcommit a32cda850a1b0dc7b7e450b2c43286d3bc2262c7[m
+Merge: cd9918a 2d60c26
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 06:42:46 2026 -0300
+
+    Merge pull request #51 from njansh/feature/credit-cards-module
+    
+    Feature/credit cards module
+
+[33mcommit 3cfc937abd937b04bfc4ba3f5066bfe48085931d[m[33m ([m[1;32mfeature/credit-cards-module[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 06:42:09 2026 -0300
+
+    fix(billing): apply date clamping to cycle generation
+    
+    Normalize closing and due dates using Math.min against month length to prevent DateTimeException during billing cycle creation, ensuring robust handling of short months like February.
+
+[33mcommit ac3e5e7a33b00cf73cd6d03214f470849efd1239[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed May 20 06:29:02 2026 -0300
+
+    fix(security): enforce resource ownership in payment route" -m "Resolve IDOR vulnerability reported by Codex. Propagate userId and cardId from the controller path variables down to the UseCase to validate tenant ownership before processing any billing cycle payments.
+
+[33mcommit 2d60c2676ac4d1084e69e88af8bb5bd3d3d696c9[m[33m ([m[1;31morigin/feature/credit-cards-module[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 20:45:39 2026 -0300
+
+    feat: implement payment engine with waterfall abatement" -m "Add BillingProcessPaymentUseCase and PaymentController. Refactor domain entities (BillingCycle, CreditCardInstallment) to support partial payments and zero-balance validation. Fix application.properties encoding and add JWT secret.
+
+[33mcommit 198f6218ad4c648f2498ffd5d571a484e23a3fd5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 19:07:17 2026 -0300
+
+    feat: implement distributed billing cycles by month and fix persistence adapter logic
+
+[33mcommit f8a48f71a6f080fdb707dcb5ae7ee88a1566a5b8[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 17:04:18 2026 -0300
+
+    feat: add categoryId to CreditCardPurchase and update business logic
+
+[33mcommit d2acd83a912435f77492dba4b889368bbedba4f6[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 16:19:57 2026 -0300
+
+    feat(credit-card): finalizar orquestração e infraestrutura de compras parceladas e faturas
+    
+    - Implementados UseCases e Ports para processamento de transações (ProcessCreditCardTransactionUseCase) e leitura detalhada de faturas (GetBillingCycleDetailsUseCase).
+    - Criados DTOs para apresentação detalhada dos itens da fatura (InstallmentDTO, BillingCycleDetailsDTO).
+    - Desenvolvidos Persistence Adapters para CreditCardPurchase e CreditCardInstallment.
+    - Adicionado método findById no BillingCyclePersistenceAdapter.
+    - Configurados os novos Beans no BeanConfiguration.
+    - Atualizado UserController com novos endpoints, incluindo validação de segurança (ownership) ao processar transações.
+    - Excluído o CreditCardController para centralizar as operações no Aggregate Root (UserController).
+    - Migrados endpoints de criação (POST) e busca (GET) de cartões para rotas hierárquicas (/users/{userId}/credit-cards).
+    - Adicionado 'userId' nas interfaces CreateCreditCardPort e GetCreditCardPort, corrigindo a semântica dos parâmetros.
+    - Implementada validação de propriedade (Ownership) nos UseCases (Create e Get) para impedir vulnerabilidades de IDOR (Insecure Direct Object Reference).
+
+[33mcommit 372b725ef18ea3c500ce65dfd567dc38e6afe312[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 15:34:30 2026 -0300
+
+    feat(credit-card): implementar domínio e infra para compras e parcelamentos
+    
+    - Criadas entidades de domínio: CreditCardPurchase e CreditCardInstallment.
+    - Refatorado BillingCycle para calcular totais baseados em parcelas reais.
+    - Criados mapeamentos JPA (Entities) e Repositórios Spring Data.
+    - Adicionada migration Flyway para criação das tabelas no PostgreSQL.
+
+[33mcommit fe04e501abc09283c080425105301bc380373a62[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 13:28:07 2026 -0300
+
+    feat(api): refatorar gestão de cartões para padrão Aggregate Root
+    
+    - Implementado ecossistema completo de leitura de cartões (Listagem por usuário e GetById).
+    - Adicionado cálculo dinâmico de limite disponível (disponível vs. gasto) nos UseCases.
+    - Migração de endpoints de cartões para sub-recursos de /users/{id}/credit-cards.
+    - Adicionada coluna 'user_id' na tabela 'credit_cards' (migração Flyway).
+    - Atualização de DTOs e refatoração de controllers para seguir o padrão 'thin controller'.
+
+[33mcommit 17aa64a2eb9c2aaacb191ec68cac9762dd326678[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:45:34 2026 -0300
+
+    feat(credit-cards): implement listing page with modal registration workflow
+
+[33mcommit 90b0cd8ae6050cfff6071af486736b2b8b3fc5e8[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:42:23 2026 -0300
+
+    feat(credit-cards): implement reusable modal form for credit card registration
+
+[33mcommit cb969b73d0b44c7093c09df3e4bbdd4dfd604500[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:36:16 2026 -0300
+
+    feat(credit-cards): initialize API client contracts for credit card management
+
+[33mcommit cd9918a65d3d3b8ee18c4d92aa98147875b6df47[m
+Merge: 244242a 72929d4
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:28:03 2026 -0300
+
+    Merge pull request #50 from njansh/feature/security-middleware
+    
+    feat(security): implement bidirectional edge proxy for route protection
+
+[33mcommit 72929d41cb4c6dba3173c6321a83688b928820bd[m[33m ([m[1;31morigin/feature/security-middleware[m[33m, [m[1;32mfeature/security-middleware[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:26:46 2026 -0300
+
+    feat(security): implement bidirectional edge proxy for route protection
+
+[33mcommit 244242a2267fab24c84cb937862d63891ce9383f[m
+Merge: 05eddef 72278dd
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:11:08 2026 -0300
+
+    Merge pull request #49 from njansh/feature/dashboard-charts
+    
+    feat(dashboard): aggregate multi-account reports and render interacti…
+
+[33mcommit 72278dd3eb07bd7b1fb4ca920791182068a2f3d6[m[33m ([m[1;31morigin/feature/dashboard-charts[m[33m, [m[1;32mfeature/dashboard-charts[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 19 09:08:33 2026 -0300
+
+    feat(dashboard): aggregate multi-account reports and render interactive donut charts
+
+[33mcommit 05eddefbbcdb314e578605f3315711424ad50b08[m
+Merge: 5445348 87a4525
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:59:06 2026 -0300
+
+    Merge pull request #48 from njansh/feature/internal-transfers
+    
+    feat: complete dynamic internal transfers implementation and integrat…
+
+[33mcommit 87a4525ade5bfe57a33fb29f334a40bc944d5818[m[33m ([m[1;31morigin/feature/internal-transfers[m[33m, [m[1;32mfeature/internal-transfers[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:57:47 2026 -0300
+
+    feat: complete dynamic internal transfers implementation and integrate with transaction controller
+
+[33mcommit 54453484c7bea77187f3ed4144a00bd4615e6a55[m
+Merge: 6de6684 cbfdb01
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:35:15 2026 -0300
+
+    Merge pull request #47 from njansh/feature/transactions-listing
+    
+    Feature/transactions listing
+
+[33mcommit cbfdb01910bbff4e2487631584d23ba4fd20d45e[m[33m ([m[1;31morigin/feature/transactions-listing[m[33m, [m[1;32mfeature/transactions-listing[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:34:38 2026 -0300
+
+    fix: restore dashboard default export component and inject accounts array to transactions layout table
+
+[33mcommit 728d511616a772f11f641c45926dfb296d16d490[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:21:13 2026 -0300
+
+    feat(frontend): build reactive extrato view with multi-account server orchestration and filters
+
+[33mcommit 47b93921bf4de0bca9169e6516c8d7d8a875bcce[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:21:10 2026 -0300
+
+    feat(frontend): implement data access layer and configuration modules for api integration
+
+[33mcommit af43d8c6e61dba58c9221dfbc7157078657d96e5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 21:21:09 2026 -0300
+
+    feat(backend): implement transaction listing core usecase and user controller endpoints
+
+[33mcommit 6de6684279306e41fe549a673cd56cbf8fab45b5[m
+Merge: 04ca9c8 6f98765
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 16:00:52 2026 -0300
+
+    Merge pull request #46 from njansh/feature/transactions-and-refactor
+    
+    feat: complete transactions module and refactor category persistence
+
+[33mcommit 6f9876584d02744cbfc19abc5f252c5975a6865c[m[33m ([m[1;31morigin/feature/transactions-and-refactor[m[33m, [m[1;32mfeature/transactions-and-refactor[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 15:54:32 2026 -0300
+
+    feat: complete transactions module and refactor category persistence
+    
+    - Frontend: Integrated categories, native date picker, and optional time logic.
+    - Backend: Standardized UserController routes and fixed GetCategoriesPort injection.
+    - Persistence: Fixed SpringCategoryRepository to return List instead of Optional (fixing NonUniqueResultException).
+    - Database: Cleaned Flyway history to align with current migration state.
+
+[33mcommit 04ca9c883b5280589fcddbf812bd0680192b57c8[m
+Merge: 92aacba 1661f84
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 13:26:53 2026 -0300
+
+    Merge pull request #45 from njansh/feature/proxy-and-dashboard
+    
+    feat: implement proxy for route protection and integrate dashboard KPIs
+
+[33mcommit 1661f842f3b9e0f22b74baced80c8dea1c39a1d7[m[33m ([m[1;31morigin/feature/proxy-and-dashboard[m[33m, [m[1;32mfeature/proxy-and-dashboard[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 13:25:43 2026 -0300
+
+    feat: implement proxy for route protection and integrate dashboard KPIs
+
+[33mcommit 92aacbac0a2a47f10ea40ab027b893bf557e943d[m
+Merge: 30c33b8 124838a
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 12:46:52 2026 -0300
+
+    Merge pull request #44 from njansh/feature/auth-integration
+    
+    feat: complete auth integration with signup and login flows
+
+[33mcommit 124838a0b1c9f3cd7c4c2ccacf5d33f0ae728112[m[33m ([m[1;31morigin/feature/auth-integration[m[33m, [m[1;32mfeature/auth-integration[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 16 12:41:34 2026 -0300
+
+    feat: complete auth integration with signup and login flows
+
+[33mcommit 30c33b8dc607ee300da92069a18a55e137e7a767[m
+Merge: e8cb7fc c8ff88f
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 12 21:11:12 2026 -0300
+
+    Merge pull request #43 from njansh/feature/user-password-auth
+    
+    feat: add password encryption, CustomUserDetailsService and /login en…
+
+[33mcommit c8ff88f15c8505b3cb7a91cc36de8251e9ab8cc0[m[33m ([m[1;31morigin/feature/user-password-auth[m[33m, [m[1;32mfeature/user-password-auth[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 12 21:10:01 2026 -0300
+
+    feat: add password encryption, CustomUserDetailsService and /login endpoint
+
+[33mcommit e8cb7fcb6cce9aabb3add8c772f687b4325a05b4[m
+Merge: f687cd2 ca54176
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 12 20:33:23 2026 -0300
+
+    Merge pull request #42 from njansh/feature/frontend-login-ui
+    
+    Feature/frontend login UI
+
+[33mcommit ca5417606fafd38619b118d5afdccf985249d0b4[m[33m ([m[1;31morigin/feature/frontend-login-ui[m[33m, [m[1;32mfeature/frontend-login-ui[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 12 20:30:10 2026 -0300
+
+    feat: create login and register ui with shadcn tabs
+
+[33mcommit cefe4f11de8edd4ddd8673d91849d86b06d404f5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue May 12 20:30:03 2026 -0300
+
+    feat: create login and register ui with shadcn tabs
+
+[33mcommit f687cd2918d969510f47b2019ffd4d0ef4cf09c4[m
+Merge: de30c86 db6c35b
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:44:26 2026 -0300
+
+    Merge pull request #41 from njansh/feature/automated-recurring-jobs
+    
+    feature/automated-recurring-jobs
+
+[33mcommit db6c35be7c730710a0a7655c227578d3602bc528[m[33m ([m[1;31morigin/feature/automated-recurring-jobs[m[33m, [m[1;32mfeature/automated-recurring-jobs[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:42:43 2026 -0300
+
+    feat: implement @Scheduled background job to automate recurring transactions
+
+[33mcommit 90928122ae09455436d252d19d9b67496ebaad75[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:42:21 2026 -0300
+
+    feat: implement @Scheduled background job to automate recurring transactions
+
+[33mcommit de30c867259bab7450191cb2fb8a34693c1c2f1a[m
+Merge: 28e43b9 f36a359
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:19:16 2026 -0300
+
+    Merge pull request #40 from njansh/refactor/import-n1-optimization
+    
+    refactor/import-n1-optimization
+
+[33mcommit 28e43b9c5de98515b84be6c0415545c657d0727a[m
+Merge: 8149bcd 7178ced
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:18:47 2026 -0300
+
+    Merge pull request #39 from njansh/refactor/jwt-httponly-cookies
+    
+    refactor: implement HttpOnly cookies for secure JWT refresh token flow
+
+[33mcommit f36a359530be2e603a6a170cf7239fc2a7784abd[m[33m ([m[1;31morigin/refactor/import-n1-optimization[m[33m, [m[1;32mrefactor/import-n1-optimization[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:15:19 2026 -0300
+
+    refactor: eliminate N+1 queries during CSV import via in-memory hashing and add Flyway index
+
+[33mcommit 7178cedb0b62c52946e986f25968ea8a5af3e6fb[m[33m ([m[1;31morigin/refactor/jwt-httponly-cookies[m[33m, [m[1;32mrefactor/jwt-httponly-cookies[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:13:15 2026 -0300
+
+    refactor: implement HttpOnly cookies for secure JWT refresh token flow
+
+[33mcommit c07b95c55c5bc28e63381d4a5d1e9667ebab9b2d[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 21:11:42 2026 -0300
+
+    refactor: eliminate N+1 queries during CSV import via in-memory hashing and add Flyway index
+
+[33mcommit dc5568eba4035c0fe7e2241e351a550cf6b2777b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 20:39:16 2026 -0300
+
+    refactor: implement HttpOnly cookies for secure JWT refresh token flow
+
+[33mcommit 8149bcd5805b160cbabe093c0f102bc60f859e18[m
+Merge: 20a4172 6e36109
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 20:31:53 2026 -0300
+
+    Merge pull request #38 from njansh/refactor/rfc7807-error-handling
+    
+    refactor: migrate custom ErrorResponse to Spring Boot 3 ProblemDetail…
+
+[33mcommit 6e36109c711ad381fea976ac645dead33b720aae[m[33m ([m[1;31morigin/refactor/rfc7807-error-handling[m[33m, [m[1;32mrefactor/rfc7807-error-handling[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 20:27:01 2026 -0300
+
+    refactor: migrate custom ErrorResponse to Spring Boot 3 ProblemDetail (RFC 7807)
+
+[33mcommit 20a4172dd3b649b80e0227e7c794e44918de4b96[m
+Merge: 17e36d8 518c42c
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 19:53:10 2026 -0300
+
+    Merge pull request #37 from njansh/chore/frontend-initial-setup
+    
+    chore: initialize Next.js 15 project with PWA and shadcn/ui
+
+[33mcommit 518c42cbffc97304c50e6d35d9aa5e4d476f397c[m[33m ([m[1;31morigin/chore/frontend-initial-setup[m[33m, [m[1;32mchore/frontend-initial-setup[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 19:51:33 2026 -0300
+
+    chore: initialize Next.js 15 project with PWA and shadcn/ui
+
+[33mcommit 57aaa3d229d7581e755c95fd4a1d7129e08fbc5b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 10 19:33:21 2026 -0300
+
+    chore: initialize Next.js 15 project with PWA and shadcn/ui
+
+[33mcommit 17e36d884674ebf3bd708872d3c08f48e2c5fd83[m
+Merge: fdabc18 68b122c
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 20:20:00 2026 -0300
+
+    Merge pull request #36 from njansh/test/add-unit-tests
+    
+    test: add unit tests for domain, use cases, and security
+
+[33mcommit 68b122cb59b8f91c1d856a5d7bd97ed2981d502b[m[33m ([m[1;31morigin/test/add-unit-tests[m[33m, [m[1;32mtest/add-unit-tests[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 20:11:22 2026 -0300
+
+    test: implement integration tests for UserController
+
+[33mcommit 5e58c4b030caf3da33ccd5858c6a3407aec30b79[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 20:05:59 2026 -0300
+
+    test: implement comprehensive integration tests for TransactionController
+
+[33mcommit 9f9a354c87dfda185832475da18ef639cac561de[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 20:04:12 2026 -0300
+
+    test: implement comprehensive integration tests for TransactionController
+
+[33mcommit cc93a3e8da4a82e250841db5f6278f0c4f420ba5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:59:22 2026 -0300
+
+    test: implement integration tests for RecurringController
+
+[33mcommit 7ad467bd15b121b1b81a89a18be676ab369cff0a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:55:06 2026 -0300
+
+    test: implement integration tests for ImportController
+
+[33mcommit 4456773ea72c6b0b347f8450ea2f99653f3dd377[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:53:02 2026 -0300
+
+    test: implement integration tests for GoalController
+
+[33mcommit d8caa588ac6d52d892311c3df73563137e40f532[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:49:09 2026 -0300
+
+    test: implement integration tests for DashboardController
+
+[33mcommit f5855d3ff1165da834aa31232d6de84a18d7435d[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:42:35 2026 -0300
+
+    test: implement integration tests for CreditCardController
+
+[33mcommit 8bd0d4036a40ee1269543639ec916297b63d496e[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:32:53 2026 -0300
+
+    test: implement integration tests for CategoryController
+
+[33mcommit 2106a78388bc055fc2fdebeccc42bc7a6ede730d[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:28:06 2026 -0300
+
+    test: implement integration tests for BudgetController
+
+[33mcommit e5f70c83d944a5e72a415f1c232c9d5935fb6ccb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 19:22:54 2026 -0300
+
+    test: implement integration tests for AccountController
+
+[33mcommit f376c627eae7fb6c9b1da77f7c01319d26173224[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 18:57:30 2026 -0300
+
+    test: add SecurityConfig tests to validate endpoint permissions and JWT filter chain
+
+[33mcommit 400421291706236e6ad518adb9665320c4091d42[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 18:03:15 2026 -0300
+
+    test: add unit tests for IdempotencyFilter with Redis integration
+
+[33mcommit 9bf1d39148ac087d1e312c942f878c47f7c8de96[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 18:01:37 2026 -0300
+
+    test: add unit tests for JwtAuthenticationFilter and SecurityContext integration
+
+[33mcommit f7484e5276a3999fc91d9b7075b1da582e92f20f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:59:58 2026 -0300
+
+    test: add unit tests for JwtService validating token generation and extraction
+
+[33mcommit 39b3ffcc7e597114ecc54b0f6eb7f08209c5f4c8[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:55:28 2026 -0300
+
+    test: add unit tests for UpdateTransactionUseCase with balance reversal logic
+
+[33mcommit 65848869cf34dd9c90da035a1d304fceb3269a0a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:53:56 2026 -0300
+
+    test: add unit tests for ProcessCreditCardTransactionUseCase with installment and limit logic
+
+[33mcommit 1a42bf2c64f4bf886e48361eceea3ca5e59b39f2[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:52:06 2026 -0300
+
+    test: add unit tests for ProcessCreditCardTransactionUseCase with installment and limit logic
+
+[33mcommit d28a6f5d83314b644e8b5eb6dce46a32a5002e05[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:46:15 2026 -0300
+
+    test: add unit tests for ListTransactionsUseCase covering multiple filter combinations
+
+[33mcommit 84802b6c98e6b7bd87e741c1cc6a46aac169b4b5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:44:24 2026 -0300
+
+    test: add unit tests for ListPendingRecurringUseCase covering temporal filtering
+
+[33mcommit 48f3d544b01f496ca3f6288bfe2b1399de4cb185[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:40:11 2026 -0300
+
+    test: add unit tests for ListAccountsByUserUseCase
+
+[33mcommit 523421f9d4b89822a1f4878d4afb9c10271adcab[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:38:26 2026 -0300
+
+    test(application): add unit tests for GetUserUseCase
+
+[33mcommit 0ab1ed437a536b0a0a9ec58ed86b798ecb33e937[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:38:12 2026 -0300
+
+    refactor(application): optimize GetUserUseCase to avoid redundant database calls
+
+[33mcommit 328aa48b94db79299a63fdddd747ad2d9ca747eb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:32:38 2026 -0300
+
+    test: add unit tests for GetTransactionUsecase with ID retrieval and description filtering
+
+[33mcommit 8f687cf1b8eb891abb0acc3f3129e7bace5ff9fc[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:30:39 2026 -0300
+
+    test: add unit tests for GetTotalBalanceUserCase
+
+[33mcommit 6e647b24aedc4948fa42be2c126e70b4e1b83906[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:29:27 2026 -0300
+
+    test: add unit tests for GetIncomesByCategoryUseCase with type filtering
+
+[33mcommit cbc0dc2ff63eb19212a48f7332b6c25a3330ad97[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:27:24 2026 -0300
+
+    test: add unit tests for GetFinancialDashboardKpisUseCase with savings ratio logic
+
+[33mcommit fac7ba7a92a0ce3d5437beaa2850e5c0c263da5e[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:24:49 2026 -0300
+
+    test: add unit tests for GetExpensesByCategoryUseCase with and without date filtering
+
+[33mcommit 5cf95f053cfe34cb3c714f582ff9779affbb7900[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:22:46 2026 -0300
+
+    test: add unit tests for GetCategoriesUseCase
+
+[33mcommit 27f3dc959869ed6bc0895a0fc6ee53d794119272[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:21:31 2026 -0300
+
+    test: add unit tests for GetAccountUseCase
+
+[33mcommit be8f19b6e364519f080fbed8681258855f00893d[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:19:48 2026 -0300
+
+    test: add unit tests for GetAccountBalanceUseCase with period filtering and totals calculation
+
+[33mcommit b142f7ec246087b58fd41d9988c5cd79912e55e9[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:17:01 2026 -0300
+
+    test: add unit tests for DeleteUserUseCase ensuring full data cleanup
+
+[33mcommit ae49a8b2d81bbc8647c55b81c02ba876b832c3f5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:14:53 2026 -0300
+
+    test: add unit tests for DeleteTransactionUseCase with balance reversal and transfer handling
+
+[33mcommit 1eb4f453554eb2511231a92664b885b3f7fff850[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:11:30 2026 -0300
+
+    test: add unit tests for DeleteAccountUseCase covering cascaded deletion and security
+
+[33mcommit c4d51c9ec7c64ecb9037db245e112afa7685cd3b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:09:24 2026 -0300
+
+    test: add unit tests for CreateUserUseCase including default categories creation
+
+[33mcommit 20618e66709e9eecd5fb0283d10c540673d2e58a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:07:25 2026 -0300
+
+    test: add unit tests for CreateGoalUseCase
+
+[33mcommit d35104a8b34bd47074c5fcba67eddcff69017613[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:04:49 2026 -0300
+
+    test: add unit tests for CreateCreditCardUseCase covering account validation
+
+[33mcommit 7500762eb2c4d2f346aa81b7f99255047fb19fb7[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 17:02:26 2026 -0300
+
+    test: add unit tests for CreateCategoryUseCase
+
+[33mcommit 0c3f34423adac4897e44012e39a6c6858199f1dc[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:59:16 2026 -0300
+
+    test: add unit tests for CreateBudgetUseCase covering validations and success flow
+
+[33mcommit be2262be4d8e8f24db95194e760dae56e503c025[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:56:10 2026 -0300
+
+    test: add unit tests for CreateAccountUseCase
+
+[33mcommit 08fa1cd2988e753d4702964b579f50249edd820c[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:56:03 2026 -0300
+
+    test: add unit tests for CategorizeTransactionUseCase covering success and exceptions
+
+[33mcommit 63686e2687e41ad7e9210d7c5f446c6decbdfd16[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:49:15 2026 -0300
+
+    test: add unit tests for CategorizeTransactionUseCase covering success and exceptions
+
+[33mcommit ec0ee52513bb22380a47f378d183155256ac4914[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:45:08 2026 -0300
+
+    build: update dependencies and plugins in pom.xml
+
+[33mcommit e3167eb5127edc275ea84061c131f8a29f4aaf22[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:44:58 2026 -0300
+
+    test: add unit tests for GlobalExceptionHandler and adjust BeanConfiguration
+
+[33mcommit 3a932198b505f262701c22dd2ea5848a3f85c802[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:44:45 2026 -0300
+
+    test: add tests for Clean Architecture rules and balance concurrency
+
+[33mcommit 8c78755c32417bb7f0322f888fd8e156b51440cb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:44:25 2026 -0300
+
+    test: add unit tests for Account and Goal entities
+
+[33mcommit de80c8c8e91f02c6ed20f7bfb5da9d92204d3372[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:44:11 2026 -0300
+
+    test: add unit tests for ProcessCreditCardTransactionUseCase
+
+[33mcommit 8c9fbbc367b29de629470f0af3f79315723721d3[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:43:54 2026 -0300
+
+    test: add unit tests for GetFinancialDashboardKpisUseCase
+
+[33mcommit f2d4a5c5e9d844832315d99c87e197ba7926e10f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:43:40 2026 -0300
+
+    test: add unit tests for TransactionImportService covering Inter and MP
+
+[33mcommit 870740847fd4d7f71241b4d96b04ae15d384f4aa[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 16:43:25 2026 -0300
+
+    test: add unit tests for CategorizationEngine and refactor cleaning logic
+
+[33mcommit ca44103225ec3295c30c708eb0babe7553e4d4df[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:16:29 2026 -0300
+
+    test: add unit tests for credit card installment math
+
+[33mcommit 382bbd2033a459628715f06feab7b2f07e1da8a5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:34 2026 -0300
+
+    test: add integration tests for transaction security and idempotency
+
+[33mcommit 86f82d5ff6adb63af5b0dbc6b4a8e7563586234f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:29 2026 -0300
+
+    test: add unit tests for atomic transaction update logic
+
+[33mcommit 1567885b4a6221193aff18466a033cfe613b2e3c[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:23 2026 -0300
+
+    test: add unit tests for bank statement import and deduplication
+
+[33mcommit 9dd4b0ab6dab028f07a6617d76656efbcc5ea4e3[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:18 2026 -0300
+
+    test: add unit tests for budget alert event listener
+
+[33mcommit be2568d79ab992bb61ac26246b9bc8b1c65dff81[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:11 2026 -0300
+
+    test: add unit tests for account and user cascading deletion
+
+[33mcommit 62de759373ea8d84d5d15b1feb85eddf3db7436a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:12:05 2026 -0300
+
+    test: add unit tests for transaction domain validations
+
+[33mcommit 0370f914756e84605fb81863a17132af98d8bf05[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:11:57 2026 -0300
+
+    feat: implement atomic balance updates in transaction use case
+
+[33mcommit e3a4e0b5d558f178ca75dc6052abdb035d7ed94c[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 14:11:39 2026 -0300
+
+    chore: add security-test dependency and update byte-buddy for java 24
+
+[33mcommit d4ff17cad6ead73c36de4a8843d5a5718c4d6dab[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 13:00:05 2026 -0300
+
+    test: implement robust security, transfer and cascade delete unit tests
+
+[33mcommit 8ff544eceb31bd72093fd2f0ea270520a8346302[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 12:55:19 2026 -0300
+
+    test: add unit tests for domain, use cases, and security
+
+[33mcommit fdabc1845641d48a3b79ff9ce6524051b4df1e1a[m
+Merge: a7c3c67 0fbeae4
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 12:38:24 2026 -0300
+
+    Merge pull request #35 from njansh/feature/audit-and-redis
+    
+    feat: implement cascading delete for accounts and users
+
+[33mcommit 0fbeae49a231e2985727fb51821cbd43eb11db47[m[33m ([m[1;31morigin/feature/audit-and-redis[m[33m, [m[1;32mfeature/audit-and-redis[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 12:28:11 2026 -0300
+
+    feat: implement cascading delete for accounts and users
+
+[33mcommit a7c3c67b450ac13d07b09f0d8cbedaaa457919d2[m
+Merge: 2b5d70d 91f61e9
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 11:44:13 2026 -0300
+
+    Merge pull request #34 from njansh/feature/audit-and-redis
+    
+    feat: implement audit trail with hibernate envers and redis idempotency
+
+[33mcommit 91f61e9d65a2a6868e99817bc2e02b2f06972d06[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 11:43:15 2026 -0300
+
+    feat: implement audit trail with hibernate envers and redis idempotency
+
+[33mcommit 2b5d70de505c3558b805fe4ba572a43a836d6037[m
+Merge: 404b092 3811d26
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 11:06:09 2026 -0300
+
+    Merge pull request #33 from njansh/feature/budgets-and-goals
+    
+    feat: implement goals and budgets domain, persistence, and REST endpo…
+
+[33mcommit 3811d26b1d920b7b7dc8f9ae1de7ad2596081459[m[33m ([m[1;31morigin/feature/budgets-and-goals[m[33m, [m[1;32mfeature/budgets-and-goals[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 11:04:52 2026 -0300
+
+    feat: implement goals and budgets domain, persistence, and REST endpoints
+
+[33mcommit 404b092fd6395dde34fbaeb92d96afeb2dffe57f[m
+Merge: 85cf3a5 d55b27b
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 09:55:08 2026 -0300
+
+    Merge pull request #32 from njansh/feature/manual-recurring-confirmation
+    
+    Feature/manual recurring confirmation
+
+[33mcommit d55b27bd8f311c5d43600d017cb978964028c452[m[33m ([m[1;31morigin/feature/manual-recurring-confirmation[m[33m)[m
+Merge: 67f0ca9 85cf3a5
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 09:54:57 2026 -0300
+
+    Merge branch 'main' into feature/manual-recurring-confirmation
+
+[33mcommit 85cf3a5eb593380db576c9c494f32311f33c618b[m
+Merge: 29cf88c eb7e7b3
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 09:49:41 2026 -0300
+
+    Merge pull request #31 from njansh/feature/credit-card-installments
+    
+    Feature/credit card installments
+
+[33mcommit 67f0ca9dff040cedf3a86649f85f9eb70a9a68d0[m[33m ([m[1;32mfeature/manual-recurring-confirmation[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 09:48:21 2026 -0300
+
+    feat: implement manual recurring transaction confirmation with ownership validation
+
+[33mcommit 0f8210f7b791b2125b512d5b0f595f90be880ce9[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun May 3 09:48:13 2026 -0300
+
+    feat: implement manual recurring transaction confirmation with ownership validation
+
+[33mcommit eb7e7b33dbac27c0978c1550580f4038026211a7[m[33m ([m[1;31morigin/feature/credit-card-installments[m[33m, [m[1;32mfeature/credit-card-installments[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 15:41:12 2026 -0300
+
+    feat: implement credit card management and automatic installments logic
+
+[33mcommit 2c26c6312603e8c87fe278d8dec4d3323581bd8b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 15:41:02 2026 -0300
+
+    feat: implement credit card management and automatic installments logic
+
+[33mcommit 29cf88c6ee892d4dc13215d71c80e83b2ff17505[m
+Merge: cec78df 8a29e23
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 15:11:59 2026 -0300
+
+    Merge pull request #30 from njansh/refactor/dashboard-performance
+    
+    refactor: optimize dashboard performance by delegating math to database
+
+[33mcommit 8a29e232fd09fcd453d8c35f5d5a57f22bce09f6[m[33m ([m[1;31morigin/refactor/dashboard-performance[m[33m, [m[1;32mrefactor/dashboard-performance[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 15:11:07 2026 -0300
+
+    refactor: optimize dashboard performance by delegating math to database
+
+[33mcommit cec78df1ec5fd45c0f9bea8a2c38a8530939fefc[m
+Merge: 1d9f535 8673531
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 15:01:18 2026 -0300
+
+    Merge pull request #29 from njansh/chore/security-and-data-integrity
+    
+    chore: externalize jwt secret and implement atomic balance updates
+
+[33mcommit 86735316a8ca4c2233158a617bf01a2cd750e7d1[m[33m ([m[1;31morigin/chore/security-and-data-integrity[m[33m, [m[1;32mchore/security-and-data-integrity[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 14:34:57 2026 -0300
+
+    chore: externalize jwt secret and implement atomic balance updates
+
+[33mcommit 1d9f5357e6ac51b1c76818dc88fa86217b659974[m
+Merge: e6d4b00 26a694c
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 14:17:21 2026 -0300
+
+    Merge pull request #28 from njansh/feature/smart-csv-categorization
+    
+    feat: smart CSV categorization, manual transfer endpoint and obsolete…
+
+[33mcommit 26a694c8bf01fc9e5ca15898d887607c8df7a47d[m[33m ([m[1;31morigin/feature/smart-csv-categorization[m[33m, [m[1;32mfeature/smart-csv-categorization[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 14:15:59 2026 -0300
+
+    feat: smart CSV categorization, manual transfer endpoint and obsolete code removal
+
+[33mcommit e6d4b00bbd69d8f5dc76ab5c5449a32740a631d7[m
+Merge: d74887e d9ee924
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 13:25:00 2026 -0300
+
+    Merge pull request #27 from njansh/feature/default-categories-on-signup
+    
+    feat: add automatic creation of default categories on user signup
+
+[33mcommit d9ee9247ffaaec3bbfda65b2e557257f520fcf90[m[33m ([m[1;31morigin/feature/default-categories-on-signup[m[33m, [m[1;32mfeature/default-categories-on-signup[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 13:24:12 2026 -0300
+
+    feat: add automatic creation of default categories on user signup
+
+[33mcommit d74887e9d8133eb7fb4c69c27c17089a25e45ca3[m
+Merge: 4c15765 7f2e9e4
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 13:16:06 2026 -0300
+
+    Merge pull request #26 from njansh/fix/category-user-isolation
+    
+    Fix/category user isolation
+
+[33mcommit 7f2e9e4f58d2ef00fd0b7b445b0abd1efa044682[m[33m ([m[1;31morigin/fix/category-user-isolation[m[33m, [m[1;32mfix/category-user-isolation[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 13:05:24 2026 -0300
+
+    fix: enforce tenant isolation by adding userId to Category domain and use cases
+
+[33mcommit 93efa61c5127db718a1ac23cb28a06c2a510d314[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 13:05:10 2026 -0300
+
+    fix: enforce tenant isolation by adding userId to Category domain and use cases
+
+[33mcommit 4c15765873e99d6e1829740b0ab919901f2b9987[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 09:43:20 2026 -0300
+
+    feat(reports): implement financial KPI dashboard with net worth and savings ratio
+    
+    - Created KpiDashboardResponse DTO.
+    - Implemented GetFinancialDashboardKpisUseCase applying core financial equations (Net Worth, Cash Flow, and Savings Ratio).
+    - Added DashboardController mapped to /api/dashboard/kpis securely using SecurityContext.
+    - Registered UseCase in BeanConfiguration.
+
+[33mcommit 37f61162af36d55541a08659f67c8a352b33d0fd[m
+Merge: f20e917 00e96ba
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 09:15:15 2026 -0300
+
+    Merge pull request #25 from njansh/refactor/dynamic-csv-strategy
+    
+    feat(reports): implement financial KPI dashboard with net worth and s…
+
+[33mcommit 00e96bae12a496ab0d447c29d344e45dde5f8953[m[33m ([m[1;31morigin/refactor/dynamic-csv-strategy[m[33m, [m[1;32mrefactor/dynamic-csv-strategy[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 09:11:48 2026 -0300
+
+    feat(reports): implement financial KPI dashboard with net worth and savings ratio
+    
+    - Created KpiDashboardResponse DTO.
+    - Implemented GetFinancialDashboardKpisUseCase applying core financial equations (Net Worth, Cash Flow, and Savings Ratio).
+    - Added DashboardController mapped to /api/dashboard/kpis securely using SecurityContext.
+    - Registered UseCase in BeanConfiguration.
+
+[33mcommit f20e91747a631381474db58b933627e954f90004[m
+Merge: 36c6d99 3d5b05c
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 08:45:58 2026 -0300
+
+    Merge pull request #24 from njansh/feat/credit-card-usecase-persistence
+    
+    fix: address codex review and resolve missing DI beans
+
+[33mcommit 3d5b05c7afc118b4052240f76ff47e05440a05c7[m[33m ([m[1;31morigin/feat/credit-card-usecase-persistence[m[33m, [m[1;32mfeat/credit-card-usecase-persistence[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 08:42:04 2026 -0300
+
+    fix(di): add missing @Component annotations to persistence adapters
+    
+    - Added @Component to CreditCardPersistenceAdapter and BillingCyclePersistenceAdapter.
+    - Resolved UnsatisfiedDependencyException during Spring context initialization.
+
+[33mcommit 3e2ccf216ed09a890f82de23f79400c541ca8c6a[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 08:35:33 2026 -0300
+
+    fix: address codex review and resolve missing DI beans
+    
+    - Restored JwtAuthenticationFilter and STATELESS session policy in SecurityConfig.
+    - Re-added /users/** and swagger to permitAll to allow user bootstrap.
+    - Added guard clause in BillingCycle.addCharge to prevent negative amounts.
+    - Registered ProcessCreditCardTransactionUseCase in BeanConfiguration.
+
+[33mcommit 36c6d99a8fd6f0df027519aa0a6fc6f5b8ea6980[m
+Merge: 3b0f52b b6de73b
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat May 2 08:28:31 2026 -0300
+
+    Merge pull request #23 from njansh/feat/credit-card-usecase-persistence
+    
+    feat(domain): implement credit card transaction processing and persis…
+
+[33mcommit b6de73bcf7100115c55836dadd2ac9e9284fb3e0[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 21:11:12 2026 -0300
+
+    feat(domain): implement credit card transaction processing and persistence
+    
+    - Created ProcessCreditCardTransactionUseCase with rolling cycle logic and global limit validation.
+    - Created DB schema (Flyway V3) for credit_cards and billing_cycles.
+    - Implemented JPA Entities mapped accurately to Domain objects, leveraging @Version for concurrent cycle updates.
+    - Added necessary Ports to interact with infrastructure.
+
+[33mcommit 3b0f52be0b00531a06eff789af5435caaa1627bb[m
+Merge: 30fe38b 73c0b77
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 20:42:03 2026 -0300
+
+    Merge pull request #22 from njansh/feat/credit-card-domain
+    
+    Feat/credit card domain
+
+[33mcommit 73c0b77c291a7f3e28996fe8ddb7f2feabbc9ea3[m[33m ([m[1;31morigin/feat/credit-card-domain[m[33m, [m[1;32mfeat/credit-card-domain[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 20:33:12 2026 -0300
+
+    feat(domain): implement credit card and billing cycle entities
+    
+    - Created BillingCycleStatus enum to track invoice states.
+    - Implemented CreditCard entity with limit, closing date and due date validation.
+    - Implemented BillingCycle entity to encapsulate the logic of adding charges only to open invoices.
+
+[33mcommit 3395914c4dbd186c9deb483f9c343d13d37696bf[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 20:30:51 2026 -0300
+
+    feat(domain): implement credit card and billing cycle entities
+    
+    - Created BillingCycleStatus enum to track invoice states.
+    - Implemented CreditCard entity with limit, closing date and due date validation.
+    - Implemented BillingCycle entity to encapsulate the logic of adding charges only to open invoices.
+
+[33mcommit 30fe38b2a6004f5be98efe83e2ed8656dac55ba9[m
+Merge: 2185831 1020635
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 20:14:28 2026 -0300
+
+    Merge pull request #21 from njansh/feat/auto-categorization-engine
+    
+    feat(domain): implement automatic transaction categorization engine
+
+[33mcommit 10206359a329d35e6aae21b3ea959d9221f294a1[m[33m ([m[1;31morigin/feat/auto-categorization-engine[m[33m, [m[1;32mfeat/auto-categorization-engine[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 20:11:57 2026 -0300
+
+    feat(domain): implement automatic transaction categorization engine
+    
+    - Created CategorizationEngine Domain Service with text sanitization and rule-based heuristics.
+    - Added findByName query to CategoryRepositoryPort and Spring implementations.
+    - Integrated CategorizationEngine into TransactionImportService to automatically predict and assign categories during CSV ETL.
+
+[33mcommit 218583188d45b0722e0cf1a551a5c95cb2f85a0e[m
+Merge: d24e7dc 2f86df2
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 13:26:15 2026 -0300
+
+    Merge pull request #20 from njansh/feat/jwt-security-context
+    
+    feat(security): implement JWT authentication and secure endpoints
+
+[33mcommit 2f86df25219cdcddf2decc389bc097b630a09884[m[33m ([m[1;31morigin/feat/jwt-security-context[m[33m, [m[1;32mfeat/jwt-security-context[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 13:20:44 2026 -0300
+
+    ..
+
+[33mcommit c2b69d937052ca591edbf1bf61ad41abdd5fbd26[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 12:53:16 2026 -0300
+
+    feat(security): implement JWT authentication and secure endpoints
+    
+    - Added Spring Security and JJWT dependencies to pom.xml.
+    - Created JwtService for token signing and validation.
+    - Implemented JwtAuthenticationFilter to populate SecurityContext securely.
+    - Configured SecurityFilterChain to enforce stateless authentication.
+    - Removed insecure X-User-Id header from ImportController.
+    - Added temporary /users/{id}/token endpoint to unblock development.
+
+[33mcommit d24e7dca3296a1c5bcd4cdc5003c46a133a60e95[m
+Merge: a6f617d 7c6db97
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:44:48 2026 -0300
+
+    Merge pull request #19 from njansh/feat/idempotency-api
+    
+    feat(api): implement idempotent transaction creation
+
+[33mcommit 7c6db9722c2afd4ad4f14f842d85ea9bfee75d24[m[33m ([m[1;31morigin/feat/idempotency-api[m[33m, [m[1;32mfeat/idempotency-api[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:37:15 2026 -0300
+
+    feat(api): implement idempotent transaction creation
+    
+    - Created V2 flyway script for idempotency_records table.
+    - Added IdempotencyRecordJpaEntity and SpringIdempotencyRepository.
+    - Implemented DB-level blind insert using native query and REQUIRES_NEW propagation.
+    - Required 'Idempotency-Key' header on POST /transactions.
+    - Captured DataIntegrityViolationException to return 409 Conflict.
+
+[33mcommit a6f617d151fbaaf5140b4ff90da967847bec2ee5[m
+Merge: 6872f1c 693a224
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:31:33 2026 -0300
+
+    Merge pull request #18 from njansh/chore/flyway-migration
+    
+    chore: add flyway migrations and disable ddl-auto
+
+[33mcommit 693a22423c74fdb477fc6edd9bc35841d3f127a5[m[33m ([m[1;31morigin/chore/flyway-migration[m[33m, [m[1;32mchore/flyway-migration[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:24:54 2026 -0300
+
+    chore: add flyway migrations and disable ddl-auto
+    
+    - Added flyway-core and flyway-database-postgresql to pom.xml.
+    - Changed spring.jpa.hibernate.ddl-auto to validate to prevent accidental schema drops.
+    - Created V1__init_schema.sql to match existing JPA entities.
+    - Removed deprecated import.sql.
+
+[33mcommit 6872f1c3482b9bd778043c07c51f1ac5a982a561[m
+Merge: 5b67ddf 3a1d682
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:17:04 2026 -0300
+
+    Merge pull request #17 from njansh/fix/acid-precision-locking
+    
+    fix(persistence): enforce BigDecimal precision and implement Optimist…
+
+[33mcommit 3a1d682c85ba013bd559d66ead1d07f9ca0f0d25[m[33m ([m[1;31morigin/fix/acid-precision-locking[m[33m, [m[1;32mfix/acid-precision-locking[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri May 1 11:05:33 2026 -0300
+
+    fix(persistence): enforce BigDecimal precision and implement Optimistic Locking
+    
+    - Added precision=19, scale=4 to all monetary columns for financial accuracy.
+    - Introduced @Version in JPA entities to prevent Lost Update anomalies.
+    - Refactored Persistence Adapters to update managed entities, keeping Domain agnostic.
+    - Handled ObjectOptimisticLockingFailureException globally.
+
+[33mcommit 5b67ddff2cea086f3461c7fdb5047e0063e3edb6[m
+Merge: ae7c6b4 79ad438
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 16:17:51 2026 -0300
+
+    Merge pull request #16 from njansh/fix/system-reliability-and-transactional-integrity
+    
+    fix/system-reliability-and-transactional-integrity
+
+[33mcommit 79ad438d1643d92e6c1eff3e2a3ea7ce996ad256[m[33m ([m[1;31morigin/fix/system-reliability-and-transactional-integrity[m[33m, [m[1;32mfix/system-reliability-and-transactional-integrity[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 16:14:13 2026 -0300
+
+    feat(infrastructure): implement global exception handler and error response DTO
+    
+    - Added GlobalExceptionHandler to map domain exceptions to HTTP status codes.
+    - Created ErrorResponse DTO with timestamp and field validation support.
+    - Handled 404 (Not Found), 400 (Bad Request), 409 (Conflict), and 500 (Internal Server Error).
+
+[33mcommit ae7c6b4baa796bf0ec666ac262c8c9b51a5090ac[m
+Merge: 9297dcc fc080da
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 15:34:07 2026 -0300
+
+    Merge pull request #15 from njansh/fix/system-reliability-and-transactional-integrity
+    
+    fix/system-reliability-and-transactional-integrity
+
+[33mcommit fc080da2991ca4f6ed396c84d60c68e4504f0630[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 15:15:54 2026 -0300
+
+    fix(import): refine transfer heuristic to ignore credit card bill payments containing user's name
+
+[33mcommit 5f1a4cd040ec4002240c402bb79e324826bbc85f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 14:15:13 2026 -0300
+
+    fix(import): prevent transfer hijacking by enforcing type and destination matching on orphaned transactions
+
+[33mcommit e286f782a829382fbb4fca25151954903886b95b[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 14:02:20 2026 -0300
+
+    fix(import): replace exists filter with occurrence counting
+    
+    Replaced the boolean exists filter in SpringTransactionRepository with a count-based mechanism. Implemented an in-memory tracking map in TransactionImportService to count local occurrences of identical transactions. This safely allows multiple legitimate identical transactions (same amount, date, and description) to be imported without being falsely discarded as duplicates.
+
+[33mcommit d6d3fb90bff77e07b8baa5b99f5ae1508507010c[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 13:54:18 2026 -0300
+
+    fix(import): reconcile orphaned transfer counterparts
+    
+    Updated TransactionRepositoryPort, TransactionPersistenceAdapter, and TransactionImportService to search for and update specific orphaned transfer transactions (where accountBalanceAfter is null) instead of blindly skipping them. This ensures proper double-entry linkage even when multiple identical transfers occur on the same day.
+
+[33mcommit 24884e6e31af4daee08d4d8f9a5e097ca4c95bba[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 13:08:13 2026 -0300
+
+    fix(import): append reference ID to MP descriptions to prevent false duplicates on identical operations
+
+[33mcommit 8aa48b6d55a46e984f4a890238bba44bafa78e31[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 11:47:47 2026 -0300
+
+    fix(import): resolve transfer deduplication bug for same-day identical amounts
+    
+    Updated TransferUseCase, TransferPort, and TransactionImportService to include
+    exact source account and balanceAfter tracking. This ensures that legitimate
+    identical transactions occurring on the same day (e.g., multiple $10.00 reserves)
+    are accurately recorded and no longer falsely discarded as duplicates.
+    Achieved absolute balance parity with bank statements.
+
+[33mcommit a8be541454a6d8c5f6b96740bf88d86ffa206a64[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 11:29:18 2026 -0300
+
+    fix(balance): return true account balance instead of period cash flow
+    
+    Updated GetAccountBalanceUseCase to consistently return the absolute
+    and consolidated balance from the Account entity. This resolves a semantic
+    bug where querying by a specific date range would incorrectly return the
+    net cash flow of that period labeled as the total account balance,
+    causing data presentation issues on the front-end.
+
+[33mcommit a3f4afbd206551c6ccfe598f9e5087ec1c95b280[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 11:25:20 2026 -0300
+
+    fix(transaction): synchronize double-entry updates for transfers
+    
+    Refactored UpdateTransactionUseCase to properly handle transfer modifications.
+    When a transfer is updated, the system now automatically fetches its counterpart
+    using the shared transferID and symmetrically applies the changes (amount, date, description)
+    to both the source and destination accounts. This guarantees strict double-entry accounting integrity.
+
+[33mcommit 580e27d2adad9c7c8487d6c722bdd0e8f4a46cba[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 11:21:28 2026 -0300
+
+    refactor(import): enhance CSV ETL resilience and parsing logic
+    
+    Updated TransactionImportService to use case-insensitive substring matching
+    for account name resolution and implemented Locale-aware currency parsing.
+    This prevents the service from crashing when account names are slightly modified
+    and ensures correct decimal conversion for both Anglo-Saxon and Brazilian number formats.
+
+[33mcommit 00c2d1296180401026c72a1d20e8d7df90c04237[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 11:10:12 2026 -0300
+
+    perf(reports): optimize queries for category sums to solve N+1 problem
+    
+    Replaced iterative in-memory processing with native SQL grouping and aggregations
+    (SUM and GROUP BY) in SpringTransactionRepository. This drastically reduces
+    database roundtrips from O(N) to O(1) when fetching category reports, preventing
+    connection pool exhaustion and improving scalability.
+
+[33mcommit 7302ab7ea6fefb4c4e866319686c613af705635f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 10:59:24 2026 -0300
+
+    fix(pagination): delegate transaction filtering to database layer
+    
+    Moved the description filtering logic from the ListTransactionsUseCase (in-memory)
+    to the SpringTransactionRepository (database level). This resolves a critical bug
+    where paginated queries would return empty or incomplete results if matching records
+    were located on subsequent database pages.
+
+[33mcommit 9b9c5f561ebbb8e2c527f400d23c5c432ff6222f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 10:53:41 2026 -0300
+
+    fix(transaction): ensure ACID compliance with @Transactional
+    
+    Added @Transactional annotation to CreateTransactionUseCase and UpdateTransactionUseCase.
+    This prevents data corruption by ensuring that account balance modifications and transaction
+    persistence occur within a single atomic database transaction, automatically rolling back
+    in case of failures.
+
+[33mcommit 9297dcc84d6d45770660b46b31c316d0654b95bb[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 26 09:54:15 2026 -0300
+
+    feat: implement active reconciliation logic for CSV imports
+    - Implemented active reconciliation in TransactionImportService to handle transfers between accounts (Inter, MP, and Investment).
+    - Added 'existsTransferCounterpart' to TransactionRepository to avoid duplicates during cross-account imports.
+    - Fixed CSV parsing for Mercado Pago and Inter formats.
+    - Updated GetAccountBalanceUseCase to calculate balance based on actual transaction history.
+
+[33mcommit 7478b91c246bb2fdeb3f8e026864f3d345aaa814[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 16:38:10 2026 -0300
+
+    feat: complete csv import with duplicate check and dynamic account lookup
+
+[33mcommit dd7230bb37e1786ba051d2dc41573b8fd017a572[m[33m ([m[1;32mfeature/importacao-csv[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 16:22:02 2026 -0300
+
+    feat: implement csv import logic for Inter and Mercado Pago with dynamic account resolution and duplicate check
+
+[33mcommit d317211af42e9549251cb8a8f7f88da40ec9dda1[m
+Merge: 8e2cf0b 9a20f3f
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:54:37 2026 -0300
+
+    Merge pull request #14 from njansh/detached3
+    
+    consertando
+
+[33mcommit 9a20f3f26e4112359548b05533e5a72d53c1013a[m[33m ([m[1;31morigin/detached3[m[33m)[m
+Merge: 77122d3 8e2cf0b
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:54:27 2026 -0300
+
+    Merge branch 'main' into detached3
+
+[33mcommit 8e2cf0b6ca3388f2a8672da098b1166feba6e610[m
+Merge: d4722ee b8efa25
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:51:06 2026 -0300
+
+    Merge pull request #13 from njansh/detached2
+    
+    hjj
+
+[33mcommit d4722eeb68aad985c542970f9f9c04f1b066f840[m
+Merge: 91cbf05 db5e33d
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:50:43 2026 -0300
+
+    Merge pull request #12 from njansh/detached
+    
+    fix: removendo erros de compilação
+
+[33mcommit 77122d3a5f56109e0bd5479cf170b975ad362b85[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:50:08 2026 -0300
+
+    consertando
+
+[33mcommit b8efa25d0c1c495723cf0d84fa777acc11f91730[m[33m ([m[1;31morigin/detached2[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:21:26 2026 -0300
+
+    hjj
+
+[33mcommit db5e33debc55d6704c43a3d3d13483a4d3ed76e0[m[33m ([m[1;31morigin/detached[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 13:14:51 2026 -0300
+
+    fix: removendo erros de compilação
+
+[33mcommit 91cbf0568943436ab8fd440e398c1f0fb0ab6770[m
+Merge: 3bd9be0 07d63f2
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 11:55:17 2026 -0300
+
+    Merge pull request #11 from njansh/feature/fix-transfer-deletion
+    
+    Feature/fix transfer deletion
+
+[33mcommit 07d63f290d64105bbfeed1607ce59cf97150d1b8[m[33m ([m[1;31morigin/feature/fix-transfer-deletion[m[33m, [m[1;32mfeature/fix-transfer-deletion[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 11:45:04 2026 -0300
+
+    refactor: update transaction DTOs and controller to support transferID
+
+[33mcommit 03c57d2b36312a913ae146adec3be02a4ef4d090[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 11:33:56 2026 -0300
+
+    wip: trying to implement atomic transfer deletion
+
+[33mcommit 3bd9be0c021198794f41e7ae1b1d9e6eb404ed88[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 25 09:20:49 2026 -0300
+
+    feat: add interactive dashboard and CORS configuration
+
+[33mcommit 3481de3171da949c6437bb980944c28868ab80a9[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 17:14:46 2026 -0300
+
+    feat: implement account listing by user
+
+[33mcommit c5c2d7cb6cd8983c21932c0c4b865be843b5d53e[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 16:18:50 2026 -0300
+
+    feat(infrastructure): implement GlobalExceptionHandler and update bean config
+
+[33mcommit a32ece9c7b9895a623eefafcffb09f48dcd31374[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 16:18:39 2026 -0300
+
+    refactor(application): integrate use cases with custom exceptions
+
+[33mcommit ec3c998b48af23e57d5651386247efc09e004b7f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 16:18:26 2026 -0300
+
+    refactor(domain): update entities with rich validation and custom exceptions
+
+[33mcommit 9618b851a46327525b29ef694bab0f123c651344[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 16:18:13 2026 -0300
+
+    feat(domain): implement custom exception hierarchy
+
+[33mcommit 8aec1c0afd192d2ebed77e0c57e12ba5ce5eedab[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 14:25:45 2026 -0300
+
+    git commit -m "docs: implement Swagger OpenAPI and add endpoint documentation"
+
+[33mcommit daa9c623d67c397efd8fa9c07f22953f0bba3096[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 13:59:47 2026 -0300
+
+    fix: ensure total calculation in reports by using findAll to ignore pagination"e descrição na listagem de transações
+
+[33mcommit 133806eeb1dd55a8cf1a0d83915295029719994e[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 13:56:43 2026 -0300
+
+    fix: ensure total calculation in reports by using findAll to ignore pagination
+
+[33mcommit 6e1dd8d9c479fb4e891d304080e21d9e4998687d[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 13:56:36 2026 -0300
+
+    refactor: update repositories to support Pageable and full queries
+
+[33mcommit 448337fee7a987eea50b6968868dda7a79e7b2c5[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 13:54:40 2026 -0300
+
+    feat: adicionar paginação e filtro de descrição na listagem de transações
+
+[33mcommit 17442de059b3dcadfc74e05bb2f1b65737510d97[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 19 10:00:07 2026 -0300
+
+    feat: implement financial reports for balance and categories
+    
+    Added GetAccountBalance, GetExpensesByCategory and GetIncomesByCategory use cases.
+    
+    Created endpoints for monthly and total financial reports.
+    
+    Fixed date filtering logic and DTO mappings in TransactionController.
+
+[33mcommit 2b2e6552d53aadb1a2a8b43529eaec2346e030cf[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri Apr 17 20:04:02 2026 -0300
+
+    feat: implement transaction deletion with balance reversal
+    
+    Created DeleteTransactionUseCase with balance adjustment logic (reversal).
+    
+    Added delete endpoint in TransactionController.
+    
+    Configured H2 persistence to file-based storage for data durability.
+    
+    Updated ddl-auto to update to prevent data loss on restart.
+
+[33mcommit 8c1fdce55532530f90ab2722550b8e695f11725f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu Apr 16 20:52:55 2026 -0300
+
+    feat: add month and year filter to list transactions
+    
+    Added findByAccountIdAndDateBetween query in Spring Data repository.
+    
+    Implemented date range logic in TransactionPersistenceAdapter.
+    
+    Updated ListTransactionsPort and ListTransactionsUseCase to accept date ranges.
+    
+    Added month and year RequestParams to AccountController with YearMonth calculation.
+
+[33mcommit 0a074e8e9a1138ec2f12869be3131960cff0acb0[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu Apr 16 20:18:34 2026 -0300
+
+    feat: implement transaction update with balance recalculation
+    
+    Added updateDetails method to Transaction domain for partial updates.
+    
+    Implemented UpdateTransactionUseCase with "sturn and recharge" logic to ensure account balance integrity.
+    
+    Added UpdateTransactionPort and configured it in BeanConfiguration.
+    
+    Updated TransactionResponse to include the transaction ID.
+    
+    Exposed PUT /transactions/{id} endpoint in TransactionController.
+
+[33mcommit b467be4b1e7283e67a0e20ac5b1e1eb76b06aa15[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Thu Apr 16 18:44:25 2026 -0300
+
+    feat: implement category management and transaction validation rules
+    
+    Added full CRUD for Categories (Domain, UseCase, and Web Adapter)
+    
+    Integrated Category validation into CreateTransactionUseCase
+    
+    Switched database to permanent file mode in application.properties
+    
+    Cleaned up import.sql for stable initial data
+
+[33mcommit e0baf7fb6824f280de9f40405dbfb9f862f13306[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 20:44:43 2026 -0300
+
+    feat: implement financial dashboard with expenses by category and total balance consolidation
+
+[33mcommit 5950e3646127241f1372d4738957ebe74216a183[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 16:41:22 2026 -0300
+
+    feat: finalize core engine integration with transfers and transaction listing
+
+[33mcommit 224e09f8e8e19fcc329085a8367ac813e259f141[m
+Merge: 8a62efc 29aee3a
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 16:01:42 2026 -0300
+
+    chore: resolve merge conflicts and sync with remote
+
+[33mcommit 8a62efce4fbe2b1c1dca7ce5a96fa7c9772f94ef[m[33m ([m[1;32mfeature/category-management[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 15:52:29 2026 -0300
+
+    refactor: update account controller and move request dto to correct package
+
+[33mcommit ca086f494e92292955cc344293581e9f7b8d8fb3[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 15:51:13 2026 -0300
+
+    feat: complete transaction flow and global error handling
+
+[33mcommit 27a0c767c24f862e2dc2c3bee9c23bd80f1cbbdc[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 15:50:29 2026 -0300
+
+    feat: implement user domain and persistence infrastructure
+
+[33mcommit 3be3c234fe0ba712f9faf717b8952df2dae18ccd[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Mon Apr 6 15:49:46 2026 -0300
+
+    feat: implement category management and persistence
+
+[33mcommit 863fcecea2cc695c2c25d785f5873fc053196ef7[m[33m ([m[1;31morigin/feature/web-api-setup[m[33m, [m[1;32mfeature/web-api-setup[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sun Apr 5 09:15:41 2026 -0300
+
+    feat: implement professional error handling for account domain
+
+[33mcommit 29aee3aee53a81c3f1471aabd06dc08b7528e834[m
+Merge: 024ef2e ee295ae
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 15:46:40 2026 -0300
+
+    Merge pull request #9 from njansh/feature/persistence-transaction-jpa
+    
+    Feature/persistence transaction jpa
+
+[33mcommit 741c12a50bef76af1c20b29048d0909742cf33d0[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 15:45:35 2026 -0300
+
+    feat: complete end-to-end account creation and retrieval
+
+[33mcommit 024ef2e1afae75f193cbaf320c8e6c17eecc1df2[m
+Merge: 1b68947 8db6595
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 14:40:15 2026 -0300
+
+    Merge pull request #10 from njansh/feature/persistence-category-jpa
+    
+    Feature/persistence category jpa
+
+[33mcommit ee295ae825ec4bc9086d79c2504d7b307f2cf14e[m[33m ([m[1;31morigin/feature/persistence-transaction-jpa[m[33m, [m[1;32mfeature/persistence-transaction-jpa[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 14:32:16 2026 -0300
+
+    feat: complete transaction persistence and custom query
+
+[33mcommit 8db6595791bd77af24b26b269482fa09f225fdfd[m[33m ([m[1;31morigin/feature/persistence-category-jpa[m[33m, [m[1;32mfeature/persistence-category-jpa[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 14:14:22 2026 -0300
+
+    feat: implement JPA persistence for Category
+
+[33mcommit ef0eb7943e04484d14d42590e3e5144dedaf3eed[m[33m ([m[1;32mfeature/persistence-account-jpa[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:56:33 2026 -0300
+
+    feat: implement JPA persistence adapter for Account
+
+[33mcommit 96f54adcfe354a736b6438decf8dd399ebfcbe79[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:43:45 2026 -0300
+
+    feat: map Account domain to JpaEntity
+
+[33mcommit 1b68947f7a179a6e8c6ce3822a3866af12bb0289[m
+Merge: bee0643 45b8604
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:37:54 2026 -0300
+
+    Merge pull request #8 from njansh/feature/setup-persistence
+    
+    chore: setup persistence with H2 and Spring Data JPA
+
+[33mcommit 45b8604325d06f6d9cdde6ce82e0d41dc2408182[m[33m ([m[1;31morigin/feature/setup-persistence[m[33m, [m[1;32mfeature/setup-persistence[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:36:38 2026 -0300
+
+    chore: setup persistence with H2 and Spring Data JPA
+
+[33mcommit bee0643cd5719a24d115eabd0c3788cd8f83cd04[m
+Merge: 9b31db0 3dc7903
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:25:15 2026 -0300
+
+    Merge pull request #7 from njansh/feature/category-domain
+    
+    feature/category-domain
+
+[33mcommit 3dc7903828a08b680e40fa3aab2c28f68133126b[m[33m ([m[1;31morigin/feature/category-domain[m[33m, [m[1;32mfeature/category-domain[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:23:23 2026 -0300
+
+    feat: finalize category entity and enfeat: enable transaction categorization through domain methodsure domain invariants
+
+[33mcommit 4c61587f1c6a4e669b9e0e62d01f5e52a2babc63[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:09:37 2026 -0300
+
+    feat: finalize category entity and ensure domain invariants
+
+[33mcommit e80301b6a73461b308f5a560b06fb22227634339[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 09:09:28 2026 -0300
+
+    feat: implement category domain and creation use case
+
+[33mcommit 9b31db0455a1c86ccd8a9fcfcaa15f0d75a40a2e[m
+Merge: 813ba35 fefe03a
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:54:26 2026 -0300
+
+    Merge pull request #6 from njansh/feature/account-queries-and-logic
+    
+    feature/account-queries-and-logic
+
+[33mcommit fefe03a2df0b77521fdc8419db2bfc8671cdcf2c[m[33m ([m[1;31morigin/feature/account-queries-and-logic[m[33m, [m[1;32mfeature/account-queries-and-logic[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:53:25 2026 -0300
+
+    refactor: centralize transaction validation to ensure domain invariants
+
+[33mcommit dbbf8dfd27140c7c562080832bdddee13cda86cc[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:39:58 2026 -0300
+
+    feat: implement transfer use case with dual-account orchestration
+
+[33mcommit e1d3ed32113111b8719509f10956d23fa883e501[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:27:09 2026 -0300
+
+    feat: implement transaction list use case using repository port
+
+[33mcommit 0d3120acc72fbca6f3fb8173255bf0d97566b9c2[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:14:49 2026 -0300
+
+    feat: implement account balance query use case
+
+[33mcommit 813ba357916880b5d2ce19f4268f8501c46de249[m
+Merge: 338ca68 f1f5b7d
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Sat Apr 4 08:04:58 2026 -0300
+
+    Merge pull request #5 from njansh/feature/transaction-logic
+    
+    feat: orchestrate account balance update within transaction creation
+
+[33mcommit f1f5b7de99dc7799e64bc132acb8a2229862b340[m[33m ([m[1;31morigin/feature/transaction-logic[m[33m, [m[1;32mfeature/transaction-logic[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Fri Apr 3 09:55:29 2026 -0300
+
+    feat: orchestrate account balance update within transaction creation
+
+[33mcommit 338ca687371e2a0c3bdef5f839872f8ac175ff1d[m
+Merge: 1d997e4 03ce5ed
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Fri Apr 3 09:31:45 2026 -0300
+
+    Merge pull request #4 from njansh/feature/transaction-usecase
+    
+    feat: add transaction use case and ports with account existence check
+
+[33mcommit 03ce5ed91ebd0121dcb12a91c8dc7e68e9f7184b[m[33m ([m[1;31morigin/feature/transaction-usecase[m[33m, [m[1;32mfeature/transaction-usecase[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 03:36:35 2026 -0300
+
+    feat: add transaction use case and ports with account existence check
+
+[33mcommit 1d997e4602bad6fcf028426fade6efa4f0354d8a[m
+Merge: 6ce0221 cd42f3a
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 03:25:37 2026 -0300
+
+    Merge pull request #3 from njansh/feature/account-usecase
+    
+    feat: implement create account use case with inbound and outbound ports
+
+[33mcommit cd42f3a09c0da1fa87be169b831ad60792980fc1[m[33m ([m[1;31morigin/feature/account-usecase[m[33m, [m[1;32mfeature/account-usecase[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 03:21:54 2026 -0300
+
+    feat: implement create account use case with inbound and outbound ports
+
+[33mcommit 6ce02219f50bacb9c9fb81dce9a39e5ee87f8ed2[m
+Merge: 4aa929a 69a634c
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 03:06:46 2026 -0300
+
+    Merge pull request #2 from njansh/feature/transaction-domain
+    
+    feat: create transaction entity with validations
+
+[33mcommit 69a634c354084ec0e0c16ab666679e7e8658107c[m[33m ([m[1;31morigin/feature/transaction-domain[m[33m, [m[1;32mfeature/transaction-domain[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 03:02:18 2026 -0300
+
+    feat: create transaction entity with validations
+
+[33mcommit 4aa929abe5e79ab25a4e4ffef6624dfde91be56e[m
+Merge: c793033 0709ecc
+Author: Nadson Jhony <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 02:34:14 2026 -0300
+
+    Merge pull request #1 from njansh/feature/account-domain
+    
+    feature/account-domain
+
+[33mcommit 0709ecc6581acb95f24e700f79b307306d6ca39d[m[33m ([m[1;31morigin/feature/account-domain[m[33m, [m[1;32mfeature/account-domain[m[33m)[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Wed Apr 1 02:32:44 2026 -0300
+
+    fix: initialize balance to zero to prevent NPE
+    
+    - Initialize balance to zero when null in constructor
+    - Add getter methods for Account entity
+
+[33mcommit 24939e4c1cc2ea0b87e2fb3b6fa8d79198b2915f[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue Mar 31 18:41:31 2026 -0300
+
+    feat: add deposit and withdraw methods with validation to account
+
+[33mcommit affbb1793f4a798d7e3812fb6ed9b0104d15da53[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue Mar 31 18:40:59 2026 -0300
+
+    feat: created account class and enum acountType
+
+[33mcommit c793033e6e4fce8b17e47ac8abac111fbdffee22[m
+Author: Njansh <nadsonjhonyobmep@gmail.com>
+Date:   Tue Mar 31 18:23:38 2026 -0300
+
+    chore: initial commit with project structure

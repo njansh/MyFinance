@@ -20,8 +20,7 @@ public class DeleteAccountUseCase implements DeleteAccountPort {
     public DeleteAccountUseCase(AccountRepositoryPort accountRepo,
                                 TransactionRepositoryPort transactionRepo,
                                 RecurringTemplateRepositoryPort recurringRepo,
-                                CreditCardRepositoryPort creditCardRepo,
-                                DeleteTransactionUseCase deleteTransactionUseCase) {
+                                CreditCardRepositoryPort creditCardRepo, DeleteTransactionUseCase deleteTransactionUseCase) {
         this.accountRepo = accountRepo;
         this.transactionRepo = transactionRepo;
         this.recurringRepo = recurringRepo;
@@ -34,15 +33,14 @@ public class DeleteAccountUseCase implements DeleteAccountPort {
     public void execute(UUID accountId, UUID userId) {
         Account account = accountRepo.findById(accountId);
         if (account == null || !account.getUserId().equals(userId)) {
-            throw new BusinessRuleException("Conta não encontrada ou acesso negado.");
+            throw new BusinessRuleException("Account not found or access denied.");
         }
 
-       creditCardRepo.deleteAllByAccountId(accountId);
-
-       List<Transaction> transactions = transactionRepo.findAllByAccountId(accountId);
+        List<Transaction> transactions = transactionRepo.findAllByAccountId(accountId);
         for (Transaction t : transactions) {
             deleteTransactionUseCase.execute(t.getTransactionId());
         }
+        creditCardRepo.deleteAllByAccountId(accountId);
 
         recurringRepo.deleteAllByAccountId(accountId);
 
