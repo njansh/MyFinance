@@ -6,6 +6,7 @@ import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.application.service.CategorizationEngine;
 import com.nadson.myfinance.application.service.TransactionImportService;
 import com.nadson.myfinance.application.usecase.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -202,8 +203,18 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public UpdateUserUsePort updateUserUsePort(UserRepositoryPort repository) {
+        return new UpdateUserUseCase(repository);
+    }
+
+    @Bean
     public UpdateCategoryPort updateCategoryPort(CategoryRepositoryPort categoryRepositoryPort) {
         return new UpdateCategoryUseCase(categoryRepositoryPort);
+    }
+
+    @Bean
+    public ChangePasswordPort changePasswordPort(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
+        return new ChangePasswordUseCase(userRepositoryPort, passwordEncoder);
     }
 
     @Bean

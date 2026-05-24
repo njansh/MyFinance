@@ -1,5 +1,7 @@
 package com.nadson.myfinance.domain.entity;
 
+import com.nadson.myfinance.domain.exception.BusinessRuleException;
+
 import java.util.UUID;
 
 public class User {
@@ -17,9 +19,9 @@ public class User {
     }
 
     private void validate() {
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("Name is required");
-        if (email == null || !email.contains("@")) throw new IllegalArgumentException("Invalid email");
-        if (password == null || password.isBlank()) throw new IllegalArgumentException("Password is required");
+        if (name == null || name.isBlank()) throw new BusinessRuleException("Name is required");
+        if (email == null || !email.contains("@")) throw new BusinessRuleException("Invalid email format");
+        if (password == null || password.isBlank()) throw new BusinessRuleException("Password is required");
     }
 
 
@@ -31,4 +33,24 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public void updateProfile(String name, String email) {
+        if (name != null) {
+            if (name.isBlank()) throw new BusinessRuleException("Name cannot be blank");
+            this.name = name;
+        }else this.name = this.name;
+
+        if (email != null) {
+            if (!email.contains("@")) throw new BusinessRuleException("Invalid email format");
+            this.email = email;
+        }else this.email = this.email;
+    }
+
+    public void changePassword(String newPassword, String encodedPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+throw new BusinessRuleException("New password cannot be blank");
+        }
+        this.password = encodedPassword;
+    }
+
 }
