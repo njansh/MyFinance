@@ -202,6 +202,11 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public UpdateUserUsePort updateUserUsePort(UserRepositoryPort repository) {
+        return new UpdateUserUseCase(repository);
+    }
+
+    @Bean
     public UpdateCategoryPort updateCategoryPort(CategoryRepositoryPort categoryRepositoryPort) {
         return new UpdateCategoryUseCase(categoryRepositoryPort);
     }

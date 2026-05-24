@@ -6,6 +6,7 @@ import com.nadson.myfinance.domain.records.BillingCycleDetailsDTO;
 import com.nadson.myfinance.domain.records.PaymentRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardTransactionRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateUserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.*;
 import com.nadson.myfinance.infrastructure.security.JwtService;
@@ -36,6 +37,7 @@ public class UserController {
     private final GetBillingCycleByDatePort getBillingCycleByDatePort;
     private final BillingProcessPaymentPort billingProcessPaymentPort;
     private final DeleteCreditCardPort deleteCreditCardPort;
+    private final UpdateUserUsePort updateUserUsePort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -51,7 +53,7 @@ public class UserController {
                           GetCreditCardPort getCreditCardPort,
                           GetBillingCycleByDatePort getBillingCycleByDatePort,
                           BillingProcessPaymentPort billingProcessPaymentPort,
-                          DeleteCreditCardPort deleteCreditCardPort) {
+                          DeleteCreditCardPort deleteCreditCardPort, UpdateUserUsePort updateUserUsePort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -67,6 +69,7 @@ public class UserController {
         this.getBillingCycleByDatePort = getBillingCycleByDatePort;
         this.billingProcessPaymentPort = billingProcessPaymentPort;
         this.deleteCreditCardPort = deleteCreditCardPort;
+        this.updateUserUsePort = updateUserUsePort;
     }
 
     // --- User Management ---
@@ -80,6 +83,15 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
         User user = getUserPort.execute(id);
+        return ResponseEntity.ok(UserResponse.fromDomain(user));
+    }
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponse> updateProfile(@RequestBody UpdateUserRequest request) {
+        String userIdString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID userId = UUID.fromString(userIdString);
+
+        var user = updateUserUsePort.execute(userId, request.name(), request.email());
+
         return ResponseEntity.ok(UserResponse.fromDomain(user));
     }
 
