@@ -7,6 +7,7 @@ import com.nadson.myfinance.domain.entity.Goal;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public class CreateGoalUseCase implements CreateGoalPort {
@@ -19,11 +20,12 @@ public class CreateGoalUseCase implements CreateGoalPort {
     }
 
     @Override
-    public Goal execute(UUID userId, String description, BigDecimal targetAmount) {
+    public Goal execute(UUID userId, String description, BigDecimal targetAmount, List<UUID> accountIds) {
         if (userRepository.findById(userId) == null) {
             throw new BusinessRuleException("User not found");
         }
-        Goal goal = new Goal(null, userId, description, targetAmount, BigDecimal.ZERO);
+
+        Goal goal = new Goal(null, userId, description, targetAmount, BigDecimal.ZERO, accountIds);
         return repository.save(goal);
     }
 }

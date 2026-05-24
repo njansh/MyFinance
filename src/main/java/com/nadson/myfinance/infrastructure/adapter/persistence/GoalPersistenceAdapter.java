@@ -7,6 +7,7 @@ import com.nadson.myfinance.infrastructure.adapter.persistence.repository.Spring
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -24,10 +25,20 @@ public class GoalPersistenceAdapter implements GoalRepositoryPort {
     }
 
     @Override
+    public Optional<Goal> findById(UUID id) {
+        return repository.findById(id).map(GoalJpaEntity::toDomain);
+    }
+
+    @Override
     public List<Goal> findByUserId(UUID userId) {
         return repository.findByUserId(userId).stream()
                 .map(GoalJpaEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        repository.deleteById(id);
     }
 
     @Override
