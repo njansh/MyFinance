@@ -44,7 +44,13 @@ public class User {
             if (!email.contains("@")) throw new BusinessRuleException("Invalid email format");
             this.email = email;
         }else this.email = this.email;
-
-
     }
+
+    public void changePassword(String newPassword, String encodedPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+throw new BusinessRuleException("New password cannot be blank");
+        }
+        this.password = encodedPassword;
+    }
+
 }

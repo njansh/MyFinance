@@ -4,10 +4,7 @@ import com.nadson.myfinance.application.port.in.*;
 import com.nadson.myfinance.domain.entity.User;
 import com.nadson.myfinance.domain.records.BillingCycleDetailsDTO;
 import com.nadson.myfinance.domain.records.PaymentRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.request.CreditCardTransactionRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UpdateUserRequest;
-import com.nadson.myfinance.infrastructure.adapter.web.dto.request.UserRequest;
+import com.nadson.myfinance.infrastructure.adapter.web.dto.request.*;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.*;
 import com.nadson.myfinance.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
@@ -38,6 +35,7 @@ public class UserController {
     private final BillingProcessPaymentPort billingProcessPaymentPort;
     private final DeleteCreditCardPort deleteCreditCardPort;
     private final UpdateUserUsePort updateUserUsePort;
+    private final ChangePasswordPort changePasswordPort;
 
     public UserController(CreateUserPort createUserPort,
                           GetUserPort getUserPort,
@@ -53,7 +51,7 @@ public class UserController {
                           GetCreditCardPort getCreditCardPort,
                           GetBillingCycleByDatePort getBillingCycleByDatePort,
                           BillingProcessPaymentPort billingProcessPaymentPort,
-                          DeleteCreditCardPort deleteCreditCardPort, UpdateUserUsePort updateUserUsePort) {
+                          DeleteCreditCardPort deleteCreditCardPort, UpdateUserUsePort updateUserUsePort, ChangePasswordPort changePasswordPort) {
         this.createUserPort = createUserPort;
         this.getUserPort = getUserPort;
         this.getTotalBalancePort = getTotalBalancePort;
@@ -70,6 +68,7 @@ public class UserController {
         this.billingProcessPaymentPort = billingProcessPaymentPort;
         this.deleteCreditCardPort = deleteCreditCardPort;
         this.updateUserUsePort = updateUserUsePort;
+        this.changePasswordPort = changePasswordPort;
     }
 
     // --- User Management ---
@@ -94,7 +93,11 @@ public class UserController {
 
         return ResponseEntity.ok(UserResponse.fromDomain(user));
     }
-
+    @PutMapping("/profile/password")
+    public ResponseEntity<Void> changePassword(@RequestBody ChangePasswordRequest request) {
+        changePasswordPort.execute(request.oldPassword(), request.newPassword());
+        return ResponseEntity.noContent().build();
+    }
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyUser() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
