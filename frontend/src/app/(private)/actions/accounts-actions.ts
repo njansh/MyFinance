@@ -73,3 +73,42 @@ export async function deleteAccountAction(accountId: string) {
 
   revalidatePath('/contas');
 }
+
+// NOVA ACTION: Adicionada de forma isolada apenas para a edição
+export async function updateAccountAction(prevState: any, formData: FormData) {
+  try {
+    const token = await getAuthToken();
+    const userId = getUserIdFromToken(token);
+
+    const accountId = formData.get('accountId');
+    const name = formData.get('name');
+    const type = formData.get('type');
+    const balance = formData.get('balance');
+
+    const payload: any = { name, type, userId };
+
+    // Adiciona o saldo ao payload se ele for enviado na edição
+    if (balance !== null && balance !== undefined) {
+      payload.balance = parseFloat(balance as string);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/accounts/${accountId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      return { success: false, error: `Erro: ${err}` };
+    }
+
+    revalidatePath('/contas');
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
