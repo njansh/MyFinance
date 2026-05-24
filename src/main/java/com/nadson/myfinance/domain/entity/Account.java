@@ -60,4 +60,18 @@ public class Account {
         return balance;
     }
 
+    public void update(String name, BigDecimal balance, AccountType type) {
+        if (name != null) {
+            if (name.isBlank()) throw new BusinessRuleException("Name cannot be blank") ;
+            this.name = name;
+        } else this.name = this.name;
+        if (balance != null) {
+            if (balance.compareTo(BigDecimal.ZERO) < 0) throw new BusinessRuleException("Balance cannot be negative");
+            this.balance = balance;
+        }else this.balance = this.balance;
+        if (type != null) {
+            this.type = type;
+        }else this.type = this.type;
+    }
+
 }
