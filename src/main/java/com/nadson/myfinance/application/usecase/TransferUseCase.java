@@ -1,5 +1,6 @@
 package com.nadson.myfinance.application.usecase;
 
+import com.nadson.myfinance.application.port.in.ProcessTransactionInGoalPort;
 import com.nadson.myfinance.application.port.in.TransferPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
@@ -20,10 +21,14 @@ public class TransferUseCase implements TransferPort {
 
     private final AccountRepositoryPort accountRepositoryPort;
     private final TransactionRepositoryPort transactionRepositoryPort;
+    private final ProcessTransactionInGoalPort processTransactionInGoal; // Nova injeção
 
-    public TransferUseCase(AccountRepositoryPort accountRepositoryPort, TransactionRepositoryPort transactionRepositoryPort) {
+    public TransferUseCase(AccountRepositoryPort accountRepositoryPort,
+                           TransactionRepositoryPort transactionRepositoryPort,
+                           ProcessTransactionInGoalPort processTransactionInGoal) {
         this.accountRepositoryPort = accountRepositoryPort;
         this.transactionRepositoryPort = transactionRepositoryPort;
+        this.processTransactionInGoal = processTransactionInGoal;
     }
 
     @Override
@@ -48,17 +53,19 @@ public class TransferUseCase implements TransferPort {
 
         UUID transferID = UUID.randomUUID();
 
-        BigDecimal senderBalanceAfter = (sourceAccountId!= null && sourceAccountId.equals(senderAccountId))? sourceBalanceAfter : null;
-        BigDecimal receiverBalanceAfter = (sourceAccountId!= null && sourceAccountId.equals(receiverAccountId))? sourceBalanceAfter : null;
+        BigDecimal senderBalanceAfter = (sourceAccountId != null && sourceAccountId.equals(senderAccountId)) ? sourceBalanceAfter : null;
+        BigDecimal receiverBalanceAfter = (sourceAccountId != null && sourceAccountId.equals(receiverAccountId)) ? sourceBalanceAfter : null;
 
-        String desc = (description!= null &&!description.isBlank())? description : "Transferência";
+        String desc = (description != null && !description.isBlank()) ? description : "Transferência";
 
+        // 1. Cria a transação de saída (Despesa)
         Transaction debit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.EXPENSE,
                 senderAccountId, null, true, transferID, senderBalanceAfter,
                 TransactionStatus.COMPLETED, null
         );
 
+        // 2. Cria a transação de entrada (Receita)
         Transaction credit = new Transaction(
                 UUID.randomUUID(), desc, amount, date, TransactionType.INCOME,
                 receiverAccountId, null, true, transferID, receiverBalanceAfter,
@@ -67,5 +74,9 @@ public class TransferUseCase implements TransferPort {
 
         transactionRepositoryPort.save(debit);
         transactionRepositoryPort.save(credit);
+
+        // 3. Processa o impacto nas metas (se houver) para ambas as contas
+        processTransactionInGoal.execute(debit);
+        processTransactionInGoal.execute(credit);
     }
 }

@@ -1,11 +1,10 @@
 package com.nadson.myfinance.application.port.in;
 
 import com.nadson.myfinance.domain.entity.Goal;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-public interface CreateGoalPort {
-    Goal execute(UUID userId, String description, BigDecimal targetAmount, List<UUID> accountIds);
+public interface UpdateGoalPort {
+    Goal execute(UUID userId,UUID id, String description, BigDecimal targetAmount, List<UUID> accountIds);
 }

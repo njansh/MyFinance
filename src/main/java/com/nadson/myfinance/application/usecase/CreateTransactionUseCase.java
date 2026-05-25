@@ -2,6 +2,7 @@ package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.CreateTransactionPort;
 import com.nadson.myfinance.application.port.in.ProcessTransactionInBudgetPort;
+import com.nadson.myfinance.application.port.in.ProcessTransactionInGoalPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
@@ -20,15 +21,19 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
     private final CategoryRepositoryPort categoryRepositoryPort;
     private final ProcessTransactionInBudgetPort processTransactionInBudget;
 
+    private final ProcessTransactionInGoalPort processTransactionInGoal;
+
     public CreateTransactionUseCase(
             TransactionRepositoryPort transactionRepositoryPort,
             AccountRepositoryPort accountRepositoryPort,
             CategoryRepositoryPort categoryRepositoryPort,
-            ProcessTransactionInBudgetPort processTransactionInBudget) {
+            ProcessTransactionInBudgetPort processTransactionInBudget,
+            ProcessTransactionInGoalPort processTransactionInGoal) {
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.accountRepositoryPort = accountRepositoryPort;
         this.categoryRepositoryPort = categoryRepositoryPort;
         this.processTransactionInBudget = processTransactionInBudget;
+        this.processTransactionInGoal = processTransactionInGoal;
     }
 
     public record TransactionResult(Transaction transaction, String alert) {}
@@ -64,6 +69,8 @@ public class CreateTransactionUseCase implements CreateTransactionPort {
         Transaction savedTransaction = transactionRepositoryPort.save(transaction);
 
         String alert = processTransactionInBudget.execute(savedTransaction);
+
+        processTransactionInGoal.execute(savedTransaction);
 
         return new TransactionResult(savedTransaction, alert);
     }
