@@ -5,13 +5,15 @@ import {
   getExpensesReport,
   getIncomesReport,
   getPendingTransactions,
-  getBudgets
+  getBudgets,
+  getGoals // Importamos a função de metas
 } from '@/lib/api/api-server';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
 import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { DashboardFilter } from '@/components/dashboard/dashboard-filter';
 import { PendingTransactions } from '@/components/pending/PendingTransactions';
 import { BudgetPanel } from '@/components/dashboard/budget-panel';
+import { GoalPanel } from '@/components/dashboard/goal-panel'; // Importamos o novo componente
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -34,6 +36,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   let pendingTransactions: any[] = [];
   let categories: any[] = [];
   let budgets: any[] = [];
+  let goals: any[] = []; // Estado para as metas
 
   let kpis = {
     netWorth: 0,
@@ -48,17 +51,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   try {
     // Buscas paralelas para otimizar o tempo de carregamento
-    const [accountsRes, categoriesRes, budgetsRes, pendingRes] = await Promise.allSettled([
+    const [accountsRes, categoriesRes, budgetsRes, pendingRes, goalsRes] = await Promise.allSettled([
       getAccounts(),
       getCategories(),
       getBudgets(currentMonth, currentYear),
-      getPendingTransactions(currentMonth, currentYear)
+      getPendingTransactions(currentMonth, currentYear),
+      getGoals() // Chamada paralela para as metas
     ]);
 
     if (accountsRes.status === 'fulfilled') accounts = accountsRes.value;
     if (categoriesRes.status === 'fulfilled') categories = categoriesRes.value;
     if (budgetsRes.status === 'fulfilled') budgets = budgetsRes.value;
     if (pendingRes.status === 'fulfilled') pendingTransactions = pendingRes.value;
+    if (goalsRes.status === 'fulfilled') goals = goalsRes.value; // Atribuição das metas
 
     const resKpis = await fetch(`http://localhost:8080/api/dashboard/kpis?month=${currentMonth}&year=${currentYear}`, {
       method: 'GET',
@@ -98,9 +103,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   const budgetsView = budgets.map((b: any) => {
     const targetCategoryId = b.categoryId || b.category_id;
-
     const cat = categories.find((c: any) => c.id === targetCategoryId || c.categoryId === targetCategoryId);
-
     return {
       id: b.id,
       categoryName: cat ? cat.name : 'Categoria Desconhecida',
@@ -130,8 +133,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         nextMonthForecast={kpis.nextMonthForecast}
       />
 
-      {/* Painel de Orçamentos renderizado aqui! */}
-      <BudgetPanel budgets={budgetsView} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <BudgetPanel budgets={budgetsView} />
+        <GoalPanel goals={goals} /> {/* Adicionado ao layout */}
+      </div>
 
       <DashboardCharts expensesData={expensesReport} incomesData={incomesReport} />
 

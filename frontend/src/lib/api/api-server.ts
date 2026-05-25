@@ -48,6 +48,15 @@ export interface CreditCard {
   accountId: string;
 }
 
+export interface Goal {
+  id: string;
+  userId: string;
+  description: string;
+  targetAmount: number;
+  currentAmount: number;
+  accountIds: string[];
+}
+
 function getUserIdFromToken(token: string): string {
   try {
     const payload = token.split('.')[1];
@@ -134,6 +143,16 @@ export async function getCategories(): Promise<Category[]> {
   const response = await apiFetch(
     `/users/${userId}/categories`
   );
+
+  return response.json();
+}
+
+/* =========================
+   GOALS (METAS)
+========================= */
+
+export async function getGoals(): Promise<Goal[]> {
+  const response = await apiFetch('/goals');
 
   return response.json();
 }
@@ -290,7 +309,6 @@ export interface Budget {
 
 export async function getBudgets(month: number, year: number): Promise<Budget[]> {
   const token = await getAuthToken();
-  // Como a sua rota GET do backend requer month e year:
   const response = await apiFetch(`/budgets?month=${month}&year=${year}`);
 
   if (!response.ok) return [];

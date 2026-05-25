@@ -180,3 +180,54 @@ export async function createAccount(payload: {
 
   return response.json();
 }
+/* =========================
+   GOALS (METAS)
+========================= */
+
+export interface Goal {
+  id: string;
+  userId: string;
+  description: string;
+  targetAmount: number;
+  currentAmount: number;
+  accountIds: string[];
+}
+
+export async function getGoals(): Promise<Goal[]> {
+  const response = await clientFetch('/api/goals', { method: 'GET' });
+  return response.json();
+}
+
+export async function createGoal(payload: {
+  description: string;
+  targetAmount: number;
+  accountIds: string[];
+}) {
+  const response = await clientFetch('/api/goals', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return response.json();
+}
+
+export async function updateGoal(
+  id: string,
+  payload: {
+    description: string;
+    targetAmount: number;
+    accountIds: string[];
+  }
+) {
+  const response = await clientFetch(`/api/goals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+  return response.json();
+}
+
+export async function deleteGoal(id: string) {
+  const response = await clientFetch(`/api/goals/${id}`, {
+    method: 'DELETE',
+  });
+  return response;
+}
