@@ -1,6 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.ConfirmRecurringPort;
+import com.nadson.myfinance.application.port.in.ProcessTransactionInGoalPort;
 import com.nadson.myfinance.application.port.out.AccountRepositoryPort;
 import com.nadson.myfinance.application.port.out.TransactionRepositoryPort;
 import com.nadson.myfinance.domain.entity.Account;
@@ -18,12 +19,15 @@ import java.util.UUID;
 public class ConfirmRecurringUseCase implements ConfirmRecurringPort {
     private final TransactionRepositoryPort transactionRepositoryPort;
     private final AccountRepositoryPort accountRepositoryPort;
+    private final ProcessTransactionInGoalPort processTransactionInGoal; // Port injetado
 
-    public ConfirmRecurringUseCase(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort) {
+    public ConfirmRecurringUseCase(TransactionRepositoryPort transactionRepositoryPort,
+                                   AccountRepositoryPort accountRepositoryPort,
+                                   ProcessTransactionInGoalPort processTransactionInGoal) { // Construtor atualizado
         this.transactionRepositoryPort = transactionRepositoryPort;
         this.accountRepositoryPort = accountRepositoryPort;
+        this.processTransactionInGoal = processTransactionInGoal;
     }
-
     @Transactional
     @Override
     public Transaction execute(UUID userId, UUID transactionId, BigDecimal actualAmount, LocalDateTime actualDate) {
@@ -59,7 +63,10 @@ public class ConfirmRecurringUseCase implements ConfirmRecurringPort {
         }
 
         accountRepositoryPort.save(account);
+        Transaction savedTransaction = transactionRepositoryPort.save(pendingTransaction);
+        processTransactionInGoal.execute(savedTransaction);
 
-        return transactionRepositoryPort.save(pendingTransaction);
+        return savedTransaction;
+
     }
 }
