@@ -233,8 +233,8 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public ConfirmRecurringPort confirmRecurringPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort) {
-        return new ConfirmRecurringUseCase(transactionRepositoryPort, accountRepositoryPort);
+    public ConfirmRecurringPort confirmRecurringPort(TransactionRepositoryPort transactionRepositoryPort, AccountRepositoryPort accountRepositoryPort,ProcessTransactionInGoalPort processTransactionInGoalPort) {
+        return new ConfirmRecurringUseCase(transactionRepositoryPort, accountRepositoryPort,processTransactionInGoalPort);
     }
 
     @Bean
@@ -275,7 +275,7 @@ public class BeanConfiguration {
             BillingCycleRepositoryPort billingCycleRepository,
             CreditCardRepositoryPort creditCardRepository,
             TransactionRepositoryPort transactionRepositoryPort,
-            CategoryRepositoryPort categoryRepositoryPort) {
+            CategoryRepositoryPort categoryRepositoryPort,ProcessTransactionInGoalPort processTransactionInGoalPort) {
         return new BillingProcessPaymentUseCase(
                 installmentRepository,
                 paymentRepository,
@@ -283,7 +283,8 @@ public class BeanConfiguration {
                 billingCycleRepository,
                 creditCardRepository,
                 transactionRepositoryPort,
-                categoryRepositoryPort
+                categoryRepositoryPort,
+                processTransactionInGoalPort
         );
     }
 

@@ -1,6 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.in.BillingProcessPaymentPort;
+import com.nadson.myfinance.application.port.in.ProcessTransactionInGoalPort; // Import adicionado
 import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.domain.entity.*;
 import com.nadson.myfinance.domain.enums.InstallmentStatus;
@@ -24,13 +25,16 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
     private final CreditCardRepositoryPort creditCardRepository;
     private final TransactionRepositoryPort transactionRepository;
     private final CategoryRepositoryPort categoryRepository;
+    private final ProcessTransactionInGoalPort processTransactionInGoal; // Port injetado
 
     public BillingProcessPaymentUseCase(CreditCardInstallmentRepositoryPort installmentRepository,
                                         BillingPaymentRepositoryPort paymentRepository,
                                         AccountRepositoryPort accountRepository,
                                         BillingCycleRepositoryPort billingCycleRepository,
                                         CreditCardRepositoryPort creditCardRepository,
-                                        TransactionRepositoryPort transactionRepository, CategoryRepositoryPort categoryRepository) {
+                                        TransactionRepositoryPort transactionRepository,
+                                        CategoryRepositoryPort categoryRepository,
+                                        ProcessTransactionInGoalPort processTransactionInGoal) { // Construtor atualizado
         this.installmentRepository = installmentRepository;
         this.paymentRepository = paymentRepository;
         this.accountRepository = accountRepository;
@@ -38,8 +42,8 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
         this.creditCardRepository = creditCardRepository;
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
+        this.processTransactionInGoal = processTransactionInGoal;
     }
-
     @Transactional
     @Override
     public void BillingProcessPayment(UUID userId, UUID cardId, UUID cycleId, UUID accountId, BigDecimal amountToPay) {
@@ -102,7 +106,9 @@ public class BillingProcessPaymentUseCase implements BillingProcessPaymentPort {
                 TransactionStatus.COMPLETED,
                 null
         );
-        transactionRepository.save(transaction);
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        processTransactionInGoal.execute(savedTransaction);
     }
 
     private void validateOwnership(UUID userId, UUID cardId, UUID cycleId, UUID accountId, BillingCycle cycle) {
