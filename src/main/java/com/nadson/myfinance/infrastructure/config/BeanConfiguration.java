@@ -34,8 +34,9 @@ public class BeanConfiguration {
             TransactionRepositoryPort transactionRepo,
             AccountRepositoryPort accountRepo,
             CategoryRepositoryPort categoryRepo,
-            ProcessTransactionInBudgetPort processTransactionInBudget) {
-        return new CreateTransactionUseCase(transactionRepo, accountRepo, categoryRepo, processTransactionInBudget);
+            ProcessTransactionInBudgetPort processTransactionInBudget,
+            ProcessTransactionInGoalPort processTransactionInGoal) {
+        return new CreateTransactionUseCase(transactionRepo, accountRepo, categoryRepo, processTransactionInBudget, processTransactionInGoal);
     }
 
     @Bean
@@ -57,8 +58,8 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public CreateGoalPort createGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository) {
-        return new CreateGoalUseCase(repository, userRepository);
+    public CreateGoalPort createGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository, AccountRepositoryPort accountRepository) {
+        return new CreateGoalUseCase(repository, userRepository, accountRepository);
     }
 
     @Bean
@@ -155,6 +156,11 @@ public class BeanConfiguration {
         return new GetBudgetUseCase(repository);
     }
 
+    @Bean
+    public ListGoalsPort listGoalsPort(GoalRepositoryPort repository, UserRepositoryPort userRepository) {
+        return new ListGoalsUseCase(repository, userRepository);
+    }
+
     /* =========================
        PROCESSAMENTO / OPERAÇÕES
     ========================= */
@@ -175,8 +181,8 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public TransferPort transferPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo) {
-        return new TransferUseCase(accountRepo, transRepo);
+    public TransferPort transferPort(AccountRepositoryPort accountRepo, TransactionRepositoryPort transRepo, ProcessTransactionInGoalPort processTransactionInGoal) {
+        return new TransferUseCase(accountRepo, transRepo, processTransactionInGoal);
     }
 
     @Bean
@@ -189,17 +195,26 @@ public class BeanConfiguration {
             TransactionRepositoryPort transactionRepositoryPort,
             AccountRepositoryPort accountRepositoryPort,
             BudgetRepositoryPort budgetRepositoryPort,
-            ProcessTransactionInBudgetPort processTransactionInBudgetPort) {
+            ProcessTransactionInBudgetPort processTransactionInBudgetPort,
+            RevertTransactionInGoalPort revertTransactionInGoalPort,
+            ProcessTransactionInGoalPort processTransactionInGoalPort) {
         return new UpdateTransactionUseCase(
                 transactionRepositoryPort,
                 accountRepositoryPort,
                 budgetRepositoryPort,
-                processTransactionInBudgetPort
+                processTransactionInBudgetPort,
+                revertTransactionInGoalPort,
+                processTransactionInGoalPort
         );
     }
     @Bean
-    public UpdateAccountPort updateAccountPort(AccountRepositoryPort repository) {
-        return new UpdateAccountUseCase(repository);
+    public UpdateAccountPort updateAccountPort(AccountRepositoryPort repository, GoalRepositoryPort goalRepositoryPort) {
+        return new UpdateAccountUseCase(repository, goalRepositoryPort);
+    }
+
+    @Bean
+    public UpdateGoalPort updateGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository, AccountRepositoryPort accountRepository) {
+        return new UpdateGoalUseCase(userRepository,repository, accountRepository);
     }
 
     @Bean
@@ -282,6 +297,16 @@ public class BeanConfiguration {
         return new ProcessTransactionInBudgetUseCase(budgetRepository, accountRepository);
     }
 
+    @Bean
+    public ProcessTransactionInGoalPort processTransactionInGoalPort(GoalRepositoryPort goalRepositoryPort) {
+        return new ProcessTransactionInGoalUseCase(goalRepositoryPort);
+    }
+
+    @Bean
+    public RevertTransactionInGoalPort revertTransactionInGoalPort(GoalRepositoryPort goalRepositoryPort) {
+        return new RevertTransactionInGoalUseCase(goalRepositoryPort);
+    }
+
     /* =========================
        DELEÇÃO
     ========================= */
@@ -290,8 +315,9 @@ public class BeanConfiguration {
     public DeleteTransactionUseCase deleteTransactionUseCase(
             TransactionRepositoryPort transactionRepository,
             AccountRepositoryPort accountRepository,
-            BudgetRepositoryPort budgetRepository) {
-        return new DeleteTransactionUseCase(transactionRepository, accountRepository, budgetRepository);
+            BudgetRepositoryPort budgetRepository,
+            RevertTransactionInGoalPort revertTransactionInGoal) {
+        return new DeleteTransactionUseCase(transactionRepository, accountRepository, budgetRepository, revertTransactionInGoal);
     }
 
     @Bean
@@ -329,6 +355,11 @@ public class BeanConfiguration {
     @Bean
     public DeleteBudgetPort deleteBudgetPort(BudgetRepositoryPort repository) {
         return new DeleteBudgetUseCase(repository);
+    }
+
+    @Bean
+    public DeleteGoalPort deleteGoalPort(GoalRepositoryPort repository, UserRepositoryPort userRepository ) {
+        return new DeleteGoalUseCase(repository, userRepository);
     }
 
     @Bean

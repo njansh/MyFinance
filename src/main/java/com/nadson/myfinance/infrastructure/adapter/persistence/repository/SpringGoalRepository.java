@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public interface SpringGoalRepository extends JpaRepository<GoalJpaEntity, UUID> {
     List<GoalJpaEntity> findByUserId(UUID userId);
+
+    List<GoalJpaEntity> findByAccountIdsContaining(UUID accountId);
+
     @Modifying
     @Query("DELETE FROM GoalJpaEntity g WHERE g.userId = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
