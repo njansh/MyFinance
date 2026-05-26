@@ -12,6 +12,29 @@ async function getAuthToken() {
   return token;
 }
 
+export async function uploadCsvAction(formData: FormData) {
+  const token = await getAuthToken();
+  // O bankCode está vindo dentro do formData, conforme configuramos no componente
+  const bankCode = formData.get('bankCode') as string || 'INTER';
+
+  const response = await fetch(`${API_BASE_URL}/api/import/${bankCode}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erro ao enviar arquivo: ${errorText}`);
+  }
+
+  revalidatePath('/extrato');
+  revalidatePath('/dashboard');
+  return { success: true, message: 'Arquivo enviado com sucesso!' };
+}
+
 export async function deleteTransactionAction(transactionId: string) {
   const token = await getAuthToken();
 
