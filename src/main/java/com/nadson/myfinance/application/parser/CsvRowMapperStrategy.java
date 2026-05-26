@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 
 public interface CsvRowMapperStrategy {
     String getBankCode();
-
     String extractDescription(CSVRecord record);
     BigDecimal extractAmount(CSVRecord record);
     LocalDateTime extractDate(CSVRecord record);
     BigDecimal extractBalanceAfter(CSVRecord record);
+
+    String extractReferenceId(CSVRecord record); // ADICIONE ISSO
 }

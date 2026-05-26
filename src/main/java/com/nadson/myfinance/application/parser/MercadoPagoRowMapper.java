@@ -59,4 +59,8 @@ public class MercadoPagoRowMapper implements CsvRowMapperStrategy {
             throw new RuntimeException("Erro ao processar valor monetário: " + value, e);
         }
     }
+    @Override
+    public String extractReferenceId(CSVRecord record) {
+        return record.get(2).trim(); // Índice 2 é o REFERENCE_ID no MP
+    }
 }
