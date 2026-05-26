@@ -74,9 +74,10 @@ public class TransactionImportService {
         log.info("Processando importação. Banco: {}. Conta alvo ID: {}", bankCode, currentAccountId);
 
         List<Category> userCategories = getCategoriesPort.execute(userId);
-        Map<String, UUID> categoryCache = new HashMap<>();
+        Map<String, Category> categoryCache = new HashMap<>();
         for (Category cat : userCategories) {
-            categoryCache.put(cat.getType().name() + "_" + cat.getName().toLowerCase(), cat.getCategoryId());
+            // Cache by name and type to ensure correct category usage
+            categoryCache.put(cat.getName().toLowerCase() + "_" + cat.getType(), cat);
         }
 
         List<CsvRowData> rowsToProcess = new ArrayList<>();
@@ -92,15 +93,24 @@ public class TransactionImportService {
                 if (!dataStarted || first.trim().isEmpty()) continue;
 
                 rowsToProcess.add(new CsvRowData(strategy.extractDescription(record), strategy.extractAmount(record),
-                        strategy.extractDate(record), strategy.extractBalanceAfter(record)));
+                        strategy.extractDate(record), strategy.extractBalanceAfter(record), strategy.extractReferenceId(record)));
             }
         }
+        LocalDateTime minDate = rowsToProcess.stream()
+                .map(CsvRowData::date)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now().minusYears(2));
+
+        LocalDateTime maxDate = rowsToProcess.stream()
+                .map(CsvRowData::date)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now().plusDays(1));
 
         List<Transaction> existingTransactions = transactionRepositoryPort.findAllByAccountIdAndDateBetween(
-                currentAccountId, LocalDateTime.now().minusYears(1), LocalDateTime.now().plusDays(1));
+                currentAccountId, minDate.minusDays(1), maxDate.plusDays(1));
 
         Set<String> processedHashes = existingTransactions.stream()
-                .map(t -> generateHash(currentAccountId, t.getDate(), t.getAmount(), t.getDescription()))
+                .map(t -> generateHash(currentAccountId, t.getDate(), t.getAmount(), t.getDescription(), t.getAccountBalanceAfter(), null))
                 .collect(Collectors.toSet());
 
         // MAPA DE FOOTPRINT: Agora usamos o Tipo e contamos quantas transferências idênticas existem
@@ -119,7 +129,7 @@ public class TransactionImportService {
             // TIPO 100% BASEADO NO SINAL MATEMÁTICO DO BANCO (Sem "adivinhar" por palavras)
             TransactionType type = row.amount().compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
-            String hash = generateHash(currentAccountId, row.date(), row.amount(), row.description());
+            String hash = generateHash(currentAccountId, row.date(), row.amount(), row.description(), row.balanceAfter(), bankCode);
             String footprint = type.name() + "_" + row.date().toLocalDate().toString() + "_" + row.amount().abs().setScale(2, RoundingMode.HALF_UP);
 
             if (processedHashes.contains(hash)) continue;
@@ -142,7 +152,6 @@ public class TransactionImportService {
         return desc.contains("transferência entre contas") ||
                 desc.contains("reserva") ||
                 desc.contains("retirado") ||
-                desc.contains("mercado pago") ||
                 desc.contains("nadson jhony") ||
                 desc.contains("poupança") ||
                 desc.contains("resgate") ||
@@ -159,7 +168,7 @@ public class TransactionImportService {
     }
 
     private void processRow(UUID currentAccountId, UUID interId, UUID mpId, UUID investmentId,
-                            CsvRowData row, UUID userId, Map<String, UUID> categoryCache, boolean isTransfer, TransactionType type) {
+                            CsvRowData row, UUID userId, Map<String, Category> categoryCache, boolean isTransfer, TransactionType type) {
 
         BigDecimal absAmount = row.amount().abs();
 
@@ -190,16 +199,32 @@ public class TransactionImportService {
             log.info("Processando linha como TRANSAÇÃO COMUM: {}", row.description());
 
             String catName = categorizationEngine.process(row.description());
-            UUID catId = categoryCache.computeIfAbsent(type.name() + "_" + catName.toLowerCase(),
-                    k -> createCategoryPort.execute(userId, catName, "#cccccc", "Circle", type).getCategoryId());
+            String catKey = catName.toLowerCase() + "_" + type;
+
+            Category category = categoryCache.get(catKey);
+            UUID catId;
+
+            if (category == null) {
+                category = createCategoryPort.execute(userId, catName, generateRandomColor(), "Circle", type);
+                categoryCache.put(catKey, category);
+            }
+            catId = category.getCategoryId();
 
             createTransactionPort.execute(new Transaction(UUID.randomUUID(), row.description(), absAmount, row.date(), type, currentAccountId, catId, false, null, row.balanceAfter(), TransactionStatus.COMPLETED, null));
         }
     }
-
-    private String generateHash(UUID accId, LocalDateTime date, BigDecimal amt, String desc) {
-        return accId.toString() + "_" + date.toLocalDate() + "_" + amt.abs().setScale(2, RoundingMode.HALF_UP) + "_" + (desc != null ? desc.trim().toLowerCase().replaceAll("\\s+", " ") : "n/a");
+    private String generateRandomColor() {
+        Random obj = new Random();
+        int randNum = obj.nextInt(0xffffff + 1);
+        return String.format("#%06x", randNum);
     }
 
-    private record CsvRowData(String description, BigDecimal amount, LocalDateTime date, BigDecimal balanceAfter) {}
+    private String generateHash(UUID accId, LocalDateTime date, BigDecimal amt, String desc, BigDecimal balanceAfter, String bankCode) {
+        String cleanDesc = (desc != null) ? desc.trim().toLowerCase().replaceAll("\\s+", " ") : "n/a";
+        String balanceStr = (balanceAfter != null) ? balanceAfter.setScale(2, RoundingMode.HALF_UP).toString() : "0.00";
+        return bankCode + "_" + accId.toString() + "_" + date.toLocalDate() + "_" +
+                amt.abs().setScale(2, RoundingMode.HALF_UP) + "_" + cleanDesc + "_" + balanceStr;
+    }
+
+    private record CsvRowData(String description, BigDecimal amount, LocalDateTime date, BigDecimal balanceAfter, String referenceId) {}
 }
