@@ -18,33 +18,56 @@ public class InterRowMapper implements CsvRowMapperStrategy {
 
     @Override
     public String extractDescription(CSVRecord record) {
-        // Índice 1 = Histórico, Índice 2 = Descrição
-        return (record.get(1) + " " + record.get(2)).trim();
+        StringBuilder sb = new StringBuilder();
+        int lastIndex = record.size() - 1; // Saldo
+        int valueIndex = lastIndex - 1;    // Valor
+
+        // Percorre as colunas do meio (Histórico e Descrição)
+        for (int i = 1; i < valueIndex; i++) {
+            String val = record.get(i);
+            // IGNORA colunas vazias geradas por ;; no CSV
+            if (val != null && !val.isBlank()) {
+                sb.append(val.trim()).append(" ");
+            }
+        }
+
+        String description = sb.toString().trim();
+        return description.isEmpty() ? "Transação sem descrição" : description;
     }
 
     @Override
     public BigDecimal extractAmount(CSVRecord record) {
-        // Índice 3 = Valor
-        return new BigDecimal(record.get(3).replace(".", "").replace(",", "."));
+        String value = record.get(record.size() - 2);
+        if (value == null || value.isBlank()) return BigDecimal.ZERO; // Segurança extra
+        return new BigDecimal(value.replace(".", "").replace(",", "."));
     }
 
     @Override
     public LocalDateTime extractDate(CSVRecord record) {
-        // Índice 0 = Data Lançamento
         return LocalDate.parse(record.get(0).trim(), FORMATTER).atStartOfDay();
     }
 
     @Override
     public BigDecimal extractBalanceAfter(CSVRecord record) {
-        // Índice 4 = Saldo
         try {
-            String balanceStr = record.get(4);
-            if (balanceStr!= null &&!balanceStr.isBlank()) {
+            String balanceStr = record.get(record.size() - 1);
+            if (balanceStr != null && !balanceStr.isBlank()) {
                 return new BigDecimal(balanceStr.replace(".", "").replace(",", "."));
             }
         } catch (Exception e) {
-            return null; // Caso a coluna venha vazia
+            return null;
         }
         return null;
+    }
+
+    @Override
+    public String extractReferenceId(CSVRecord record) {
+        // Cria um Pseudo-ID forte para o Inter (Data_Descrição_Valor)
+        // Isso garante que a deduplicação funcione da mesma forma que no Mercado Pago
+        String date = record.get(0).trim();
+        String desc = extractDescription(record);
+        String amount = record.get(record.size() - 2).trim();
+
+        return (date + "|" + desc + "|" + amount).replaceAll("\\s+", "_");
     }
 }
