@@ -57,7 +57,7 @@ public class Budget {
         if (categoryId == null) throw new BusinessRuleException("Category ID is required");
         if (month < 1 || month > 12) throw new BusinessRuleException("Invalid month");
         if (year < 2000) throw new BusinessRuleException("Invalid year");
-        if (limitAmount == null || limitAmount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (limitAmount == null || limitAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessRuleException("Limit amount must be greater than zero");
         }
     }

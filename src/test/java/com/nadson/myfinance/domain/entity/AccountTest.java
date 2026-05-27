@@ -60,4 +60,24 @@ class AccountTest {
         assertThrows(BusinessRuleException.class, () -> account.update(" ", null, null));
         assertThrows(BusinessRuleException.class, () -> account.update(null, new BigDecimal("-1.00"), null));
     }
-}
+    @Test
+    @DisplayName("Should cover 100% of Getters and Update branches")
+    void shouldCoverAccountMethods() {
+        // 1. Cobertura dos Getters (0% no seu print)
+        UUID accId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(accId, userId, AccountType.CHECKING, "Conta Corrente", BigDecimal.ZERO);
+
+        assertThat(account.getAccountId()).isEqualTo(accId);
+        assertThat(account.getUserId()).isEqualTo(userId);
+
+        // 2. Cobertura do método update (83.3% no seu print)
+        // O que falta aqui é testar o caso onde passamos nulos para manter o valor original
+        account.update(null, null, null);
+        assertThat(account.getName()).isEqualTo("Conta Corrente"); // Mantém o nome original
+
+        // Testa atualização com dados válidos
+        account.update("Nova Conta", new BigDecimal("100.00"), AccountType.SAVINGS);
+        assertThat(account.getName()).isEqualTo("Nova Conta");
+        assertThat(account.getType()).isEqualTo(AccountType.SAVINGS);
+    }}

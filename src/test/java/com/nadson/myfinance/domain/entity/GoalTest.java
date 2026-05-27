@@ -13,61 +13,90 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GoalTest {
 
-    // --- CENÁRIOS DE SUCESSO E ESTADO ---
-
     @Test
-    @DisplayName("Should increment current amount correctly")
-    void shouldAddAmountSuccessfully() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("100.00"), null);
-        goal.addAmount(new BigDecimal("50.00"));
+    @DisplayName("Should create goal successfully with valid data and nulls treated")
+    void shouldCreateGoalSuccessfully() {
+        // Testa o construtor com valores nulos (para cobrir os operadores ternários)
+        Goal goal = new Goal(null, UUID.randomUUID(), "Viagem", new BigDecimal("1000.00"), null, null);
 
-        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("150.00");
+        assertThat(goal.getId()).isNotNull();
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(goal.getAccountIds()).isEmpty();
     }
 
     @Test
-    @DisplayName("Should decrement current amount correctly")
-    void shouldSubtractAmountSuccessfully() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("100.00"), null);
-        goal.subtractAmount(new BigDecimal("40.00"));
+    @DisplayName("Should throw BusinessRuleException when validation fails in constructor")
+    void shouldThrowExceptionOnInvalidConstructor() {
+        UUID userId = UUID.randomUUID();
 
-        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("60.00");
+        // Testa validação do UserId
+        assertThrows(BusinessRuleException.class, () -> new Goal(null, null, "Desc", BigDecimal.TEN, null, null));
+
+        // Testa validação da Description (null ou blank)
+        assertThrows(BusinessRuleException.class, () -> new Goal(null, userId, "", BigDecimal.TEN, null, null));
+
+        // Testa validação do TargetAmount (<= 0)
+        assertThrows(BusinessRuleException.class, () -> new Goal(null, userId, "Desc", BigDecimal.ZERO, null, null));
     }
 
     @Test
-    @DisplayName("Should set current amount to zero if subtraction exceeds balance")
-    void shouldNotAllowNegativeCurrentAmount() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("10.00"), null);
-        goal.subtractAmount(new BigDecimal("50.00")); // Tentando subtrair mais do que tem
+    @DisplayName("Should update goal fields correctly")
+    void shouldUpdateGoal() {
+        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Old", new BigDecimal("100.00"), null, null);
 
-        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("0");
-    }
+        // Testa atualização válida
+        goal.update("New", new BigDecimal("200.00"), List.of(UUID.randomUUID()));
+        assertThat(goal.getDescription()).isEqualTo("New");
+        assertThat(goal.getTargetAmount()).isEqualByComparingTo("200.00");
 
-    @Test
-    @DisplayName("Should successfully update fields via update method")
-    void shouldUpdateGoalFields() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Antiga", new BigDecimal("1000.00"), null, null);
-        List<UUID> newAccounts = List.of(UUID.randomUUID());
-
-        goal.update("Nova", new BigDecimal("5000.00"), newAccounts);
-
-        assertThat(goal.getDescription()).isEqualTo("Nova");
-        assertThat(goal.getTargetAmount()).isEqualByComparingTo("5000.00");
-        assertThat(goal.getAccountIds()).hasSize(1);
-    }
-
-    // --- CENÁRIOS DE ERRO ---
-
-    @Test
-    @DisplayName("Should throw exception when creating goal with null UserID")
-    void shouldThrowErrorForNullUserId() {
-        assertThrows(BusinessRuleException.class, () ->
-                new Goal(null, null, "Teste", new BigDecimal("100.00"), null, null));
-    }
-
-    @Test
-    @DisplayName("Should throw exception for blank description in update")
-    void shouldThrowErrorForBlankUpdateDescription() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Valid", new BigDecimal("100.00"), null, null);
+        // Testa atualização com description em branco (deve lançar exceção)
         assertThrows(BusinessRuleException.class, () -> goal.update(" ", null, null));
+
+        // Testa atualização com targetAmount inválido (deve lançar exceção)
+        assertThrows(BusinessRuleException.class, () -> goal.update(null, new BigDecimal("-10.00"), null));
+    }
+
+    @Test
+    @DisplayName("Should add amount correctly")
+    void shouldAddAmount() {
+        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Meta", new BigDecimal("100.00"), BigDecimal.ZERO, null);
+        goal.addAmount(new BigDecimal("50.00"));
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("50.00");
+
+        // Testa exceções de addAmount
+        assertThrows(BusinessRuleException.class, () -> goal.addAmount(null));
+        assertThrows(BusinessRuleException.class, () -> goal.addAmount(BigDecimal.ZERO));
+    }
+
+    @Test
+    @DisplayName("Should subtract amount and clamp to zero if negative")
+    void shouldSubtractAmount() {
+        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Meta", new BigDecimal("100.00"), new BigDecimal("50.00"), null);
+
+        // Subtração normal
+        goal.subtractAmount(new BigDecimal("20.00"));
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("30.00");
+
+        // Subtração que força saldo negativo (deve resetar para zero)
+        goal.subtractAmount(new BigDecimal("100.00"));
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("0.00");
+
+        // Testa exceções de subtractAmount
+        assertThrows(BusinessRuleException.class, () -> goal.subtractAmount(null));
+        assertThrows(BusinessRuleException.class, () -> goal.subtractAmount(new BigDecimal("-10")));
+    }
+
+    @Test
+    @DisplayName("Should verify getters coverage")
+    void shouldVerifyGetters() {
+        UUID id = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Goal goal = new Goal(id, userId, "Test", BigDecimal.TEN, BigDecimal.ONE, List.of());
+
+        assertThat(goal.getId()).isEqualTo(id);
+        assertThat(goal.getUserId()).isEqualTo(userId);
+        assertThat(goal.getDescription()).isEqualTo("Test");
+        assertThat(goal.getTargetAmount()).isEqualTo(BigDecimal.TEN);
+        assertThat(goal.getCurrentAmount()).isEqualTo(BigDecimal.ONE);
     }
 }

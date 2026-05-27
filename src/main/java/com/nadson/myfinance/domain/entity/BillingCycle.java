@@ -32,14 +32,19 @@ public class BillingCycle {
         if (startDate == null) throw new BusinessRuleException("Start date is required");
         if (closingDate == null) throw new BusinessRuleException("Closing date is required");
         if (dueDate == null) throw new BusinessRuleException("Due date is required");
-        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) < 0)
+
+        if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessRuleException("Total amount cannot be negative");
+        }
+
         if (status == null) throw new BusinessRuleException("Status is required");
-        
-        if (closingDate.isBefore(startDate)) 
+
+        if (closingDate.isBefore(startDate)) {
             throw new BusinessRuleException("Closing date cannot be before start date");
-        if (dueDate.isBefore(closingDate))
+        }
+        if (dueDate.isBefore(closingDate)) {
             throw new BusinessRuleException("Due date cannot be before closing date");
+        }
     }
 
     public void addInstallment(CreditCardInstallment installment) {
@@ -62,7 +67,7 @@ public class BillingCycle {
     }
 
     public void registerPayment(BigDecimal paymentAmount) {
-        if (this.totalAmount != null) {
+        if (this.totalAmount != null && paymentAmount != null) {
             this.totalAmount = this.totalAmount.subtract(paymentAmount);
             if (this.totalAmount.compareTo(BigDecimal.ZERO) < 0) {
                 this.totalAmount = BigDecimal.ZERO;
@@ -77,6 +82,4 @@ public class BillingCycle {
     public LocalDate getDueDate() { return dueDate; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public BillingCycleStatus getStatus() { return status; }
-
-
 }
