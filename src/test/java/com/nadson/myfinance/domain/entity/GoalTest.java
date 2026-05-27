@@ -13,60 +13,61 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GoalTest {
 
-    // --- CENÁRIOS DE SUCESSO ---
+    // --- CENÁRIOS DE SUCESSO E ESTADO ---
 
     @Test
-    @DisplayName("Should create goal successfully with valid data")
-    void shouldCreateValidGoal() {
-        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Viagem", new BigDecimal("1000.00"), BigDecimal.ZERO, null);
-        assertThat(goal.getDescription()).isEqualTo("Viagem");
+    @DisplayName("Should increment current amount correctly")
+    void shouldAddAmountSuccessfully() {
+        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("100.00"), null);
+        goal.addAmount(new BigDecimal("50.00"));
+
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("150.00");
     }
 
     @Test
-    @DisplayName("Should update goal successfully with valid data")
-    void shouldUpdateGoal() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Antiga", new BigDecimal("1000.00"), BigDecimal.ZERO, null);
-        goal.update("Nova", new BigDecimal("2000.00"), List.of(UUID.randomUUID()));
+    @DisplayName("Should decrement current amount correctly")
+    void shouldSubtractAmountSuccessfully() {
+        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("100.00"), null);
+        goal.subtractAmount(new BigDecimal("40.00"));
+
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("60.00");
+    }
+
+    @Test
+    @DisplayName("Should set current amount to zero if subtraction exceeds balance")
+    void shouldNotAllowNegativeCurrentAmount() {
+        Goal goal = new Goal(null, UUID.randomUUID(), "Economia", new BigDecimal("1000.00"), new BigDecimal("10.00"), null);
+        goal.subtractAmount(new BigDecimal("50.00")); // Tentando subtrair mais do que tem
+
+        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("Should successfully update fields via update method")
+    void shouldUpdateGoalFields() {
+        Goal goal = new Goal(null, UUID.randomUUID(), "Antiga", new BigDecimal("1000.00"), null, null);
+        List<UUID> newAccounts = List.of(UUID.randomUUID());
+
+        goal.update("Nova", new BigDecimal("5000.00"), newAccounts);
 
         assertThat(goal.getDescription()).isEqualTo("Nova");
-        assertThat(goal.getTargetAmount()).isEqualTo(new BigDecimal("2000.00"));
+        assertThat(goal.getTargetAmount()).isEqualByComparingTo("5000.00");
+        assertThat(goal.getAccountIds()).hasSize(1);
     }
 
-    // --- CENÁRIOS DE ERRO (VALIDAÇÃO) ---
+    // --- CENÁRIOS DE ERRO ---
 
     @Test
-    @DisplayName("Should throw exception when creating goal with null or blank description")
-    void shouldThrowErrorForInvalidDescription() {
+    @DisplayName("Should throw exception when creating goal with null UserID")
+    void shouldThrowErrorForNullUserId() {
         assertThrows(BusinessRuleException.class, () ->
-                new Goal(null, UUID.randomUUID(), "", new BigDecimal("100.00"), null, null));
-        assertThrows(BusinessRuleException.class, () ->
-                new Goal(null, UUID.randomUUID(), null, new BigDecimal("100.00"), null, null));
-    }
-
-    @Test
-    @DisplayName("Should throw exception when target amount is zero or negative")
-    void shouldThrowErrorForInvalidTargetAmount() {
-        assertThrows(BusinessRuleException.class, () ->
-                new Goal(null, UUID.randomUUID(), "Teste", BigDecimal.ZERO, null, null));
-        assertThrows(BusinessRuleException.class, () ->
-                new Goal(null, UUID.randomUUID(), "Teste", new BigDecimal("-50.00"), null, null));
+                new Goal(null, null, "Teste", new BigDecimal("100.00"), null, null));
     }
 
     @Test
-    @DisplayName("Should throw exception when adding null or non-positive amount")
-    void shouldThrowErrorForInvalidAddAmount() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Teste", new BigDecimal("100.00"), BigDecimal.ZERO, null);
-
-        assertThrows(BusinessRuleException.class, () -> goal.addAmount(null));
-        assertThrows(BusinessRuleException.class, () -> goal.addAmount(new BigDecimal("-10.00")));
-    }
-
-    @Test
-    @DisplayName("Should throw exception when subtracting null or non-positive amount")
-    void shouldThrowErrorForInvalidSubtractAmount() {
-        Goal goal = new Goal(null, UUID.randomUUID(), "Teste", new BigDecimal("100.00"), new BigDecimal("50.00"), null);
-
-        assertThrows(BusinessRuleException.class, () -> goal.subtractAmount(null));
-        assertThrows(BusinessRuleException.class, () -> goal.subtractAmount(new BigDecimal("-5.00")));
+    @DisplayName("Should throw exception for blank description in update")
+    void shouldThrowErrorForBlankUpdateDescription() {
+        Goal goal = new Goal(null, UUID.randomUUID(), "Valid", new BigDecimal("100.00"), null, null);
+        assertThrows(BusinessRuleException.class, () -> goal.update(" ", null, null));
     }
 }

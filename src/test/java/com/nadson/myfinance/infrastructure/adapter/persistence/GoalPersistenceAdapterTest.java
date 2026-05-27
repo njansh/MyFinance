@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(properties = "spring.flyway.enabled=false")
@@ -37,32 +36,118 @@ class GoalPersistenceAdapterTest {
     @BeforeEach
     void setup() {
         userId = UUID.randomUUID();
-        // Criando uma entidade de domínio temporária para usar o construtor da UserJpaEntity
-        User userDomain = new User(userId, "Test User", "test@test.com", "password123");
-        userRepository.save(new UserJpaEntity(userDomain));
+
+        UserJpaEntity user = new UserJpaEntity();
+        user.setId(userId);
+        user.setName("Test User");
+        user.setEmail("test@test.com");
+        user.setPassword("password123");
+
+        userRepository.save(user);
     }
 
     @Test
-    @DisplayName("Should save and find goal by account ID")
-    void shouldSaveAndFindByAccountId() {
+    @DisplayName("Should persist and retrieve goal by ID")
+    void shouldPersistAndRetrieveGoalById() {
+
+        // Arrange
+        Goal goal = new Goal(
+                UUID.randomUUID(),
+                userId,
+                "Trip",
+                new BigDecimal("1000.00"),
+                new BigDecimal("250.00"),
+                List.of(UUID.randomUUID())
+        );
+
+        // Act
+        adapter.save(goal);
+
+        Goal foundGoal = adapter.findById(goal.getId()).orElseThrow();
+
+        // Assert
+        assertThat(foundGoal).isNotNull();
+        assertThat(foundGoal.getId()).isEqualTo(goal.getId());
+        assertThat(foundGoal.getUserId()).isEqualTo(userId);
+        assertThat(foundGoal.getDescription()).isEqualTo("Trip");
+        assertThat(foundGoal.getTargetAmount()).isEqualByComparingTo("1000.00");
+        assertThat(foundGoal.getCurrentAmount()).isEqualByComparingTo("250.00");
+        assertThat(foundGoal.getAccountIds())
+                .containsExactlyElementsOf(goal.getAccountIds());
+    }
+
+    @Test
+    @DisplayName("Should return goals associated with account ID")
+    void shouldReturnGoalsAssociatedWithAccountId() {
+
+        // Arrange
         UUID accountId = UUID.randomUUID();
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Viagem", new BigDecimal("1000.00"), BigDecimal.ZERO, List.of(accountId));
+
+        Goal goal = new Goal(
+                UUID.randomUUID(),
+                userId,
+                "Travel",
+                new BigDecimal("5000.00"),
+                BigDecimal.ZERO,
+                List.of(accountId)
+        );
 
         adapter.save(goal);
-        List<Goal> foundGoals = adapter.findByAccountId(accountId);
 
-        assertThat(foundGoals).hasSize(1);
-        assertThat(foundGoals.get(0).getAccountIds()).contains(accountId);
+        // Act
+        List<Goal> goals = adapter.findByAccountId(accountId);
+
+        // Assert
+        assertThat(goals)
+                .hasSize(1)
+                .extracting(Goal::getId)
+                .contains(goal.getId());
     }
 
     @Test
     @DisplayName("Should delete all goals by user ID")
-    void shouldDeleteAllByUserId() {
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Meta", new BigDecimal("500.00"), BigDecimal.ZERO, null);
+    void shouldDeleteAllGoalsByUserId() {
 
-        adapter.save(goal);
+        // Arrange
+        Goal goal1 = new Goal(
+                UUID.randomUUID(),
+                userId,
+                "Goal 1",
+                new BigDecimal("100.00"),
+                BigDecimal.ZERO,
+                List.of()
+        );
+
+        Goal goal2 = new Goal(
+                UUID.randomUUID(),
+                userId,
+                "Goal 2",
+                new BigDecimal("200.00"),
+                BigDecimal.ZERO,
+                List.of()
+        );
+
+        adapter.save(goal1);
+        adapter.save(goal2);
+
+        // Act
         adapter.deleteAllByUserId(userId);
 
+        // Assert
         assertThat(adapter.findByUserId(userId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no goals are associated with account ID")
+    void shouldReturnEmptyListWhenNoGoalsExistForAccountId() {
+
+        // Arrange
+        UUID accountId = UUID.randomUUID();
+
+        // Act
+        List<Goal> goals = adapter.findByAccountId(accountId);
+
+        // Assert
+        assertThat(goals).isEmpty();
     }
 }
