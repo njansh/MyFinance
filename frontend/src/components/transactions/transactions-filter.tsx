@@ -40,8 +40,8 @@ export function TransactionsFilter({ accounts }: FilterProps) {
     params.set('page', '0'); // Sempre volta para a primeira página ao filtrar
 
     // Mantém os outros filtros obrigatórios se não estiverem no params ainda
-    if (!params.get('accountId') && currentAccountId) {
-      params.set('accountId', currentAccountId);
+    if (!params.get('account_Id') && currentAccountId) {
+      params.set('account_Id', currentAccountId);
     }
     if (!params.get('month')) params.set('month', currentMonth);
     if (!params.get('year')) params.set('year', currentYear);

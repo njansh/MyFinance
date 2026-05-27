@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import { getTransactions, getAccounts, getCategories } from '../../../lib/api/api-server';
 import { TransactionsTable } from '../../../components/transactions/transactions-table';
 import { TransactionsFilter } from '../../../components/transactions/transactions-filter';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -27,19 +29,63 @@ export default async function ExtratoPage({ searchParams }: { searchParams: any 
   const accountId = params?.accountId || 'all';
   const now = new Date();
 
+  const currentMonth = params?.month ? Number(params.month) : now.getMonth() + 1;
+  const currentYear = params?.year ? Number(params.year) : now.getFullYear();
+
   const filters = {
-    month: params?.month ? Number(params.month) : now.getMonth() + 1,
-    year: params?.year ? Number(params.year) : now.getFullYear(),
+    month: currentMonth,
+    year: currentYear,
     desc: params?.desc || undefined,
     page: params?.page ? Number(params.page) : 0,
-    size: 10,
+    size: params?.size ? Number(params.size) : 10000,
   };
+
+  const createDateUrl = (month: number, year: number) => {
+    let newMonth = month;
+    let newYear = year;
+
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    } else if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    }
+
+    const p = new URLSearchParams(params);
+    p.set('month', String(newMonth));
+    p.set('year', String(newYear));
+    p.set('page', '0');
+    return `?${p.toString()}`;
+  };
+
+  const monthName = new Date(currentYear, currentMonth - 1).toLocaleString('pt-BR', { month: 'long' });
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 antialiased text-slate-900">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black tracking-tight text-slate-900">Extrato Consolidado</h1>
-        <p className="text-sm text-slate-500 font-medium mt-1">Gestão e auditoria de lançamentos e fluxos de caixa.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Extrato Consolidado</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">Gestão e auditoria de lançamentos e fluxos de caixa.</p>
+        </div>
+
+        <div className="flex items-center gap-3 bg-white border border-slate-200 p-1.5 rounded-xl shadow-sm">
+          <Link
+            href={createDateUrl(currentMonth - 1, currentYear)}
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Link>
+          <span className="text-sm font-bold px-2 text-slate-900 capitalize">
+            {monthName} {currentYear}
+          </span>
+          <Link
+            href={createDateUrl(currentMonth + 1, currentYear)}
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Link>
+        </div>
       </div>
 
       <TransactionsFilter accounts={accounts} />
