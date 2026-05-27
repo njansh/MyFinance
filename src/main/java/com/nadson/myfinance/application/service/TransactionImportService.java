@@ -110,7 +110,7 @@ public class TransactionImportService {
                 currentAccountId, minDate.minusDays(1), maxDate.plusDays(1));
 
         Set<String> processedHashes = existingTransactions.stream()
-                .map(t -> generateHash(currentAccountId, t.getDate(), t.getAmount(), t.getDescription(), t.getAccountBalanceAfter(), null))
+                .map(t -> generateHash(currentAccountId, t.getDate(), t.getAmount(), t.getDescription(), t.getAccountBalanceAfter()))
                 .collect(Collectors.toSet());
 
         // MAPA DE FOOTPRINT: Agora usamos o Tipo e contamos quantas transferências idênticas existem
@@ -129,7 +129,7 @@ public class TransactionImportService {
             // TIPO 100% BASEADO NO SINAL MATEMÁTICO DO BANCO (Sem "adivinhar" por palavras)
             TransactionType type = row.amount().compareTo(BigDecimal.ZERO) > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
 
-            String hash = generateHash(currentAccountId, row.date(), row.amount(), row.description(), row.balanceAfter(), bankCode);
+            String hash = generateHash(currentAccountId, row.date(), row.amount(), row.description(), row.balanceAfter());
             String footprint = type.name() + "_" + row.date().toLocalDate().toString() + "_" + row.amount().abs().setScale(2, RoundingMode.HALF_UP);
 
             if (processedHashes.contains(hash)) continue;
@@ -219,10 +219,10 @@ public class TransactionImportService {
         return String.format("#%06x", randNum);
     }
 
-    private String generateHash(UUID accId, LocalDateTime date, BigDecimal amt, String desc, BigDecimal balanceAfter, String bankCode) {
+    private String generateHash(UUID accId, LocalDateTime date, BigDecimal amt, String desc, BigDecimal balanceAfter) {
         String cleanDesc = (desc != null) ? desc.trim().toLowerCase().replaceAll("\\s+", " ") : "n/a";
         String balanceStr = (balanceAfter != null) ? balanceAfter.setScale(2, RoundingMode.HALF_UP).toString() : "0.00";
-        return bankCode + "_" + accId.toString() + "_" + date.toLocalDate() + "_" +
+        return accId.toString() + "_" + date.toLocalDate() + "_" +
                 amt.abs().setScale(2, RoundingMode.HALF_UP) + "_" + cleanDesc + "_" + balanceStr;
     }
 

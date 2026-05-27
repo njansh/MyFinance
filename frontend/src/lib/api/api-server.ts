@@ -308,10 +308,6 @@ export interface Budget {
 }
 
 export async function getBudgets(month: number, year: number): Promise<Budget[]> {
-  const token = await getAuthToken();
   const response = await apiFetch(`/budgets?month=${month}&year=${year}`);
-
-  if (!response.ok) return [];
-
   return response.json();
 }
