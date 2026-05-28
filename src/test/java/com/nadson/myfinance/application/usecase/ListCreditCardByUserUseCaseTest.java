@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ListCreditCardByUserUseCaseTest {
+class ListCreditCardByUserUseCaseTest {
 
     @Mock private CreditCardRepositoryPort repositoryPort;
     @Mock private UserRepositoryPort userRepository;

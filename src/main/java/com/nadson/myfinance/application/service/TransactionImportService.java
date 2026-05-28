@@ -215,7 +215,7 @@ public class TransactionImportService {
     }
     private String generateRandomColor() {
         Random obj = new Random();
-        int randNum = obj.nextInt(0xffffff + 1);
+        int randNum = obj.nextInt(0xFFFFFF + 1);
         return String.format("#%06x", randNum);
     }
 

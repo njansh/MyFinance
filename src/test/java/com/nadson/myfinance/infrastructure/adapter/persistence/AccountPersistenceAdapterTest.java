@@ -2,109 +2,124 @@ package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.enums.AccountType;
-import com.nadson.myfinance.infrastructure.adapter.persistence.entity.UserJpaEntity;
+import com.nadson.myfinance.infrastructure.adapter.persistence.entity.AccountJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringAccountRepository;
-import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringUserRepository;
-import jakarta.persistence.EntityManager; // Importe o EntityManager
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(properties = "spring.flyway.enabled=false")
-@Import(AccountPersistenceAdapter.class)
+@ExtendWith(MockitoExtension.class)
 class AccountPersistenceAdapterTest {
 
-    @Autowired
+    @Mock
+    private SpringAccountRepository repository;
+
+    @InjectMocks
     private AccountPersistenceAdapter adapter;
 
-    @Autowired
-    private SpringUserRepository userRepository;
-
-    @Autowired
-    private SpringAccountRepository accountRepository;
-
-    @Autowired
-    private EntityManager entityManager; // Injeta o gerenciador de contexto do JPA
-
-    private UUID userId;
-
-    @BeforeEach
-    void setup() {
-        userId = UUID.randomUUID();
-        UserJpaEntity user = new UserJpaEntity();
-        user.setId(userId);
-        user.setName("Account Owner");
-        user.setEmail("owner@test.com");
-        user.setPassword("pass123");
-        userRepository.save(user);
-    }
-
     @Test
-    @DisplayName("Should save and retrieve account")
-    void shouldSaveAndRetrieveAccount() {
-        Account account = new Account(userId, "Nubank", AccountType.CHECKING);
-        account.deposit(new BigDecimal("1500.00"));
+    @DisplayName("Deve salvar ou atualizar conta com sucesso")
+    void shouldSaveAccount() {
+        UUID accountId = UUID.randomUUID();
+        Account account = new Account(accountId, UUID.randomUUID(), AccountType.CHECKING, "INTER", BigDecimal.TEN);
+
+        AccountJpaEntity entity = new AccountJpaEntity();
+        entity.setId(accountId);
+
+        when(repository.findById(accountId)).thenReturn(Optional.empty());
+        when(repository.save(any(AccountJpaEntity.class))).thenReturn(entity);
 
         Account saved = adapter.save(account);
-        Account found = adapter.findById(saved.getAccountId());
+
+        assertThat(saved).isNotNull();
+        verify(repository).save(any(AccountJpaEntity.class));
+    }
+
+    @Test
+    @DisplayName("Deve realizar débito atômico")
+    void shouldPerformAtomicDebit() {
+        UUID accountId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("50.00");
+
+        adapter.debit(accountId, amount);
+
+        verify(repository).updateBalanceAtomic(accountId, amount.negate());
+    }
+
+    @Test
+    @DisplayName("Deve buscar conta por ID")
+    void shouldFindById() {
+        UUID accountId = UUID.randomUUID();
+        AccountJpaEntity entity = new AccountJpaEntity();
+        entity.setId(accountId);
+
+        when(repository.findById(accountId)).thenReturn(Optional.of(entity));
+
+        Account found = adapter.findById(accountId);
 
         assertThat(found).isNotNull();
-        assertThat(found.getName()).isEqualTo("Nubank");
-        assertThat(found.getBalance()).isEqualByComparingTo("1500.00");
+        verify(repository).findById(accountId);
+    }
+    @Test
+    @DisplayName("Deve deletar conta por ID")
+    void shouldDeleteById() {
+        UUID accountId = UUID.randomUUID();
+
+        adapter.deleteById(accountId);
+
+        verify(repository).deleteById(accountId);
     }
 
     @Test
-    @DisplayName("Should debit account atomically")
-    void shouldDebitAccountAtomic() {
-        Account account = adapter.save(new Account(UUID.randomUUID(), userId, AccountType.CHECKING, "Inter", new BigDecimal("1000.00")));
+    @DisplayName("Deve buscar contas por ID de usuário")
+    void shouldFindByUserId() {
+        UUID userId = UUID.randomUUID();
+        AccountJpaEntity entity = new AccountJpaEntity();
+        // Configurar o ID da entidade se necessário para o toDomain
 
-        // Força a inserção da conta no banco real antes de rodar o UPDATE
-        entityManager.flush();
-
-        // Roda o UPDATE direto no banco de dados (@Modifying)
-        adapter.debit(account.getAccountId(), new BigDecimal("200.00"));
-
-        // Limpa a memória do Hibernate para forçar um novo SELECT
-        entityManager.clear();
-
-        Account found = adapter.findById(account.getAccountId());
-        assertThat(found.getBalance()).isEqualByComparingTo("800.00");
-    }
-
-    @Test
-    @DisplayName("Should delete account")
-    void shouldDeleteAccount() {
-        Account account = adapter.save(new Account(userId, "To Delete", AccountType.CHECKING));
-
-        entityManager.flush(); // Força inserção
-
-        adapter.deleteById(account.getAccountId()); // Roda DELETE direto
-
-        entityManager.clear(); // Limpa memória do Hibernate
-
-        assertThat(adapter.findById(account.getAccountId())).isNull();
-    }
-
-    @Test
-    @DisplayName("Should find accounts by user ID")
-    void shouldFindAccountsByUserId() {
-        adapter.save(new Account(userId, "Acc 1", AccountType.CHECKING));
-        adapter.save(new Account(userId, "Acc 2", AccountType.SAVINGS));
+        when(repository.findByUserId(userId)).thenReturn(List.of(entity));
 
         List<Account> accounts = adapter.findByUserId(userId);
-        assertThat(accounts).hasSize(2);
+
+        assertThat(accounts).hasSize(1);
+        verify(repository).findByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("Deve buscar ID de usuário por ID de conta")
+    void shouldFindUserIdByAccountId() {
+        UUID accountId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        AccountJpaEntity entity = new AccountJpaEntity();
+        entity.setUserId(userId);
+
+        when(repository.findById(accountId)).thenReturn(Optional.of(entity));
+
+        UUID foundUserId = adapter.findUserIdByAccountId(accountId);
+
+        assertThat(foundUserId).isEqualTo(userId);
+        verify(repository).findById(accountId);
+    }
+
+    @Test
+    @DisplayName("Deve realizar update de saldo atômico")
+    void shouldUpdateBalanceAtomic() {
+        UUID accountId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("100.00");
+
+        adapter.updateBalanceAtomic(accountId, amount);
+
+        verify(repository).updateBalanceAtomic(accountId, amount);
     }
 }

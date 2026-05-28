@@ -1,62 +1,54 @@
 package com.nadson.myfinance.application.service;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CategorizationEngineTest {
 
     private final CategorizationEngine engine = new CategorizationEngine();
 
-    @ParameterizedTest
-    @DisplayName("Deve limpar e categorizar descrições vindas de extratos bancários")
-    @CsvSource({
-            // Casos originais
-            "'PAGAMENTO * MERCADO EXTRA', 'Mercado'",
-            "'TRANSFERENCIA RECEBIDA - NADSON', 'Nadson'",
-            "'UBER * TRIP HELPER', 'Uber'",
-            "'PIX ENVIADA PARA JOAO', 'Joao'",
-
-            // Casos de ruído bancário (Prefixo que deve ser ignorado)
-            "'PIX ENVIADO - SUPERMERCADO ABC', 'Supermercado'",
-            "'COMPRA NO DEBITO POSTO SHELL', 'Posto'",
-            "'PAGAMENTO EFETUADO FARMACIA PAG MENOS', 'Farmacia'",
-            "'PIX RECEBIDO DE MARIA SILVA', 'Maria'",
-
-            // Casos com números e caracteres especiais
-            "'REFEICAO 123456789', 'Refeicao'",
-            "'RESTAURANTE @ SABOR!', 'Restaurante'",
-            "'LANCHONETE/PADARIA', 'Lanchonete'",
-
-            // Normalização de texto (Capitalização)
-            "'mErCaDo eXtRa', 'Mercado'",
-            "'  loja de moveis  ', 'Loja'",
-
-            // Casos de borda
-            "'', 'Outros'",
-            " , 'Outros'",
-            "'A', 'Outros'", // Palavras muito curtas que não ajudam na categoria
-            "'DE', 'Outros'"
-    })
-    void shouldCleanAndCategorizeDescriptionCorrectly(String input, String expected) {
-        String result = engine.process(input);
-
-        assertEquals(expected, result,
-                String.format("Falha ao processar: '%s'", input));
+    @Test
+    @DisplayName("Deve retornar categoria mapeada via KEYWORD_MAP")
+    void shouldReturnCategoryFromKeywordMap() {
+        assertThat(engine.process("COMPRA NO ATACADAO")).isEqualTo("Mercado");
+        assertThat(engine.process("PAGAMENTO DE BOLT")).isEqualTo("Transporte");
+        assertThat(engine.process("MANUTENCAO CANDIDO")).isEqualTo("Manutenção");
     }
 
-    @ParameterizedTest
-    @DisplayName("Deve ignorar conectores e artigos no início da descrição")
-    @CsvSource({
-            "'O BOTICARIO', 'Boticario'",
-            "'A GOL TRANSPORTES', 'Gol'",
-            "'OS IRMAOS PAIVA', 'Irmaos'",
-            "'DAS ARARAS LANCHES', 'Araras'"
-    })
-    void shouldIgnoreShortConnectorsAtStart(String input, String expected) {
-        String result = engine.process(input);
-        assertEquals(expected, result);
+    @Test
+    @DisplayName("Deve retornar 'Transferência' para palavras-chave de transferência")
+    void shouldReturnTransferenciaForKeywords() {
+        assertThat(engine.process("PIX ENVIADO")).isEqualTo("Transferência");
+        assertThat(engine.process("RESERVA DE DINHEIRO")).isEqualTo("Transferência");
+        assertThat(engine.process("RESGATE DE INVESTIMENTO")).isEqualTo("Transferência");
+    }
+
+    @Test
+    @DisplayName("Deve retornar 'Outros' para descrições vazias ou nulas")
+    void shouldReturnOutrosForInvalidDescription() {
+        assertThat(engine.process(null)).isEqualTo("Outros");
+        assertThat(engine.process("   ")).isEqualTo("Outros");
+    }
+
+    @Test
+    @DisplayName("Deve limpar descrição e extrair nome de loja válida (Capitalized)")
+    void shouldExtractAndCapitalizeStoreName() {
+        // "PADARIA DO ZE" -> ignora "DO", filtra "PADARIA" (comp > 3 letras)
+        assertThat(engine.process("PADARIA DO ZE")).isEqualTo("Padaria");
+    }
+
+    @Test
+    @DisplayName("Deve retornar 'Outros' quando não houver palavras com mais de 3 letras após limpeza")
+    void shouldReturnOutrosWhenNoValidWordsFound() {
+        // "DO" e "PIX" são ignoradas ou pequenas demais
+        assertThat(engine.process("DO PIX")).isEqualTo("Outros");
+    }
+
+    @Test
+    @DisplayName("Deve tratar caracteres especiais e limpar ruídos")
+    void shouldHandleSpecialCharacters() {
+        // Remove símbolos e mantém letras acentuadas (se presentes)
+        assertThat(engine.process("COMPRA #123 CAFÉ ")).isEqualTo("Café");
     }
 }

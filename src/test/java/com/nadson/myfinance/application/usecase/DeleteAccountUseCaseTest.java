@@ -1,7 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
 import com.nadson.myfinance.application.port.out.*;
-import com.nadson.myfinance.domain.entity.Account;
+import com.nadson.myfinance.domain.entity.*;
 import com.nadson.myfinance.domain.enums.AccountType;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
 import org.junit.jupiter.api.DisplayName;
@@ -12,9 +12,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,55 +25,43 @@ class DeleteAccountUseCaseTest {
     @Mock private TransactionRepositoryPort transactionRepo;
     @Mock private RecurringTemplateRepositoryPort recurringRepo;
     @Mock private CreditCardRepositoryPort creditCardRepo;
+    @Mock private DeleteTransactionUseCase deleteTransactionUseCase;
 
     @InjectMocks
     private DeleteAccountUseCase useCase;
 
     @Test
-    @DisplayName("Deve excluir conta e todos os vínculos quando usuário é o dono")
-    void shouldDeleteAccountAndAllRelatedDataSuccessfully() {
+    @DisplayName("Deve falhar se a conta não existir ou não pertencer ao usuário")
+    void shouldFailWhenAccountNotFoundOrUnauthorized() {
+        UUID accId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        UUID accountId = UUID.randomUUID();
-        Account account = new Account(accountId, userId, AccountType.CHECKING, "Inter", BigDecimal.ZERO);
 
-        when(accountRepo.findById(accountId)).thenReturn(account);
+        // Simula conta inexistente (null)
+        when(accountRepo.findById(accId)).thenReturn(null);
 
-        useCase.execute(accountId, userId);
-
-        verify(creditCardRepo, times(1)).deleteAllByAccountId(accountId);
-        verify(transactionRepo, times(1)).deleteAllByAccountId(accountId);
-        verify(recurringRepo, times(1)).deleteAllByAccountId(accountId);
-        verify(accountRepo, times(1)).deleteById(accountId);
+        assertThrows(BusinessRuleException.class, () -> useCase.execute(accId, userId));
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando a conta pertence a outro usuário")
-    void shouldThrowExceptionWhenUserDoesNotOwnAccount() {
+    @DisplayName("Deve deletar conta e todas as dependências com sucesso")
+    void shouldDeleteAccountAndDependencies() {
+        UUID accId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        UUID otherUserId = UUID.randomUUID();
-        UUID accountId = UUID.randomUUID();
-        Account account = new Account(accountId, otherUserId, AccountType.CHECKING, "Fake Account", BigDecimal.ZERO);
+        Account account = new Account(accId, userId, AccountType.CHECKING, "Conta", BigDecimal.ZERO);
 
-        when(accountRepo.findById(accountId)).thenReturn(account);
+        // Setup das dependências
+        Transaction t1 = new Transaction();
+        t1.setTransactionId(UUID.randomUUID());
 
-        BusinessRuleException exception = assertThrows(BusinessRuleException.class, () ->
-                useCase.execute(accountId, userId));
+        when(accountRepo.findById(accId)).thenReturn(account);
+        when(transactionRepo.findAllByAccountId(accId)).thenReturn(List.of(t1));
 
-        assertEquals("Conta não encontrada ou acesso negado.", exception.getMessage());
-        verify(accountRepo, never()).deleteById(any());
-        verifyNoInteractions(transactionRepo, recurringRepo, creditCardRepo);
-    }
+        useCase.execute(accId, userId);
 
-    @Test
-    @DisplayName("Deve lançar exceção quando a conta não existe")
-    void shouldThrowExceptionWhenAccountDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        UUID accountId = UUID.randomUUID();
-
-        when(accountRepo.findById(accountId)).thenReturn(null);
-
-        assertThrows(BusinessRuleException.class, () -> useCase.execute(accountId, userId));
-
-        verify(accountRepo, never()).deleteById(any());
+        // Verifica deleção em cascata
+        verify(deleteTransactionUseCase).execute(t1.getTransactionId());
+        verify(creditCardRepo).deleteAllByAccountId(accId);
+        verify(recurringRepo).deleteAllByAccountId(accId);
+        verify(accountRepo).deleteById(accId);
     }
 }

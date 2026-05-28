@@ -1,9 +1,7 @@
 package com.nadson.myfinance.application.usecase;
 
-import com.nadson.myfinance.application.port.in.CreateCategoryPort;
-import com.nadson.myfinance.application.port.out.PasswordEncoderPort;
-import com.nadson.myfinance.application.port.out.UserRepositoryPort;
-import com.nadson.myfinance.domain.entity.User;
+import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
+import com.nadson.myfinance.domain.entity.Category;
 import com.nadson.myfinance.domain.enums.TransactionType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,39 +13,64 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateUserUseCaseTest {
+public class UpdateCategoryUseCaseTest {
 
-    @Mock private UserRepositoryPort userRepository;
-    @Mock private CreateCategoryPort categoryPort;
-    @Mock private PasswordEncoderPort passwordEncoder;
+    @Mock
+    private CategoryRepositoryPort categoryRepositoryPort;
 
     @InjectMocks
-    private CreateUserUseCase useCase;
+    private UpdateCategoryUseCase useCase;
 
     @Test
-    @DisplayName("Deve criar usuário, criptografar senha e criar 11 categorias padrão")
-    void shouldCreateUserAndDefaultCategories() {
-        // Arrange
+    @DisplayName("Deve lançar IllegalArgumentException quando a categoria não for encontrada (existing == null)")
+    void shouldThrowExceptionWhenCategoryNotFound() {
+        UUID categoryId = UUID.randomUUID();
+        when(categoryRepositoryPort.findById(categoryId)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                useCase.execute(UUID.randomUUID(), categoryId, "Alimentação", "#FF5733", "fastfood", TransactionType.EXPENSE));
+
+        verify(categoryRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar IllegalArgumentException quando a categoria pertencer a outro usuário (!existing.getUserId().equals(userId))")
+    void shouldThrowExceptionWhenCategoryBelongsToAnotherUser() {
         UUID userId = UUID.randomUUID();
-        User savedUser = new User(userId, "Nadson", "nadson@email.com", "hashed_password");
+        UUID categoryId = UUID.randomUUID();
+        Category categoryMock = mock(Category.class);
 
-        when(passwordEncoder.encode("123456")).thenReturn("hashed_password");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(categoryRepositoryPort.findById(categoryId)).thenReturn(categoryMock);
+        when(categoryMock.getUserId()).thenReturn(UUID.randomUUID()); // Retorna um ID diferente do userId
 
-        // Act
-        User result = useCase.execute("Nadson", "nadson@email.com", "123456");
+        assertThrows(IllegalArgumentException.class, () ->
+                useCase.execute(userId, categoryId, "Alimentação", "#FF5733", "fastfood", TransactionType.EXPENSE));
 
-        // Assert
-        assertThat(result.getId()).isEqualTo(userId);
-        verify(passwordEncoder).encode("123456");
-        verify(userRepository).save(any(User.class));
+        verify(categoryRepositoryPort, never()).save(any());
+    }
 
-        // Verifica se todas as 11 categorias padrão foram criadas
-        verify(categoryPort, times(11)).execute(eq(userId), anyString(), anyString(), anyString(), any(TransactionType.class));
+    @Test
+    @DisplayName("Deve atualizar e salvar a categoria com sucesso")
+    void shouldUpdateCategorySuccessfully() {
+        UUID userId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+        Category categoryMock = mock(Category.class);
+
+        when(categoryRepositoryPort.findById(categoryId)).thenReturn(categoryMock);
+        when(categoryMock.getUserId()).thenReturn(userId);
+        when(categoryMock.getCategoryId()).thenReturn(categoryId);
+
+        when(categoryRepositoryPort.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Category result = useCase.execute(userId, categoryId, "Mercado", "#00FF00", "shop", TransactionType.EXPENSE);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Mercado");
+        verify(categoryRepositoryPort, times(1)).save(any(Category.class));
     }
 }

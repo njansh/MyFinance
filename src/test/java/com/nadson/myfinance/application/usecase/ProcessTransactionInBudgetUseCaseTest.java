@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProcessTransactionInBudgetUseCaseTest {
+class ProcessTransactionInBudgetUseCaseTest {
 
     @Mock private BudgetRepositoryPort budgetRepository;
     @Mock private AccountRepositoryPort accountRepository;

@@ -24,58 +24,112 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UpdateAccountUseCaseTest {
 
-    @Mock private AccountRepositoryPort accountRepo;
-    @Mock private GoalRepositoryPort goalRepo;
+    @Mock private AccountRepositoryPort accountRepositoryPort;
+    @Mock private GoalRepositoryPort goalRepositoryPort;
 
-    @InjectMocks private UpdateAccountUseCase useCase;
+    @InjectMocks
+    private UpdateAccountUseCase useCase;
 
     @Test
-    @DisplayName("Should update account and sync positive delta with goal")
-    void shouldUpdateAccountAndAddDeltaToGoal() {
+    @DisplayName("Deve falhar quando a conta não for encontrada")
+    void shouldThrowExceptionWhenAccountNotFound() {
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        Account account = new Account(accountId, userId, AccountType.CHECKING, "Old Name", new BigDecimal("100.00"));
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Goal", new BigDecimal("1000"), new BigDecimal("50.00"), List.of(accountId));
+        when(accountRepositoryPort.findById(accountId)).thenReturn(null);
 
-        when(accountRepo.findById(accountId)).thenReturn(account);
-        when(accountRepo.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(goalRepo.findByAccountId(accountId)).thenReturn(List.of(goal));
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+                useCase.execute(accountId, userId, "Conta Principal", BigDecimal.TEN, "CHECKING"));
 
-        // Novo balanço é 150.00 (Delta = +50.00)
-        Account updated = useCase.execute(accountId, userId, "New Name", new BigDecimal("150.00"), "CHECKING");
-
-        assertThat(updated.getName()).isEqualTo("New Name");
-        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("100.00"); // 50 anterior + 50 de delta
-        verify(goalRepo, times(1)).save(goal);
+        assertThat(exception.getMessage()).isEqualTo("Account not found");
+        verify(accountRepositoryPort, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should update account and sync negative delta with goal")
-    void shouldUpdateAccountAndSubtractDeltaFromGoal() {
+    @DisplayName("Deve falhar se o usuário não tiver permissão de acesso à conta")
+    void shouldThrowExceptionWhenUserDoesNotHavePermission() {
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        Account account = new Account(accountId, userId, AccountType.CHECKING, "Name", new BigDecimal("200.00"));
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Goal", new BigDecimal("1000"), new BigDecimal("150.00"), List.of(accountId));
+        UUID intruderId = UUID.randomUUID();
 
-        when(accountRepo.findById(accountId)).thenReturn(account);
-        when(accountRepo.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(goalRepo.findByAccountId(accountId)).thenReturn(List.of(goal));
-
-        // Novo balanço é 50.00 (Delta = -150.00)
-        useCase.execute(accountId, userId, "Name", new BigDecimal("50.00"), "CHECKING");
-
-        assertThat(goal.getCurrentAmount()).isEqualByComparingTo("0.00"); // 150 - 150 abs
-        verify(goalRepo, times(1)).save(goal);
-    }
-
-    @Test
-    @DisplayName("Should throw SecurityException when user is not the owner")
-    void shouldThrowExceptionWhenUserNotOwner() {
-        UUID accountId = UUID.randomUUID();
-        Account account = new Account(accountId, UUID.randomUUID(), AccountType.CHECKING, "Name", BigDecimal.ZERO);
-        when(accountRepo.findById(accountId)).thenReturn(account);
+        Account accountMock = mock(Account.class);
+        when(accountMock.getUserId()).thenReturn(userId); // Conta pertence a 'userId'
+        when(accountRepositoryPort.findById(accountId)).thenReturn(accountMock);
 
         assertThrows(SecurityException.class, () ->
-                useCase.execute(accountId, UUID.randomUUID(), "Name", BigDecimal.ZERO, "CHECKING"));
+                useCase.execute(accountId, intruderId, "Conta Principal", BigDecimal.TEN, "CHECKING"));
+
+        verify(accountRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar dados com sucesso sem alterar o saldo e mapeando tipo nulo")
+    void shouldUpdateAccountSuccessfullyWithoutBalanceDeltaAndNullType() {
+        UUID accountId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        BigDecimal initialBalance = new BigDecimal("500.00");
+
+        Account accountMock = mock(Account.class);
+        when(accountMock.getUserId()).thenReturn(userId);
+        when(accountMock.getBalance()).thenReturn(initialBalance);
+        when(accountRepositoryPort.findById(accountId)).thenReturn(accountMock);
+        when(accountRepositoryPort.save(accountMock)).thenReturn(accountMock);
+
+        // Executa enviando o exato mesmo saldo (delta = 0) e tipo nulo
+        Account result = useCase.execute(accountId, userId, "Novo Nome", initialBalance, null);
+
+        assertThat(result).isNotNull();
+        verify(accountMock).update("Novo Nome", initialBalance, null);
+        verifyNoInteractions(goalRepositoryPort);
+    }
+
+    @Test
+    @DisplayName("Deve sincronizar adicionando o delta positivo nas metas quando o saldo aumentar")
+    void shouldSyncGoalsWithPositiveDeltaWhenBalanceIncreases() {
+        UUID accountId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        BigDecimal currentBalance = new BigDecimal("500.00");
+        BigDecimal newBalance = new BigDecimal("650.00"); // Delta de +150.00
+        BigDecimal expectedDelta = new BigDecimal("150.00");
+
+        Account accountMock = mock(Account.class);
+        when(accountMock.getUserId()).thenReturn(userId);
+        when(accountMock.getBalance()).thenReturn(currentBalance);
+        when(accountRepositoryPort.findById(accountId)).thenReturn(accountMock);
+        when(accountRepositoryPort.save(accountMock)).thenReturn(accountMock);
+
+        Goal goalMock = mock(Goal.class);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(List.of(goalMock));
+
+        useCase.execute(accountId, userId, "Conta", newBalance, "CHECKING");
+
+        verify(accountMock).update(eq("Conta"), eq(newBalance), any(AccountType.class));
+        verify(goalMock).addAmount(expectedDelta);
+        verify(goalMock, never()).subtractAmount(any());
+        verify(goalRepositoryPort).save(goalMock);
+    }
+
+    @Test
+    @DisplayName("Deve sincronizar subtraindo o valor absoluto do delta nas metas quando o saldo diminuir")
+    void shouldSyncGoalsWithAbsoluteNegativeDeltaWhenBalanceDecreases() {
+        UUID accountId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        BigDecimal currentBalance = new BigDecimal("500.00");
+        BigDecimal newBalance = new BigDecimal("400.00"); // Delta de -100.00
+        BigDecimal expectedAbsoluteDelta = new BigDecimal("100.00");
+
+        Account accountMock = mock(Account.class);
+        when(accountMock.getUserId()).thenReturn(userId);
+        when(accountMock.getBalance()).thenReturn(currentBalance);
+        when(accountRepositoryPort.findById(accountId)).thenReturn(accountMock);
+        when(accountRepositoryPort.save(accountMock)).thenReturn(accountMock);
+
+        Goal goalMock = mock(Goal.class);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(List.of(goalMock));
+
+        useCase.execute(accountId, userId, "Conta", newBalance, "CHECKING");
+
+        verify(goalMock).subtractAmount(expectedAbsoluteDelta);
+        verify(goalMock, never()).addAmount(any());
+        verify(goalRepositoryPort).save(goalMock);
     }
 }

@@ -6,6 +6,7 @@ import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.entity.Transaction;
 import com.nadson.myfinance.domain.enums.AccountType;
 import com.nadson.myfinance.domain.enums.TransactionType;
+import com.nadson.myfinance.domain.exception.AccountNotFoundException;
 import com.nadson.myfinance.infrastructure.adapter.web.dto.response.BalanceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,41 +20,63 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class GetAccountBalanceUseCaseTest {
 
-    @Mock private TransactionRepositoryPort transactionRepo;
-    @Mock private AccountRepositoryPort accountRepo;
+    @Mock private TransactionRepositoryPort transactionRepositoryPort;
+    @Mock private AccountRepositoryPort accountRepositoryPort;
 
-    @InjectMocks private GetAccountBalanceUseCase useCase;
+    @InjectMocks
+    private GetAccountBalanceUseCase useCase;
 
     @Test
-    @DisplayName("Should calculate balance response correctly with filtered dates")
-    void shouldCalculateBalanceWithDates() {
-        UUID accountId = UUID.randomUUID();
-        Account account = new Account(accountId, UUID.randomUUID(), AccountType.CHECKING, "Conta", new BigDecimal("1000.00"));
+    @DisplayName("Deve calcular saldo e totais sem intervalo de datas")
+    void shouldGetBalanceWithoutDateRange() {
+        UUID accId = UUID.randomUUID();
+        Account account = new Account(accId, UUID.randomUUID(), AccountType.CHECKING, "Acc", new BigDecimal("500.00"));
 
-        Transaction t1 = new Transaction();
-        t1.setType(TransactionType.INCOME);
-        t1.setAmount(new BigDecimal("500.00"));
+        Transaction income = mock(Transaction.class);
+        when(income.getType()).thenReturn(TransactionType.INCOME);
+        when(income.getAmount()).thenReturn(new BigDecimal("1000.00"));
 
-        Transaction t2 = new Transaction();
-        t2.setType(TransactionType.EXPENSE);
-        t2.setAmount(new BigDecimal("200.00"));
+        Transaction expense = mock(Transaction.class);
+        when(expense.getType()).thenReturn(TransactionType.EXPENSE);
+        when(expense.getAmount()).thenReturn(new BigDecimal("200.00"));
 
+        when(accountRepositoryPort.findById(accId)).thenReturn(account);
+        when(transactionRepositoryPort.findAllByAccountId(accId)).thenReturn(List.of(income, expense));
+
+        BalanceResponse response = useCase.execute(accId, null, null);
+
+        assertEquals(new BigDecimal("1000.00"), response.getIncomes());
+        assertEquals(new BigDecimal("200.00"), response.getExpenses());
+        assertEquals(new BigDecimal("500.00"), response.balance());
+    }
+
+    @Test
+    @DisplayName("Deve calcular saldo usando intervalo de datas")
+    void shouldGetBalanceWithDateRange() {
+        UUID accId = UUID.randomUUID();
         LocalDateTime start = LocalDateTime.now().minusDays(1);
         LocalDateTime end = LocalDateTime.now();
+        Account account = new Account(accId, UUID.randomUUID(), AccountType.CHECKING, "Acc", BigDecimal.ZERO);
 
-        when(accountRepo.findById(accountId)).thenReturn(account);
-        when(transactionRepo.findAllByAccountIdAndDateBetween(accountId, start, end)).thenReturn(List.of(t1, t2));
+        when(accountRepositoryPort.findById(accId)).thenReturn(account);
+        when(transactionRepositoryPort.findAllByAccountIdAndDateBetween(accId, start, end)).thenReturn(List.of());
 
-        BalanceResponse response = useCase.execute(accountId, start, end);
+        useCase.execute(accId, start, end);
 
-        assertThat(response.getIncomes()).isEqualByComparingTo("500.00");
-        assertThat(response.getExpenses()).isEqualByComparingTo("200.00");
-        assertThat(response.getBalance()).isEqualByComparingTo("1000.00"); // Saldo da conta não é afetado pelo filtro
+        verify(transactionRepositoryPort).findAllByAccountIdAndDateBetween(accId, start, end);
+    }
+
+    @Test
+    @DisplayName("Deve falhar se a conta não for encontrada")
+    void shouldFailWhenAccountNotFound() {
+        when(accountRepositoryPort.findById(any())).thenReturn(null);
+        assertThrows(AccountNotFoundException.class, () -> useCase.execute(UUID.randomUUID(), null, null));
     }
 }
