@@ -39,12 +39,12 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,55 +54,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class TransactionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @MockBean private CreateTransactionPort createTransactionPort;
+    @MockBean private GetTransactionPort getTransactionPort;
+    @MockBean private GetExpensesByCategoryPort getExpensesByCategoryPort;
+    @MockBean private UpdateTransactionPort updateTransactionPort;
+    @MockBean private DeleteTransactionPort deleteTransactionPort;
+    @MockBean private GetAccountBalancePort getAccountBalancePort;
+    @MockBean private GetIncomesByCategoryPort getIncomesByCategoryPort;
+    @MockBean private TransferPort transferPort;
+    @MockBean private ConfirmRecurringPort confirmRecurringPort;
+    @MockBean private StringRedisTemplate stringRedisTemplate;
+    @MockBean private JwtService jwtService;
 
-    @MockBean
-    private CreateTransactionPort createTransactionPort;
-
-    @MockBean
-    private GetTransactionPort getTransactionPort;
-
-    @MockBean
-    private GetExpensesByCategoryPort getExpensesByCategoryPort;
-
-    @MockBean
-    private UpdateTransactionPort updateTransactionPort;
-
-    @MockBean
-    private DeleteTransactionPort deleteTransactionPort;
-
-    @MockBean
-    private GetAccountBalancePort getAccountBalancePort;
-
-    @MockBean
-    private GetIncomesByCategoryPort getIncomesByCategoryPort;
-
-    @MockBean
-    private TransferPort transferPort;
-
-    @MockBean
-    private ConfirmRecurringPort confirmRecurringPort;
-
-    @MockBean
-    private StringRedisTemplate stringRedisTemplate;
-
-    @MockBean
-    private JwtService jwtService;
-
-    private static final String USER_ID =
-            "550e8400-e29b-41d4-a716-446655440000";
-
+    private static final String USER_ID = "550e8400-e29b-41d4-a716-446655440000";
     private static final UsernamePasswordAuthenticationToken AUTH =
-            new UsernamePasswordAuthenticationToken(
-                    USER_ID,
-                    null,
-                    Collections.emptyList()
-            );
-
+            new UsernamePasswordAuthenticationToken(USER_ID, null, Collections.emptyList());
+    
     @Nested
     class CreateTransactionTests {
 
@@ -395,5 +365,44 @@ class TransactionControllerTest {
 
             verify(deleteTransactionPort).execute(transactionId);
         }
+    }
+    @Test
+    @DisplayName("Deve confirmar transação recorrente com sucesso")
+    void shouldConfirmTransaction() throws Exception {
+        UUID transactionId = UUID.randomUUID();
+        UUID accountId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+
+        Transaction confirmedTransaction = new Transaction(
+                transactionId,
+                "Conta de Luz",
+                new BigDecimal("150.00"),
+                LocalDateTime.now(),
+                TransactionType.EXPENSE,
+                accountId,
+                categoryId,
+                false,
+                null,
+                null,
+                TransactionStatus.COMPLETED,
+                null
+        );
+
+        when(confirmRecurringPort.execute(any(UUID.class), eq(transactionId), any(BigDecimal.class), any(LocalDateTime.class)))
+                .thenReturn(confirmedTransaction);
+
+        var auth = new UsernamePasswordAuthenticationToken(USER_ID, null, Collections.emptyList());
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+        mockMvc.perform(post("/transactions/{id}/confirm", transactionId)
+                        .with(csrf())
+                        .with(authentication(auth))
+                        .param("actualAmount", "150.00")
+                        .param("actualDate", "2026-05-28T10:00:00")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.description").value("Conta de Luz"));
+
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 }
