@@ -1,6 +1,5 @@
 package com.nadson.myfinance.application.usecase;
 
-import com.nadson.myfinance.application.port.in.DeleteAccountPort;
 import com.nadson.myfinance.application.port.out.*;
 import com.nadson.myfinance.domain.entity.Account;
 import com.nadson.myfinance.domain.enums.AccountType;
@@ -26,46 +25,40 @@ class DeleteUserUseCaseTest {
     @Mock private BudgetRepositoryPort budgetRepo;
     @Mock private GoalRepositoryPort goalRepo;
     @Mock private RecurringTemplateRepositoryPort recurringRepo;
-    @Mock private DeleteAccountPort deleteAccountPort;
+    @Mock private TransactionRepositoryPort transactionRepo;
+    @Mock private BillingCycleRepositoryPort billingCycleRepo;
+    @Mock private BillingPaymentRepositoryPort billingPaymentRepo;
+    @Mock private CreditCardRepositoryPort creditCardRepo;
 
     @InjectMocks
     private DeleteUserUseCase useCase;
 
     @Test
-    @DisplayName("Deve excluir todos os dados vinculados e o usuário por último")
-    void shouldDeleteAllUserDataSuccessfully() {
+    @DisplayName("Deve deletar todos os dados do usuário em cascata")
+    void shouldDeleteAllUserData() {
         UUID userId = UUID.randomUUID();
-        UUID account1Id = UUID.randomUUID();
-        UUID account2Id = UUID.randomUUID();
+        UUID accId = UUID.randomUUID();
+        Account account = new Account(accId, userId, AccountType.CHECKING, "Conta", BigDecimal.ZERO);
 
-        Account acc1 = new Account(account1Id, userId, AccountType.CHECKING, "Conta 1", BigDecimal.ZERO);
-        Account acc2 = new Account(account2Id, userId, AccountType.CHECKING, "Conta 2", BigDecimal.ZERO);
-
-        when(accountRepo.findByUserId(userId)).thenReturn(List.of(acc1, acc2));
+        when(accountRepo.findByUserId(userId)).thenReturn(List.of(account));
 
         useCase.execute(userId);
 
-        verify(deleteAccountPort, times(1)).execute(account1Id, userId);
-        verify(deleteAccountPort, times(1)).execute(account2Id, userId);
+        // Verifica limpeza de faturamento
+        verify(billingPaymentRepo).deleteAllByUserId(userId);
+        verify(billingCycleRepo).deleteAllByUserId(userId);
 
-        verify(recurringRepo, times(1)).deleteAllByUserId(userId);
-        verify(goalRepo, times(1)).deleteAllByUserId(userId);
-        verify(budgetRepo, times(1)).deleteAllByUserId(userId);
-        verify(categoryRepo, times(1)).deleteAllByUserId(userId);
+        // Verifica limpeza vinculada às contas
+        verify(transactionRepo).deleteAllByAccountId(accId);
+        verify(recurringRepo).deleteAllByAccountId(accId);
+        verify(creditCardRepo).deleteAllByAccountId(accId);
+        verify(accountRepo).deleteById(accId);
 
-        verify(userRepo, times(1)).deleteById(userId);
-    }
-
-    @Test
-    @DisplayName("Deve excluir usuário mesmo que ele não possua contas")
-    void shouldDeleteUserEvenWithoutAccounts() {
-        UUID userId = UUID.randomUUID();
-
-        when(accountRepo.findByUserId(userId)).thenReturn(List.of());
-
-        useCase.execute(userId);
-
-        verify(deleteAccountPort, never()).execute(any(), any());
-        verify(userRepo, times(1)).deleteById(userId);
+        // Verifica limpeza geral do usuário
+        verify(recurringRepo).deleteAllByUserId(userId);
+        verify(goalRepo).deleteAllByUserId(userId);
+        verify(budgetRepo).deleteAllByUserId(userId);
+        verify(categoryRepo).deleteAllByUserId(userId);
+        verify(userRepo).deleteById(userId);
     }
 }

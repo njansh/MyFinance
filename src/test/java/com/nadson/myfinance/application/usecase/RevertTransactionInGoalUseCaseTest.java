@@ -15,60 +15,98 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RevertTransactionInGoalUseCaseTest {
 
-    @Mock private GoalRepositoryPort goalRepository;
-    @InjectMocks private RevertTransactionInGoalUseCase useCase;
+    @Mock
+    private GoalRepositoryPort goalRepositoryPort;
+
+    @InjectMocks
+    private RevertTransactionInGoalUseCase useCase;
 
     @Test
-    @DisplayName("Should subtract amount from goal when reverting an INCOME transaction")
-    void shouldRevertIncome() {
-        UUID accountId = UUID.randomUUID();
-        // Meta com 100 de saldo atual
-        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Viagem", new BigDecimal("1000.00"), new BigDecimal("100.00"), List.of(accountId));
-        Transaction transaction = new Transaction(accountId, new BigDecimal("100.00"), TransactionType.INCOME, "Renda", null, null, null);
-
-        when(goalRepository.findByAccountId(accountId)).thenReturn(List.of(goal));
-
-        useCase.execute(transaction);
-
-        // Deve subtrair 100, voltando a 0
-        verify(goalRepository).save(argThat(g -> g.getCurrentAmount().compareTo(BigDecimal.ZERO) == 0));
+    @DisplayName("Deve retornar imediatamente se a transação for nula")
+    void shouldReturnImmediatelyWhenTransactionIsNull() {
+        useCase.execute(null);
+        verifyNoInteractions(goalRepositoryPort);
     }
 
     @Test
-    @DisplayName("Should add amount to goal when reverting an EXPENSE transaction")
-    void shouldRevertExpense() {
-        UUID accountId = UUID.randomUUID();
-        // Meta com 50 de saldo atual
-        Goal goal = new Goal(UUID.randomUUID(), UUID.randomUUID(), "Viagem", new BigDecimal("1000.00"), new BigDecimal("50.00"), List.of(accountId));
-        Transaction transaction = new Transaction(accountId, new BigDecimal("50.00"), TransactionType.EXPENSE, "Gasto", null, null, null);
+    @DisplayName("Deve retornar imediatamente se o ID da conta for nulo")
+    void shouldReturnImmediatelyWhenAccountIdIsNull() {
+        Transaction tx = mock(Transaction.class);
+        when(tx.getAccountId()).thenReturn(null);
 
-        when(goalRepository.findByAccountId(accountId)).thenReturn(List.of(goal));
+        useCase.execute(tx);
 
-        useCase.execute(transaction);
-
-        // Deve somar 50, voltando a 100
-        verify(goalRepository).save(argThat(g -> g.getCurrentAmount().compareTo(new BigDecimal("100.00")) == 0));
+        verifyNoInteractions(goalRepositoryPort);
     }
 
     @Test
-    @DisplayName("Should do nothing when no goals are affected")
-    void shouldDoNothingWhenNoGoalsFound() {
+    @DisplayName("Deve retornar imediatamente se a lista de metas afetadas for nula")
+    void shouldReturnImmediatelyWhenAffectedGoalsIsNull() {
         UUID accountId = UUID.randomUUID();
-        Transaction transaction = new Transaction(accountId, new BigDecimal("100.00"), TransactionType.INCOME, "Renda", null, null, null);
+        Transaction tx = mock(Transaction.class);
+        when(tx.getAccountId()).thenReturn(accountId);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(null);
 
-        // Simulando que não existem metas para essa conta
-        when(goalRepository.findByAccountId(accountId)).thenReturn(List.of());
+        useCase.execute(tx);
 
-        // O método deve terminar sem erros
-        assertDoesNotThrow(() -> useCase.execute(transaction));
+        verify(goalRepositoryPort, never()).save(any());
+    }
 
-        // Verifica que o save NUNCA foi chamado, pois não há metas para atualizar
-        verify(goalRepository, never()).save(any());
+    @Test
+    @DisplayName("Deve retornar imediatamente se a lista de metas afetadas estiver vazia")
+    void shouldReturnImmediatelyWhenAffectedGoalsIsEmpty() {
+        UUID accountId = UUID.randomUUID();
+        Transaction tx = mock(Transaction.class);
+        when(tx.getAccountId()).thenReturn(accountId);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(List.of());
+
+        useCase.execute(tx);
+
+        verify(goalRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve subtrair valor das metas ao reverter uma transação de receita")
+    void shouldSubtractAmountFromGoalsWhenRevertingIncome() {
+        UUID accountId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("350.00");
+
+        Transaction tx = mock(Transaction.class);
+        when(tx.getAccountId()).thenReturn(accountId);
+        when(tx.getType()).thenReturn(TransactionType.INCOME);
+        when(tx.getAmount()).thenReturn(amount);
+
+        Goal goal = mock(Goal.class);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(List.of(goal));
+
+        useCase.execute(tx);
+
+        verify(goal).subtractAmount(amount);
+        verify(goalRepositoryPort).save(goal);
+    }
+
+    @Test
+    @DisplayName("Deve adicionar valor às metas ao reverter uma transação de despesa")
+    void shouldAddAmountToGoalsWhenRevertingExpense() {
+        UUID accountId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("150.00");
+
+        Transaction tx = mock(Transaction.class);
+        when(tx.getAccountId()).thenReturn(accountId);
+        when(tx.getType()).thenReturn(TransactionType.EXPENSE);
+        when(tx.getAmount()).thenReturn(amount);
+
+        Goal goal = mock(Goal.class);
+        when(goalRepositoryPort.findByAccountId(accountId)).thenReturn(List.of(goal));
+
+        useCase.execute(tx);
+
+        verify(goal).addAmount(amount);
+        verify(goalRepositoryPort).save(goal);
     }
 }

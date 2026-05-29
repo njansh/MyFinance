@@ -1,4 +1,4 @@
-package com.nadson.myfinance.domain.exception;
+package com.nadson.myfinance.domain.enums;
 
 public enum AlertType {
     EIGHTY_PERCENT,

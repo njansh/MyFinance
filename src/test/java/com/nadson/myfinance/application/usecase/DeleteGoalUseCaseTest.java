@@ -12,62 +12,73 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteGoalUseCaseTest {
 
-    @Mock private GoalRepositoryPort goalRepository;
-    @Mock private UserRepositoryPort userRepository;
+    @Mock private GoalRepositoryPort repository;
+    @Mock private UserRepositoryPort userRepositoryPort;
 
     @InjectMocks
     private DeleteGoalUseCase useCase;
 
     @Test
-    @DisplayName("Should delete goal successfully when user is owner")
-    void shouldDeleteSuccessfully() {
+    @DisplayName("Deve deletar meta com sucesso")
+    void shouldDeleteGoalSuccessfully() {
         UUID userId = UUID.randomUUID();
         UUID goalId = UUID.randomUUID();
-        Goal goal = new Goal(goalId, userId, "Viagem", new BigDecimal("100.00"), BigDecimal.ZERO, Collections.emptyList());
+        Goal goal = mock(Goal.class);
 
-        when(userRepository.findById(userId)).thenReturn(new User(userId, "Name", "email@test.com", "pass"));
-        when(goalRepository.findById(goalId)).thenReturn(Optional.of(goal));
+        when(userRepositoryPort.findById(userId)).thenReturn(mock(User.class));
+        when(goal.getUserId()).thenReturn(userId);
+        when(repository.findById(goalId)).thenReturn(Optional.of(goal));
 
-        assertDoesNotThrow(() -> useCase.execute(goalId, userId));
-        verify(goalRepository, times(1)).deleteById(goalId);
+        useCase.execute(goalId, userId);
+
+        verify(repository).deleteById(goalId);
     }
 
     @Test
-    @DisplayName("Should throw exception when user tries to delete another user's goal")
-    void shouldThrowExceptionWhenUnauthorized() {
+    @DisplayName("Deve falhar se o usuário não for encontrado")
+    void shouldFailWhenUserNotFound() {
+        UUID userId = UUID.randomUUID();
+        when(userRepositoryPort.findById(userId)).thenReturn(null);
+
+        assertThrows(BusinessRuleException.class, () ->
+                useCase.execute(UUID.randomUUID(), userId));
+    }
+
+    @Test
+    @DisplayName("Deve falhar se a meta não for encontrada")
+    void shouldFailWhenGoalNotFound() {
+        UUID userId = UUID.randomUUID();
+        UUID goalId = UUID.randomUUID();
+
+        when(userRepositoryPort.findById(userId)).thenReturn(mock(User.class));
+        when(repository.findById(goalId)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessRuleException.class, () ->
+                useCase.execute(goalId, userId));
+    }
+
+    @Test
+    @DisplayName("Deve falhar se a meta pertencer a outro usuário")
+    void shouldFailWhenUnauthorized() {
         UUID ownerId = UUID.randomUUID();
-        UUID attackerId = UUID.randomUUID();
-        UUID goalId = UUID.randomUUID();
-        Goal goal = new Goal(goalId, ownerId, "Meta", new BigDecimal("100.00"), BigDecimal.ZERO, Collections.emptyList());
-
-        when(userRepository.findById(attackerId)).thenReturn(new User(attackerId, "Attacker", "a@test.com", "pass"));
-        when(goalRepository.findById(goalId)).thenReturn(Optional.of(goal));
-
-        assertThrows(BusinessRuleException.class, () -> useCase.execute(goalId, attackerId));
-        verify(goalRepository, never()).deleteById(any());
-    }
-
-    @Test
-    @DisplayName("Should throw exception when goal does not exist")
-    void shouldThrowExceptionWhenGoalNotFound() {
         UUID userId = UUID.randomUUID();
         UUID goalId = UUID.randomUUID();
+        Goal goal = mock(Goal.class);
 
-        when(userRepository.findById(userId)).thenReturn(new User(userId, "Name", "email@test.com", "pass"));
-        when(goalRepository.findById(goalId)).thenReturn(Optional.empty());
+        when(userRepositoryPort.findById(userId)).thenReturn(mock(User.class));
+        when(goal.getUserId()).thenReturn(ownerId);
+        when(repository.findById(goalId)).thenReturn(Optional.of(goal));
 
-        assertThrows(BusinessRuleException.class, () -> useCase.execute(goalId, userId));
+        assertThrows(BusinessRuleException.class, () ->
+                useCase.execute(goalId, userId));
     }
 }

@@ -90,4 +90,8 @@ public class CreditCardJpaEntity {
     public void setDueDay(int dueDay) {
         this.dueDay = dueDay;
     }
+
+    public void setCreditLimit(BigDecimal one) {
+        this.creditLimit = one;
+    }
 }

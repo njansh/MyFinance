@@ -61,6 +61,10 @@ public class Transaction {
         this.templateId = templateId;
     }
 
+    public Transaction() {
+        
+    }
+
     public void updateCategory(UUID categoryId) {
         if (categoryId == null) {
             throw new BusinessRuleException("Category ID cannot be null");
@@ -103,6 +107,17 @@ public class Transaction {
     public BigDecimal getAccountBalanceAfter() { return accountBalanceAfter; }
     public TransactionStatus getStatus() { return status; }
     public void setStatus(TransactionStatus status) { this.status = status; }
+    public void setTransactionId(UUID transactionId) { this.transactionId = transactionId; }
+    public void setTransferID(UUID transferID) { this.transferID = transferID; }
+    public void setDescription(String description) { this.description = description; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public void setAccountBalanceAfter(BigDecimal accountBalanceAfter) { this.accountBalanceAfter = accountBalanceAfter; }
+    public void setDate(LocalDateTime date) { this.date = date; }
+    public void setType(TransactionType type) { this.type = type; }
+    public void setAccountId(UUID accountId) { this.accountId = accountId; }
+    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+    public void setTransfer(boolean transfer) { isTransfer = transfer; }
+    public void setTemplateId(UUID templateId) { this.templateId = templateId; }
 
     public void markAsCompleted() {
         this.status = TransactionStatus.COMPLETED;
@@ -127,4 +142,6 @@ public class Transaction {
             throw new BusinessRuleException("Account cannot be null");
         }
     }
+
+
 }

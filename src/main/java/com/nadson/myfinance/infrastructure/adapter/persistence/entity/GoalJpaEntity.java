@@ -45,4 +45,52 @@ public class GoalJpaEntity {
     public Goal toDomain() {
         return new Goal(id, userId, description, targetAmount, currentAmount, accountIds);
     }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getTargetAmount() {
+        return targetAmount;
+    }
+
+    public void setTargetAmount(BigDecimal targetAmount) {
+        this.targetAmount = targetAmount;
+    }
+
+    public BigDecimal getCurrentAmount() {
+        return currentAmount;
+    }
+
+    public void setCurrentAmount(BigDecimal currentAmount) {
+        this.currentAmount = currentAmount;
+    }
+
+    public List<UUID> getAccountIds() {
+        return accountIds;
+    }
+
+    public void setAccountIds(List<UUID> accountIds) {
+        this.accountIds = accountIds;
+    }
 }

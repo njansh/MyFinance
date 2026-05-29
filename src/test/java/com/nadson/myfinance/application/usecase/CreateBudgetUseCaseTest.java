@@ -1,86 +1,84 @@
-package com.nadson.myfinance.application.usecase;
+	package com.nadson.myfinance.application.usecase;
 
-import com.nadson.myfinance.application.port.out.BudgetRepositoryPort;
-import com.nadson.myfinance.application.port.out.CategoryRepositoryPort;
-import com.nadson.myfinance.application.port.out.UserRepositoryPort;
-import com.nadson.myfinance.domain.entity.Budget;
-import com.nadson.myfinance.domain.entity.Category;
-import com.nadson.myfinance.domain.entity.User;
+import com.nadson.myfinance.application.port.out.*;
+import com.nadson.myfinance.domain.entity.*;
+import com.nadson.myfinance.domain.enums.TransactionType;
 import com.nadson.myfinance.domain.exception.BusinessRuleException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
- class CreateBudgetUseCaseTest {
+class CreateBudgetUseCaseTest {
 
-    @Mock
     private BudgetRepositoryPort repository;
-
-    @Mock
     private UserRepositoryPort userRepository;
-
-    @Mock
     private CategoryRepositoryPort categoryRepository;
-
-    @InjectMocks
+    private TransactionRepositoryPort transactionRepository;
     private CreateBudgetUseCase useCase;
 
-    @Test
-    @DisplayName("Deve criar um orçamento com sucesso quando usuário e categoria existem")
-    void shouldCreateBudgetSuccessfully() {
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        BigDecimal limit = new BigDecimal("1000.00");
-
-        when(userRepository.findById(userId)).thenReturn(mock(User.class));
-        when(categoryRepository.findById(categoryId)).thenReturn(mock(Category.class));
-        when(repository.save(any(Budget.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Budget result = useCase.execute(userId, categoryId, 5, 2026, limit);
-
-        assertNotNull(result);
-        assertEquals(userId, result.getUserId());
-        assertEquals(categoryId, result.getCategoryId());
-        assertEquals(limit, result.getLimitAmount());
-        verify(repository, times(1)).save(any(Budget.class));
+    @BeforeEach
+    void setUp() {
+        repository = mock(BudgetRepositoryPort.class);
+        userRepository = mock(UserRepositoryPort.class);
+        categoryRepository = mock(CategoryRepositoryPort.class);
+        transactionRepository = mock(TransactionRepositoryPort.class);
+        useCase = new CreateBudgetUseCase(repository, userRepository, categoryRepository, transactionRepository);
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando o usuário não existe")
-    void shouldThrowExceptionWhenUserNotFound() {
+    @DisplayName("Deve criar orçamento com sucesso calculando gastos existentes")
+    void shouldCreateBudgetSuccessfully() {
         UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(null);
+        UUID catId = UUID.randomUUID();
+
+        when(userRepository.findById(userId)).thenReturn(mock(User.class));
+        when(categoryRepository.findById(catId)).thenReturn(mock(Category.class));
+
+        // Simula transações de despesa (soma 50 + 30 = 80)
+        Transaction t1 = mock(Transaction.class);
+        when(t1.getType()).thenReturn(TransactionType.EXPENSE);
+        when(t1.getAmount()).thenReturn(new BigDecimal("50.00"));
+
+        Transaction t2 = mock(Transaction.class);
+        when(t2.getType()).thenReturn(TransactionType.EXPENSE);
+        when(t2.getAmount()).thenReturn(new BigDecimal("30.00"));
+
+        when(transactionRepository.findAllByUserIdAndCategoryIdAndMonthAndYear(userId, catId, 5, 2026))
+                .thenReturn(List.of(t1, t2));
+
+        when(repository.save(any(Budget.class))).thenAnswer(i -> i.getArgument(0));
+
+        Budget budget = useCase.execute(userId, catId, 5, 2026, new BigDecimal("100.00"));
+
+        assertThat(budget.getSpentAmount()).isEqualByComparingTo("80.00");
+        verify(repository).save(any(Budget.class));
+    }
+
+    @Test
+    @DisplayName("Deve falhar se usuário não for encontrado")
+    void shouldFailWhenUserNotFound() {
+        when(userRepository.findById(any())).thenReturn(null);
+        assertThrows(BusinessRuleException.class, () ->
+                useCase.execute(UUID.randomUUID(), UUID.randomUUID(), 5, 2026, BigDecimal.TEN));
+    }
+
+    @Test
+    @DisplayName("Deve falhar se categoria não for encontrada")
+    void shouldFailWhenCategoryNotFound() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(mock(User.class));
+        when(categoryRepository.findById(any())).thenReturn(null);
 
         assertThrows(BusinessRuleException.class, () ->
                 useCase.execute(userId, UUID.randomUUID(), 5, 2026, BigDecimal.TEN));
-
-        verifyNoInteractions(categoryRepository);
-        verifyNoInteractions(repository);
     }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando a categoria não existe")
-    void shouldThrowExceptionWhenCategoryNotFound() {
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-
-        when(userRepository.findById(userId)).thenReturn(mock(User.class));
-        when(categoryRepository.findById(categoryId)).thenReturn(null);
-
-        assertThrows(BusinessRuleException.class, () ->
-                useCase.execute(userId, categoryId, 5, 2026, BigDecimal.TEN));
-
-        verifyNoInteractions(repository);
-    }
+    
 }

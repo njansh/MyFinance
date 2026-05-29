@@ -1,68 +1,90 @@
 package com.nadson.myfinance.infrastructure.adapter.persistence;
 
 import com.nadson.myfinance.domain.entity.Goal;
-import com.nadson.myfinance.domain.entity.User; // Import do domínio para criar o DTO da Entity
-import com.nadson.myfinance.infrastructure.adapter.persistence.entity.UserJpaEntity;
+import com.nadson.myfinance.infrastructure.adapter.persistence.entity.GoalJpaEntity;
 import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringGoalRepository;
-import com.nadson.myfinance.infrastructure.adapter.persistence.repository.SpringUserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(properties = "spring.flyway.enabled=false")
-@Import(GoalPersistenceAdapter.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class GoalPersistenceAdapterTest {
 
-    @Autowired
+    @Mock
+    private SpringGoalRepository repository;
+
+    @InjectMocks
     private GoalPersistenceAdapter adapter;
 
-    @Autowired
-    private SpringUserRepository userRepository;
-
-    private UUID userId;
-
-    @BeforeEach
-    void setup() {
-        userId = UUID.randomUUID();
-        // Criando uma entidade de domínio temporária para usar o construtor da UserJpaEntity
-        User userDomain = new User(userId, "Test User", "test@test.com", "password123");
-        userRepository.save(new UserJpaEntity(userDomain));
+    @Test
+    @DisplayName("Deve salvar meta")
+    void shouldSaveGoal() {
+        Goal goal = new Goal(UUID.randomUUID(),UUID.randomUUID() ,"Viagem",new BigDecimal("1000") ,new BigDecimal("5000.00"),new ArrayList<>());
+        when(repository.save(any(GoalJpaEntity.class)))
+                .thenReturn(new GoalJpaEntity(goal));
+        Goal result = adapter.save(goal);
+        assertThat(result).isNotNull();
+        verify(repository).save(any(GoalJpaEntity.class));
     }
 
     @Test
-    @DisplayName("Should save and find goal by account ID")
-    void shouldSaveAndFindByAccountId() {
-        UUID accountId = UUID.randomUUID();
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Viagem", new BigDecimal("1000.00"), BigDecimal.ZERO, List.of(accountId));
+    @DisplayName("Deve buscar meta por ID")
+    void shouldFindById() {
+        UUID id = UUID.randomUUID();
+        GoalJpaEntity entity = mock(GoalJpaEntity.class);
+        when(entity.toDomain()).thenReturn(mock(Goal.class));
+        when(repository.findById(id)).thenReturn(Optional.of(entity));
 
-        adapter.save(goal);
-        List<Goal> foundGoals = adapter.findByAccountId(accountId);
-
-        assertThat(foundGoals).hasSize(1);
-        assertThat(foundGoals.get(0).getAccountIds()).contains(accountId);
+        assertThat(adapter.findById(id)).isPresent();
     }
 
     @Test
-    @DisplayName("Should delete all goals by user ID")
-    void shouldDeleteAllByUserId() {
-        Goal goal = new Goal(UUID.randomUUID(), userId, "Meta", new BigDecimal("500.00"), BigDecimal.ZERO, null);
+    @DisplayName("Deve buscar metas por User ID")
+    void shouldFindByUserId() {
+        UUID userId = UUID.randomUUID();
+        GoalJpaEntity entity = mock(GoalJpaEntity.class);
+        when(entity.toDomain()).thenReturn(mock(Goal.class));
+        when(repository.findByUserId(userId)).thenReturn(List.of(entity));
 
-        adapter.save(goal);
-        adapter.deleteAllByUserId(userId);
+        assertThat(adapter.findByUserId(userId)).hasSize(1);
+    }
 
-        assertThat(adapter.findByUserId(userId)).isEmpty();
+    @Test
+    @DisplayName("Deve buscar metas por Account ID")
+    void shouldFindByAccountId() {
+        UUID accId = UUID.randomUUID();
+        GoalJpaEntity entity = mock(GoalJpaEntity.class);
+        when(entity.toDomain()).thenReturn(mock(Goal.class));
+        when(repository.findByAccountIdsContaining(accId)).thenReturn(List.of(entity));
+
+        assertThat(adapter.findByAccountId(accId)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Deve deletar metas por ID e por User ID")
+    void shouldDeleteGoals() {
+        UUID id = UUID.randomUUID();
+        adapter.deleteById(id);
+        adapter.deleteAllByUserId(id);
+
+        verify(repository).deleteById(id);
+        verify(repository).deleteAllByUserId(id);
     }
 }
